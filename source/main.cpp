@@ -15,12 +15,9 @@ int main()
 	std::cout << "Seed: " << seed << std::endl;
 	std::srand(seed);
 
-	std::vector<glm::vec3> sphere_positions;
-
 	Scene scene;
 	scene.surfaces.resize(16);
-	std::generate(scene.surfaces.begin(), scene.surfaces.end(), [&sphere_positions]() {
-		glm::vec3 new_pos = glm::vec3(rnd(-.6f, .6f), rnd(-.35f, .35f), rnd(-1.f, -4.5f));
+	std::generate(scene.surfaces.begin(), scene.surfaces.end(), []() {
 		return std::make_unique<Surface::Sphere>(glm::vec3(rnd(-.6f, .6f), rnd(-.35f, .35f), rnd(-1.f, -4.5f)), rnd(.05f, .15f));
 	});
 

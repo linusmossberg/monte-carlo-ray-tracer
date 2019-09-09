@@ -4,7 +4,6 @@
 #include <cstdint>
 #include <fstream>
 
-
 //Hard coded (except for dimensions) uncompressed 24bpp true-color TGA header.
 //After writing this to file, the RGB bytes can be dumped in sequence (left to right, top to bottom) to create a TGA image.
 struct HeaderTGA
