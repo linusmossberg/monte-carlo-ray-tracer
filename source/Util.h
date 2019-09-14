@@ -2,14 +2,14 @@
 
 #include <cstdlib>
 
-static float rnd(const float& v1, const float& v2)
+static double rnd(const double& v1, const double& v2)
 {
-	float min = fmin(v1, v2);
-	float max = fmax(v1, v2);
-	return min + ((float)rand() / RAND_MAX) * (max - min);
+	double min = fmin(v1, v2);
+	double max = fmax(v1, v2);
+	return min + ((double)rand() / RAND_MAX) * (max - min);
 }
 
-static float mm2m(const float& mm)
+static double mm2m(const double& mm)
 {
-	return mm / 1000.0f;
+	return mm / 1000.0;
 }

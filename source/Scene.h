@@ -7,5 +7,5 @@
 
 struct Scene
 {
-	std::vector<std::unique_ptr<Surface::Base>> surfaces;
+	std::vector<std::shared_ptr<Surface::Base>> surfaces;
 };

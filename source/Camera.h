@@ -14,7 +14,7 @@
 class Camera
 {
 public:
-	Camera(glm::vec3 eye, glm::vec3 forward, glm::vec3 up, float focal_length, float sensor_width, int width, int height) 
+	Camera(glm::dvec3 eye, glm::dvec3 forward, glm::dvec3 up, double focal_length, double sensor_width, int width, int height) 
 		: eye(eye), 
 		forward(forward), 
 		left(glm::cross(up, forward)), 
@@ -22,6 +22,8 @@ public:
 		focal_length(mm2m(focal_length)), 
 		sensor_width(mm2m(sensor_width)), 
 		image(width, height) { }
+
+	glm::dvec3 sampleRay(const Ray& ray, Scene& scene, int ray_depth, Surface::Base* ignore = nullptr);
 
 	void samplePixel(int x, int y, int supersamples, Scene& scene);
 
@@ -33,10 +35,10 @@ public:
 	}
 
 private:
-	glm::vec3 eye;
+	glm::dvec3 eye;
 
-	glm::vec3 forward, left, up;
+	glm::dvec3 forward, left, up;
 
-	float focal_length, sensor_width;
+	double focal_length, sensor_width;
 	Image image;
 };
