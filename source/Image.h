@@ -32,7 +32,8 @@ struct Image
 		{
 			for (int c = 2; c >= 0; c--)
 			{
-				double v = p[c] > 1.0 ? 1.0 : p[c] < 0.0 ? 0.0 : p[c];
+				double v = pow(p[c], 1.0 / 2.2);
+				v = v > 1.0 ? 1.0 : v < 0.0 ? 0.0 : v;
 				uint8_t pv = (uint8_t)(v * 255.0);
 				out.write(reinterpret_cast<char*>(&pv), sizeof(pv));
 			}

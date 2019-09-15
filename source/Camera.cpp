@@ -61,7 +61,7 @@ glm::dvec3 Camera::sampleDiffuseRay(const Ray& ray, Scene& scene, int ray_depth,
 	{
 		if (t_intersect.t < intersect.t)
 		{
-			emittance = 2.0;
+			emittance = 20.0;
 			intersect = t_intersect;
 			next_ignore = scene.light.get();
 		}
@@ -74,19 +74,17 @@ glm::dvec3 Camera::sampleDiffuseRay(const Ray& ray, Scene& scene, int ray_depth,
 
 	Ray reflect(intersect.position, intersect.position + glm::dvec3(1.0));
 
-	double inclination = rnd(0.0, M_PI/2.0);
+	double inclination = acos(sqrt(rnd(0.0, 1.0)));
 	double azimuth = rnd(0.0, 2.0*M_PI);
 
 	glm::dvec3 tangent = glm::normalize(glm::cross(intersect.normal, intersect.normal + glm::dvec3(1.0)));
 	reflect.direction = glm::rotate(glm::rotate(intersect.normal, inclination, tangent), azimuth, intersect.normal);
 
-	double p = 1.0 / (2.0 * M_PI);
-	double cos_theta = glm::dot(reflect.direction, intersect.normal);
-	double BRDF = 0.9 / M_PI;
+	double BRDF = 0.5 / M_PI;
 
 	glm::dvec3 incoming = sampleDiffuseRay(reflect, scene, ray_depth - 1, next_ignore);
 
-	return emittance + (BRDF * incoming * cos_theta / p);
+	return emittance + (BRDF * incoming * M_PI);
 }
 
 void Camera::samplePixel(int x, int y, int supersamples, Scene& scene)
@@ -102,7 +100,7 @@ void Camera::samplePixel(int x, int y, int supersamples, Scene& scene)
 			glm::dvec2 center_offset = pixel_size * (glm::dvec2(image.width, image.height) / 2.0 - pixel_space_pos);
 			glm::dvec3 sensor_pos = eye + forward * focal_length + left * center_offset.x + up * center_offset.y;
 
-			image(x, y) += sampleDiffuseRay(Ray(eye, sensor_pos), scene, 8);
+			image(x, y) += sampleDiffuseRay(Ray(eye, sensor_pos), scene, 6);
 		}
 	}
 	image(x, y) /= pow(supersamples, 2);
@@ -110,25 +108,57 @@ void Camera::samplePixel(int x, int y, int supersamples, Scene& scene)
 
 void Camera::sampleImage(int supersamples, Scene& scene)
 {
-	unsigned sec_before = (unsigned)std::time(nullptr);
-	for (int x = 0; x < image.width; x++)
+	void (Camera::*f)(int, Scene&, size_t, size_t) = &Camera::sampleImage;
+
+	std::vector<std::unique_ptr<std::thread>> threads(std::thread::hardware_concurrency() - 2);
+
+	size_t step = (size_t)floor((double)image.width / threads.size());
+	for (size_t i = 0; i < threads.size(); i++)
+	{
+		size_t start = i * step;
+		size_t end = i != (threads.size() - 1) ? start + step : image.width;
+		threads[i] = std::make_unique<std::thread>(f, this, supersamples, std::ref(scene), start, end);
+	}
+
+	for (auto &thread : threads)
+	{
+		thread->join();
+	}
+}
+
+void Camera::sampleImage(int supersamples, Scene& scene, size_t start, size_t end)
+{
+	auto t_before = std::chrono::high_resolution_clock::now();
+	int x_before = start;
+	for (int x = start; x < end; x++)
 	{
 		for (int y = 0; y < image.height; y++)
 		{
 			samplePixel(x, y, supersamples, scene);
 		}
 
-		if (x % (image.width / 64) == 0)
+		if (end == image.width)
 		{
-			unsigned sec_after = (unsigned)std::time(nullptr);
+			auto t_after = std::chrono::high_resolution_clock::now();
+			auto delta_t = std::chrono::duration_cast<std::chrono::milliseconds>(t_after - t_before);
+			int delta_x = x - x_before;
+			if (delta_t.count() >= 10000 && delta_x > 0)
+			{
+				int msec_left = int(double(end - x) * (double(delta_t.count()) / delta_x));
+				int sec_left = (int)floor(msec_left / 1000.0);
 
-			unsigned sec_left = unsigned(((double(image.width) / x) - 1.0) * (sec_after - sec_before));
+				int hours = (unsigned)floor(sec_left / (60.0 * 60.0));
+				int minutes = (unsigned)floor((sec_left - hours * 60 * 60) / 60.0);
+				int seconds = sec_left - hours * 60 * 60 - minutes * 60;
 
-			unsigned hours = (unsigned)floor(sec_left / (60.0 * 60.0));
-			unsigned minutes = (unsigned)floor((sec_left - hours * 60 * 60) / 60.0);
-			unsigned seconds = sec_left - hours * 60 * 60 - minutes * 60;
-
-			std::cout << hours << " hours, " << minutes << " minutes and " << seconds << " seconds left." << std::endl;
+				t_before = std::chrono::high_resolution_clock::now();
+				x_before = x;
+				std::cout << "Time remaining: "
+						  << std::setfill('0') << std::setw(2) << hours << ":" 
+					      << std::setfill('0') << std::setw(2) << minutes << ":" 
+						  << std::setfill('0') << std::setw(2) << seconds << "."
+						  << std::setfill('0') << std::setw(3) << (msec_left - sec_left*1000) << std::endl;
+			}
 		}
 	}
 }

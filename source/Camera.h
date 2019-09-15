@@ -1,7 +1,10 @@
 #pragma once
 
 #include <iostream>
-#include <ctime>
+#include <thread>
+#include <algorithm>
+#include <iomanip>
+#include <chrono>
 
 #include <glm/glm.hpp>
 #include <glm/vec3.hpp>
@@ -34,6 +37,8 @@ public:
 	void samplePixel(int x, int y, int supersamples, Scene& scene);
 
 	void sampleImage(int supersamples, Scene& scene);
+
+	void sampleImage(int supersamples, Scene& scene, size_t start, size_t end);
 
 	void saveImage(const std::string& filename) const
 	{
