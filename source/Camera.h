@@ -1,10 +1,14 @@
 #pragma once
 
 #include <iostream>
+#include <ctime>
 
 #include <glm/glm.hpp>
 #include <glm/vec3.hpp>
 #include <glm/vec2.hpp>
+#include <glm/gtc/constants.hpp>
+#include <glm/gtx/rotate_vector.hpp>
+#include <glm/gtx/vector_angle.hpp>
 
 #include "Scene.h"
 #include "Surface.h"
@@ -22,6 +26,8 @@ public:
 		focal_length(mm2m(focal_length)), 
 		sensor_width(mm2m(sensor_width)), 
 		image(width, height) { }
+
+	glm::dvec3 sampleDiffuseRay(const Ray& ray, Scene& scene, int ray_depth, Surface::Base* ignore = nullptr);
 
 	glm::dvec3 sampleRay(const Ray& ray, Scene& scene, int ray_depth, Surface::Base* ignore = nullptr);
 

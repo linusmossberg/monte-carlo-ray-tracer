@@ -1,6 +1,8 @@
 #pragma once
 
 #include <cstdlib>
+#define _USE_MATH_DEFINES
+#include <math.h>
 
 static double rnd(const double& v1, const double& v2)
 {
