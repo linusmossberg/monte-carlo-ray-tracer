@@ -1,12 +1,17 @@
 #include "Random.h"
 
-std::uniform_real_distribution<double> Random::dist;
-std::mt19937_64 Random::engine;
+thread_local std::mt19937_64 Random::engine;
+thread_local unsigned Random::engine_seed;
 
-void Random::init(unsigned seed)
+void Random::seed(unsigned seed)
 {
-	dist.param(std::uniform_real_distribution<double>::param_type(0.0, 1.0 - std::numeric_limits<double>::epsilon()));
 	engine.seed(seed);
+	engine_seed = seed;
+}
+
+unsigned Random::seed()
+{
+	return engine_seed;
 }
 
 // Generates random numbers in range [min,max[
@@ -15,5 +20,7 @@ double Random::range(const double& v1, const double& v2)
 	double min = fmin(v1, v2);
 	double max = fmax(v1, v2);
 
-	return min + dist(engine) * (max - min);
+	std::uniform_real_distribution<double> dist(min, max);
+
+	return dist(engine);
 }

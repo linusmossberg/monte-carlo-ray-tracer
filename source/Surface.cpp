@@ -18,6 +18,7 @@ bool Surface::Sphere::intersect(const Ray& ray, Intersection& intersection) cons
 	intersection.t = t;
 	intersection.position = ray(t);
 	intersection.normal = (intersection.position - origin) / radius;
+	intersection.material = material;
 
 	return true;
 }
@@ -54,6 +55,7 @@ bool Surface::Triangle::intersect(const Ray& ray, Intersection& intersection) co
 	intersection.t = t;
 	intersection.position = ray(t);
 	intersection.normal = normal;
+	intersection.material = material;
 
 	return true;
 }

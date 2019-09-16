@@ -6,10 +6,14 @@ struct Random
 {
 	Random() {}
 
-	static void init(unsigned seed);
+	static unsigned seed();
+
+	static void seed(unsigned seed);
 
 	static double range(const double& v1, const double& v2);
 
-	static std::mt19937_64 engine;
-	static std::uniform_real_distribution<double> dist;
+private:
+	// thread_local to create one static random engine per thread.
+	thread_local static std::mt19937_64 engine;
+	thread_local static unsigned engine_seed;
 };

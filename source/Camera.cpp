@@ -56,18 +56,6 @@ glm::dvec3 Camera::sampleDiffuseRay(const Ray& ray, Scene& scene, int ray_depth,
 		}
 	}
 
-	double emittance = 0.0;
-	Intersection t_intersect;
-	if (scene.light.get() != next_ignore && scene.light->intersect(ray, t_intersect))
-	{
-		if (t_intersect.t < intersect.t)
-		{
-			emittance = 20.0;
-			intersect = t_intersect;
-			next_ignore = scene.light.get();
-		}
-	}
-
 	if (!intersect)
 	{
 		return glm::dvec3(0.0);
@@ -75,17 +63,24 @@ glm::dvec3 Camera::sampleDiffuseRay(const Ray& ray, Scene& scene, int ray_depth,
 
 	Ray reflect(intersect.position, intersect.position + glm::dvec3(1.0));
 
-	double inclination = acos(sqrt(rnd(0.0, 1.0)));
+	// Generate uniform sample on unit circle at radius r and angle azimuth
+	double r = sqrt(rnd(0.0, 1.0));
 	double azimuth = rnd(0.0, 2.0*M_PI);
+
+	// Project up to hemisphere by rotating up angle inclination. 
+	// The result is a cosine-weighted hemispherical sample.
+	double inclination = acos(r);
 
 	glm::dvec3 tangent = glm::normalize(glm::cross(intersect.normal, intersect.normal + glm::dvec3(1.0)));
 	reflect.direction = glm::rotate(glm::rotate(intersect.normal, inclination, tangent), azimuth, intersect.normal);
 
-	double BRDF = 0.5 / M_PI;
+	glm::dvec3 BRDF = intersect.material->reflectance / M_PI;
 
 	glm::dvec3 incoming = sampleDiffuseRay(reflect, scene, ray_depth - 1, next_ignore);
 
-	return emittance + (BRDF * incoming * M_PI);
+	// Cosine term eliminated by cosine-weighted probability density function p(x) = cos(theta)/pi
+	// L0 = reflectance * incoming, multiply by pi to eliminate 1/pi from the BRDF.
+	return intersect.material->emittance + (BRDF * incoming * M_PI);
 }
 
 void Camera::samplePixel(int x, int y, int supersamples, Scene& scene)
@@ -101,7 +96,7 @@ void Camera::samplePixel(int x, int y, int supersamples, Scene& scene)
 			glm::dvec2 center_offset = pixel_size * (glm::dvec2(image.width, image.height) / 2.0 - pixel_space_pos);
 			glm::dvec3 sensor_pos = eye + forward * focal_length + left * center_offset.x + up * center_offset.y;
 
-			image(x, y) += sampleDiffuseRay(Ray(eye, sensor_pos), scene, 6);
+			image(x, y) += sampleDiffuseRay(Ray(eye, sensor_pos), scene, 8);
 		}
 	}
 	image(x, y) /= pow(supersamples, 2);
@@ -129,6 +124,8 @@ void Camera::sampleImage(int supersamples, Scene& scene)
 
 void Camera::sampleImage(int supersamples, Scene& scene, size_t start, size_t end)
 {
+	Random::seed(std::random_device{}()); // Each thread uses different seed.
+
 	auto t_before = std::chrono::high_resolution_clock::now();
 	int x_before = start;
 	for (int x = start; x < end; x++)
