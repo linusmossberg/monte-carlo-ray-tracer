@@ -48,8 +48,8 @@ int main()
 
 	Camera camera(glm::dvec3(0.0, 0.0, -0.01), glm::dvec3(0.0, 0.0, -1.0), glm::dvec3(0.0, 1.0, 0.0), 36.0, 35.0, 960, 540);
 
-	camera.sampleImage(64, scene);
-	camera.saveImage("image20.tga");
+	camera.sampleImage(16, scene);
+	camera.saveImage("image_filmic.tga");
 	
 	return 0;
 }

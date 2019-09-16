@@ -20,7 +20,7 @@ double Random::range(const double& v1, const double& v2)
 	double min = fmin(v1, v2);
 	double max = fmax(v1, v2);
 
-	std::uniform_real_distribution<double> dist(min, max);
+	std::uniform_real_distribution<double> dist(min, std::nextafter(max, min));
 
 	return dist(engine);
 }
