@@ -1,19 +1,19 @@
 #include <iostream>
 #include <string>
-#include <ctime>
 #include <algorithm>
 
 #include <glm/vec3.hpp>
 
+#include "Random.h"
+#include "Util.h"
 #include "Scene.h"
 #include "Camera.h"
 
 int main()
 {
-	unsigned seed = (unsigned)std::time(nullptr);
-	seed = 1568013294;
+	unsigned seed = std::random_device{}();
 	std::cout << "Seed: " << seed << std::endl;
-	std::srand(seed);
+	Random::init(seed);
 
 	Scene scene;
 	scene.surfaces.resize(16);
@@ -38,9 +38,9 @@ int main()
 	scene.surfaces.push_back(std::make_shared<Surface::Triangle>(v7, v6, v5)); // Front
 	scene.surfaces.push_back(std::make_shared<Surface::Triangle>(v7, v5, v4));
 
-	Camera camera(glm::dvec3(0.0, 0.0, -0.01), glm::dvec3(0.0, 0.0, -1.0), glm::dvec3(0.0, 1.0, 0.0), 36.0, 35.0, 960, 540);
+	Camera camera(glm::dvec3(0.0, 0.0, -0.01), glm::dvec3(0.0, 0.0, -1.0), glm::dvec3(0.0, 1.0, 0.0), 36.0, 35.0, 960/4, 540/4);
 
-	camera.sampleImage(32, scene);
+	camera.sampleImage(16, scene);
 	camera.saveImage("image12.tga");
 	
 	return 0;

@@ -1,4 +1,5 @@
 #include "Camera.h"
+#include "Random.h"
 
 glm::dvec3 Camera::sampleRay(const Ray& ray, Scene& scene, int ray_depth, Surface::Base* ignore)
 {
