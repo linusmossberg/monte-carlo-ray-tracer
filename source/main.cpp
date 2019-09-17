@@ -26,10 +26,10 @@ int main()
 	glm::dvec3 v0(-a, -b, c), v1(a, b, c), v2(-a, b, c), v3(a, -b, c);
 	glm::dvec3 v4(-a, -b, d), v5(a, -b, d), v6(a, b, d), v7(-a, b, d);
 
-	Material red(glm::dvec3(1.0, 0.6, 0.5), glm::dvec3(0.0));
-	Material blue(glm::dvec3(0.5, 0.882, 1.0), glm::dvec3(0.0));
+	Material red(glm::pow(glm::dvec3(1.0, 0.6, 0.5), glm::dvec3(2.2)), glm::dvec3(0.0));
+	Material blue(glm::pow(glm::dvec3(0.5, 0.882, 1.0), glm::dvec3(2.2)), glm::dvec3(0.0));
 
-	Material light(glm::dvec3(0.5), glm::dvec3(20.0));
+	Material light(glm::dvec3(0.5), glm::dvec3(100.0));
 
 	scene.surfaces.push_back(std::make_shared<Surface::Triangle>(v0, v1, v2));			// Back
 	scene.surfaces.push_back(std::make_shared<Surface::Triangle>(v0, v3, v1));	
@@ -48,7 +48,7 @@ int main()
 
 	Camera camera(glm::dvec3(0.0, 0.0, -0.01), glm::dvec3(0.0, 0.0, -1.0), glm::dvec3(0.0, 1.0, 0.0), 36.0, 35.0, 960, 540);
 
-	camera.sampleImage(16, scene);
+	camera.sampleImage(160, scene);
 	camera.saveImage("image_filmic.tga");
 	
 	return 0;

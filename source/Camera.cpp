@@ -83,7 +83,7 @@ glm::dvec3 Camera::sampleDiffuseRay(const Ray& ray, Scene& scene, int ray_depth,
 	return intersect.material->emittance + (BRDF * incoming * M_PI);
 }
 
-void Camera::samplePixel(int x, int y, int supersamples, Scene& scene)
+void Camera::samplePixel(size_t x, size_t y, int supersamples, Scene& scene)
 {
 	double pixel_size = sensor_width / image.width;
 	double sub_step = 1.0 / supersamples;
@@ -127,10 +127,10 @@ void Camera::sampleImage(int supersamples, Scene& scene, size_t start, size_t en
 	Random::seed(std::random_device{}()); // Each thread uses different seed.
 
 	auto t_before = std::chrono::high_resolution_clock::now();
-	int x_before = start;
-	for (int x = start; x < end; x++)
+	size_t x_before = start;
+	for (size_t x = start; x < end; x++)
 	{
-		for (int y = 0; y < image.height; y++)
+		for (size_t y = 0; y < image.height; y++)
 		{
 			samplePixel(x, y, supersamples, scene);
 		}
@@ -139,15 +139,15 @@ void Camera::sampleImage(int supersamples, Scene& scene, size_t start, size_t en
 		{
 			auto t_after = std::chrono::high_resolution_clock::now();
 			auto delta_t = std::chrono::duration_cast<std::chrono::milliseconds>(t_after - t_before);
-			int delta_x = x - x_before;
+			size_t delta_x = x - x_before;
 			if (delta_t.count() >= 10000 && delta_x > 0)
 			{
-				int msec_left = int(double(end - x) * (double(delta_t.count()) / delta_x));
-				int sec_left = (int)floor(msec_left / 1000.0);
+				size_t msec_left = size_t((end - x) * 1.0 * delta_t.count() / delta_x);
 
-				int hours = (unsigned)floor(sec_left / (60.0 * 60.0));
-				int minutes = (unsigned)floor((sec_left - hours * 60 * 60) / 60.0);
-				int seconds = sec_left - hours * 60 * 60 - minutes * 60;
+				size_t hours = msec_left / 3600000;
+				size_t minutes = (msec_left % 3600000) / 60000;
+				size_t seconds = (msec_left % 60000) / 1000;
+				size_t milliseconds = msec_left % 1000;
 
 				t_before = std::chrono::high_resolution_clock::now();
 				x_before = x;
@@ -155,7 +155,7 @@ void Camera::sampleImage(int supersamples, Scene& scene, size_t start, size_t en
 						  << std::setfill('0') << std::setw(2) << hours << ":" 
 					      << std::setfill('0') << std::setw(2) << minutes << ":" 
 						  << std::setfill('0') << std::setw(2) << seconds << "."
-						  << std::setfill('0') << std::setw(3) << (msec_left - sec_left*1000) << std::endl;
+						  << std::setfill('0') << std::setw(3) << milliseconds << std::endl;
 			}
 		}
 	}
