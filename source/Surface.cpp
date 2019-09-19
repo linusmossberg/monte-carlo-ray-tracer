@@ -29,7 +29,7 @@ bool Surface::Triangle::intersect(const Ray& ray, Intersection& intersection) co
 	double denominator = glm::dot(P, E1);
 	if (abs(denominator) < 0.0000001) // Ray parallel to triangle. 
 	{
-		return false; // The other checks will catch this but doing it here reduces computations.
+		return false;
 	}
 
 	glm::dvec3 T = ray.start - v0;

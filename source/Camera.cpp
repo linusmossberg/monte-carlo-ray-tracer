@@ -71,7 +71,7 @@ glm::dvec3 Camera::sampleDiffuseRay(const Ray& ray, Scene& scene, int ray_depth,
 	// The result is a cosine-weighted hemispherical sample.
 	double inclination = acos(r);
 
-	glm::dvec3 tangent = glm::normalize(glm::cross(intersect.normal, intersect.normal + glm::dvec3(1.0)));
+	glm::dvec3 tangent = orthogonal_unit_vector(intersect.normal);
 	reflect.direction = glm::rotate(glm::rotate(intersect.normal, inclination, tangent), azimuth, intersect.normal);
 
 	glm::dvec3 BRDF = intersect.material->reflectance / M_PI;
@@ -106,7 +106,7 @@ void Camera::sampleImage(int supersamples, Scene& scene)
 {
 	void (Camera::*f)(int, Scene&, size_t, size_t) = &Camera::sampleImage;
 
-	std::vector<std::unique_ptr<std::thread>> threads(std::thread::hardware_concurrency() - 2);
+	std::vector<std::unique_ptr<std::thread>> threads(std::thread::hardware_concurrency() - 1);
 
 	size_t step = (size_t)floor((double)image.width / threads.size());
 	for (size_t i = 0; i < threads.size(); i++)
