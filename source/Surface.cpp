@@ -14,7 +14,6 @@ bool Surface::Sphere::intersect(const Ray& ray, Intersection& intersection) cons
 	{
 		return false;
 	}
-
 	intersection.t = t;
 	intersection.position = ray(t);
 	intersection.normal = (intersection.position - origin) / radius;

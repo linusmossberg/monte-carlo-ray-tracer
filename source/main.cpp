@@ -18,6 +18,7 @@ int main()
 
 	Material red(glm::pow(glm::dvec3(1.0, 0.5, 0.5), glm::dvec3(2.2)), glm::dvec3(0.0));
 	Material blue(glm::pow(glm::dvec3(0.5, 0.882, 1.0), glm::dvec3(2.2)), glm::dvec3(0.0));
+	Material specular(glm::dvec3(0.9), glm::dvec3(0.0), Material::Type::SPECULAR);
 	Material light(glm::dvec3(0.8), glm::dvec3(33.333));
 	Material light2(glm::dvec3(0.8), 6.0 * glm::pow(glm::dvec3(1.0, 0.973, 0.788), glm::dvec3(4.0)));
 	Material light3(glm::dvec3(0.8), 6.0 * glm::pow(glm::dvec3(0.89, 0.961, 1.0), glm::dvec3(4.0)));
@@ -28,8 +29,10 @@ int main()
 		return std::make_shared<Surface::Sphere>(glm::dvec3(rnd(-.6, .6), rnd(-.35, .35), rnd(-1., -4.5)), rnd(.05, .15));
 	});
 
-	scene.surfaces[3]->material = std::make_shared<Material>(light2); // 8
-	scene.surfaces[8]->material = std::make_shared<Material>(light3); // 8
+	scene.surfaces[3]->material = std::make_shared<Material>(light2); 
+	scene.surfaces[8]->material = std::make_shared<Material>(light3); 
+	scene.surfaces[4]->material = std::make_shared<Material>(specular);
+	scene.surfaces[1]->material = std::make_shared<Material>(specular);
 
 	double a = 1.0, b = 0.7, c = -5.0, d = 0.0;
 	glm::dvec3 v0(-a, -b, c), v1(a, b, c), v2(-a, b, c), v3(a, -b, c);
@@ -48,10 +51,10 @@ int main()
 
 	scene.surfaces.push_back(std::make_shared<Surface::Sphere>(glm::dvec3(.0, .4, -2.5), 0.1, light));
 
-	Camera camera(glm::dvec3(0.0, 0.0, -0.01), glm::dvec3(0.0, 0.0, -1.0), glm::dvec3(0.0, 1.0, 0.0), 36.0, 35.0, 960/2, 540/2);
+	Camera camera(glm::dvec3(0.0, 0.0, -0.01), glm::dvec3(0.0, 0.0, -1.0), glm::dvec3(0.0, 1.0, 0.0), 36.0, 35.0, 960/4, 540/4);
 
 	camera.sampleImage(8, scene);
-	camera.saveImage("image30");
+	camera.saveImage("image31");
 	
 	return 0;
 }

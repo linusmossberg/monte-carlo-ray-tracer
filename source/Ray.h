@@ -10,8 +10,11 @@
 class Ray
 {
 public:
+	Ray()
+		: start(0.0), direction(0.0, 0.0, 1.0) { }
+
 	Ray(const glm::dvec3& start, const glm::dvec3& end)
-		: start(start), end(end), direction(glm::normalize(end - start)) { }
+		: start(start), direction(glm::normalize(end - start)) { }
 
 	glm::dvec3 operator()(double t) const
 	{
@@ -19,7 +22,7 @@ public:
 	}
 	
 	// Normalized direction -> t corresponds to euclidian distance in metric units
-	glm::dvec3 start, end, direction;
+	glm::dvec3 start, direction;
 };
 
 struct Intersection

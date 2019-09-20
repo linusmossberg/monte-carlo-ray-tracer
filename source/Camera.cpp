@@ -15,26 +15,43 @@ glm::dvec3 Camera::sampleRay(const Ray& ray, Scene& scene, int ray_depth, Surfac
 		return glm::dvec3(0.0);
 	}
 
-	Ray reflect(intersect.position, intersect.position + glm::dvec3(1.0));
+	Ray reflect;
+	reflect.start = intersect.position;
+	glm::dvec3 BRDF;
 
-	// Generate uniform sample on unit circle at radius r and angle azimuth
-	double r = sqrt(rnd(0.0, 1.0));
-	double azimuth = rnd(0.0, 2.0*M_PI);
+	if (intersect.material->type == Material::LAMBERTIAN)
+	{
+		// Generate uniform sample on unit circle at radius r and angle azimuth
+		double r = sqrt(rnd(0.0, 1.0));
+		double azimuth = rnd(0.0, 2.0*M_PI);
 
-	// Project up to hemisphere by rotating up angle inclination. 
-	// The result is a cosine-weighted hemispherical sample.
-	double inclination = acos(r);
+		// Project up to hemisphere by rotating up angle inclination. 
+		// The result is a cosine-weighted hemispherical sample.
+		double inclination = acos(r);
 
-	glm::dvec3 tangent = orthogonalUnitVector(intersect.normal);
-	reflect.direction = glm::rotate(glm::rotate(intersect.normal, inclination, tangent), azimuth, intersect.normal);
+		glm::dvec3 tangent = orthogonalUnitVector(intersect.normal);
+		reflect.direction = glm::rotate(glm::rotate(intersect.normal, inclination, tangent), azimuth, intersect.normal);
 
-	glm::dvec3 BRDF = intersect.material->reflectance / M_PI;
+		BRDF = intersect.material->reflectance / M_PI;
+	}
+	else //if (intersect.material->type == Material::SPECULAR)
+	{
+		reflect.direction = glm::reflect(ray.direction, intersect.normal);
+		BRDF = intersect.material->reflectance;
+	}
 
 	glm::dvec3 incoming = sampleRay(reflect, scene, ray_depth - 1, ignore);
 
-	// Cosine term eliminated by cosine-weighted probability density function p(x) = cos(theta)/pi
-	// L0 = reflectance * incoming, multiply by pi to eliminate 1/pi from the BRDF.
-	return intersect.material->emittance + (BRDF * incoming * M_PI);
+	if (intersect.material->type == Material::LAMBERTIAN)
+	{
+		// Cosine term eliminated by cosine-weighted probability density function p(x) = cos(theta)/pi
+		// L0 = reflectance * incoming, multiply by pi to eliminate 1/pi from the BRDF.
+		return intersect.material->emittance + (BRDF * incoming * M_PI);
+	}
+	else //if (intersect.material->type == Material::SPECULAR)
+	{
+		return intersect.material->emittance + (BRDF * incoming);
+	}
 }
 
 void Camera::samplePixel(size_t x, size_t y, int supersamples, Scene& scene)
