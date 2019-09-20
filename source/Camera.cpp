@@ -3,58 +3,12 @@
 
 glm::dvec3 Camera::sampleRay(const Ray& ray, Scene& scene, int ray_depth, Surface::Base* ignore)
 {
-	Intersection intersect;
-	Surface::Base* next_ignore = nullptr;
-	for (const auto& surface : scene.surfaces)
-	{
-		if (surface.get() != ignore)
-		{
-			Intersection t_intersect;
-			if (surface->intersect(ray, t_intersect))
-			{
-				if (t_intersect.t < intersect.t)
-				{
-					intersect = t_intersect;
-					next_ignore = surface.get();
-				}
-			}
-		}
-	}
-
-	if (intersect && ray_depth > 0)
-	{
-		ray_depth--;
-		Ray reflect(intersect.position, intersect.position + glm::reflect(ray.direction, intersect.normal));
-		return sampleRay(reflect, scene, ray_depth, next_ignore);
-	}
-
-	return double(bool(intersect)) * glm::dvec3(pow(glm::dot(intersect.normal, -ray.direction) + 0.2, 0.5) * pow(1 - intersect.t / (5.15), 0.5));
-}
-
-glm::dvec3 Camera::sampleDiffuseRay(const Ray& ray, Scene& scene, int ray_depth, Surface::Base* ignore)
-{
 	if (ray_depth <= 0)
 	{
 		return glm::dvec3(0.0);
 	}
 
-	Intersection intersect;
-	Surface::Base* next_ignore = nullptr;
-	for (const auto& surface : scene.surfaces)
-	{
-		if (surface.get() != ignore)
-		{
-			Intersection t_intersect;
-			if (surface->intersect(ray, t_intersect))
-			{
-				if (t_intersect.t < intersect.t)
-				{
-					intersect = t_intersect;
-					next_ignore = surface.get();
-				}
-			}
-		}
-	}
+	Intersection intersect = scene.intersect(ray, ignore);
 
 	if (!intersect)
 	{
@@ -71,12 +25,12 @@ glm::dvec3 Camera::sampleDiffuseRay(const Ray& ray, Scene& scene, int ray_depth,
 	// The result is a cosine-weighted hemispherical sample.
 	double inclination = acos(r);
 
-	glm::dvec3 tangent = orthogonal_unit_vector(intersect.normal);
+	glm::dvec3 tangent = orthogonalUnitVector(intersect.normal);
 	reflect.direction = glm::rotate(glm::rotate(intersect.normal, inclination, tangent), azimuth, intersect.normal);
 
 	glm::dvec3 BRDF = intersect.material->reflectance / M_PI;
 
-	glm::dvec3 incoming = sampleDiffuseRay(reflect, scene, ray_depth - 1, next_ignore);
+	glm::dvec3 incoming = sampleRay(reflect, scene, ray_depth - 1, ignore);
 
 	// Cosine term eliminated by cosine-weighted probability density function p(x) = cos(theta)/pi
 	// L0 = reflectance * incoming, multiply by pi to eliminate 1/pi from the BRDF.
@@ -96,7 +50,7 @@ void Camera::samplePixel(size_t x, size_t y, int supersamples, Scene& scene)
 			glm::dvec2 center_offset = pixel_size * (glm::dvec2(image.width, image.height) / 2.0 - pixel_space_pos);
 			glm::dvec3 sensor_pos = eye + forward * focal_length + left * center_offset.x + up * center_offset.y;
 
-			image(x, y) += sampleDiffuseRay(Ray(eye, sensor_pos), scene, 8);
+			image(x, y) += sampleRay(Ray(eye, sensor_pos), scene, 8);
 		}
 	}
 	image(x, y) /= pow(supersamples, 2);
@@ -106,7 +60,7 @@ void Camera::sampleImage(int supersamples, Scene& scene)
 {
 	void (Camera::*f)(int, Scene&, size_t, size_t) = &Camera::sampleImage;
 
-	std::vector<std::unique_ptr<std::thread>> threads(std::thread::hardware_concurrency() - 1);
+	std::vector<std::unique_ptr<std::thread>> threads(std::thread::hardware_concurrency() - 2);
 
 	size_t step = (size_t)floor((double)image.width / threads.size());
 	for (size_t i = 0; i < threads.size(); i++)
@@ -144,18 +98,10 @@ void Camera::sampleImage(int supersamples, Scene& scene, size_t start, size_t en
 			{
 				size_t msec_left = size_t((end - x) * 1.0 * delta_t.count() / delta_x);
 
-				size_t hours = msec_left / 3600000;
-				size_t minutes = (msec_left % 3600000) / 60000;
-				size_t seconds = (msec_left % 60000) / 1000;
-				size_t milliseconds = msec_left % 1000;
+				writeTimeDuration(msec_left, std::cout);
 
 				t_before = std::chrono::high_resolution_clock::now();
 				x_before = x;
-				std::cout << "Time remaining: "
-						  << std::setfill('0') << std::setw(2) << hours << ":" 
-					      << std::setfill('0') << std::setw(2) << minutes << ":" 
-						  << std::setfill('0') << std::setw(2) << seconds << "."
-						  << std::setfill('0') << std::setw(3) << milliseconds << std::endl;
 			}
 		}
 	}

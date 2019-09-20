@@ -48,10 +48,10 @@ int main()
 
 	scene.surfaces.push_back(std::make_shared<Surface::Sphere>(glm::dvec3(.0, .4, -2.5), 0.1, light));
 
-	Camera camera(glm::dvec3(0.0, 0.0, -0.01), glm::dvec3(0.0, 0.0, -1.0), glm::dvec3(0.0, 1.0, 0.0), 36.0, 35.0, 1280, 720);
+	Camera camera(glm::dvec3(0.0, 0.0, -0.01), glm::dvec3(0.0, 0.0, -1.0), glm::dvec3(0.0, 1.0, 0.0), 36.0, 35.0, 960/2, 540/2);
 
-	camera.sampleImage(144, scene);
-	camera.saveImage("16h-144sqrspp-8b_naive");
+	camera.sampleImage(8, scene);
+	camera.saveImage("image30");
 	
 	return 0;
 }

@@ -30,8 +30,6 @@ public:
 		sensor_width(mm2m(sensor_width)), 
 		image(width, height) { }
 
-	glm::dvec3 sampleDiffuseRay(const Ray& ray, Scene& scene, int ray_depth, Surface::Base* ignore = nullptr);
-
 	glm::dvec3 sampleRay(const Ray& ray, Scene& scene, int ray_depth, Surface::Base* ignore = nullptr);
 
 	void samplePixel(size_t x, size_t y, int supersamples, Scene& scene);
