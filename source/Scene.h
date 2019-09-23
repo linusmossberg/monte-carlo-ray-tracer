@@ -75,4 +75,6 @@ public:
 
 	std::vector<std::shared_ptr<Surface::Base>> surfaces;
 	std::vector<std::shared_ptr<Surface::Base>> emissives; // subset of surfaces
+
+	glm::dvec3 sky_color = glm::dvec3(0.0);
 };

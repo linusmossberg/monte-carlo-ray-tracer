@@ -55,7 +55,8 @@ private:
 	double focal_length, sensor_width;
 	Image image;
 
-	size_t max_ray_depth = 8;
+	size_t min_ray_depth = 3;
+	size_t max_ray_depth = std::numeric_limits<size_t>::max(); // prevent integer overflow
 
 	// Keeps track of the thread with most estimated time remaining
 	static std::pair<size_t, size_t> max_t; // <thread, msec_left>

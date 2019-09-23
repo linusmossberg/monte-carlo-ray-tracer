@@ -22,7 +22,7 @@ int main()
 	Material blue(glm::pow(glm::dvec3(0.5, 0.882, 1.0), glm::dvec3(2.2)), glm::dvec3(0.0));
 	Material green(glm::pow(glm::dvec3(0.5, 1.0, 0.5), glm::dvec3(2.2)), glm::dvec3(0.0));
 	Material specular(glm::dvec3(0.99), glm::dvec3(0.0), Material::Type::SPECULAR);
-	Material light(glm::dvec3(0.8), glm::dvec3(16*33.333));
+	Material light(glm::dvec3(0.8), glm::dvec3(4*33.333));
 	Material light2(glm::dvec3(0.8), 30.0 * glm::pow(glm::dvec3(1.000, 0.973, 0.788), glm::dvec3(4.0)));
 	Material light3(glm::dvec3(0.8), 30.0 * glm::pow(glm::dvec3(0.890, 0.961, 1.000), glm::dvec3(4.0)));
 
@@ -57,17 +57,17 @@ int main()
 	scene.surfaces.push_back(std::make_shared<Surface::Sphere>(glm::dvec3(-.15-0.15, -.55, -3.0), 0.15, blue));
 	scene.surfaces.push_back(std::make_shared<Surface::Sphere>(glm::dvec3(.15-0.15, -.55, -3.0), 0.15, red));
 	scene.surfaces.push_back(std::make_shared<Surface::Sphere>(glm::dvec3(.0-0.15, -.55, -3.0 + 1/(5*sqrt(2))), 0.15, green));
-	scene.surfaces.push_back(std::make_shared<Surface::Sphere>(glm::dvec3(.0, .026, -2.5), 0.1/4.0, light));
+	scene.surfaces.push_back(std::make_shared<Surface::Sphere>(glm::dvec3(.0, .0, -2.5), 0.1/2, light));
 
-	Camera camera(glm::dvec3(0.0, -0.16, 0.7), glm::dvec3(0.0, 0.0, -1.0), glm::dvec3(0.0, 1.0, 0.0), 50.0, 35.0, 1280, 720);
+	Camera camera(glm::dvec3(0.0, -0.16, 0.7), glm::dvec3(0.0, 0.0, -1.0), glm::dvec3(0.0, 1.0, 0.0), 50.0, 35.0, 960, 540);
 
 	scene.surfaces.erase(scene.surfaces.begin() + 9);
 	scene.surfaces.erase(scene.surfaces.begin() + 0);
 
 	scene.findEmissive();
 
-	camera.sampleImage(4, scene);
-	camera.saveImage("test8");
+	camera.sampleImage(6, scene);
+	camera.saveImage("test24");
 	
 	return 0;
 }

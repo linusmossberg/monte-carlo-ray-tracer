@@ -3,7 +3,7 @@
 
 glm::dvec3 Camera::sampleNaiveRay(const Ray& ray, Scene& scene, size_t ray_depth)
 {
-	if (ray_depth >= max_ray_depth)
+	if (ray_depth > max_ray_depth)
 	{
 		return glm::dvec3(0.0);
 	}
@@ -13,6 +13,16 @@ glm::dvec3 Camera::sampleNaiveRay(const Ray& ray, Scene& scene, size_t ray_depth
 	if (!intersect)
 	{
 		return glm::dvec3(0.0);
+	}
+
+	double terminate = 0.0;
+	if (ray_depth > min_ray_depth)
+	{
+		terminate = 1.0 - glm::length(intersect.material->reflectance) / sqrt(3.0);
+		if (terminate > rnd(0, 1))
+		{
+			return glm::dvec3(0.0);
+		}
 	}
 
 	Ray reflect;
@@ -36,7 +46,7 @@ glm::dvec3 Camera::sampleNaiveRay(const Ray& ray, Scene& scene, size_t ray_depth
 
 		// Cosine term eliminated by cosine-weighted probability density function p(x) = cos(theta)/pi
 		// L0 = reflectance * incoming, multiply by pi to eliminate 1/pi from the BRDF.
-		return intersect.material->emittance + (BRDF * incoming * M_PI);
+		return (intersect.material->emittance + (BRDF * incoming * M_PI)) / (1.0 - terminate);
 	}
 	else //if (intersect.material->type == Material::SPECULAR)
 	{
@@ -45,13 +55,13 @@ glm::dvec3 Camera::sampleNaiveRay(const Ray& ray, Scene& scene, size_t ray_depth
 
 		glm::dvec3 incoming = sampleNaiveRay(reflect, scene, ray_depth + 1);
 
-		return intersect.material->emittance + (BRDF * incoming);
+		return (intersect.material->emittance + (BRDF * incoming)) / (1.0 - terminate);
 	}
 }
 
 glm::dvec3 Camera::sampleExplicitLightRay(Ray ray, Scene& scene, size_t ray_depth)
 {
-	if (ray_depth >= max_ray_depth)
+	if (ray_depth > max_ray_depth)
 	{
 		return glm::dvec3(0.0);
 	}
@@ -60,7 +70,17 @@ glm::dvec3 Camera::sampleExplicitLightRay(Ray ray, Scene& scene, size_t ray_dept
 
 	if (!intersect)
 	{
-		return glm::dvec3(0.0);
+		return scene.sky_color;
+	}
+
+	double terminate = 0.0;
+	if (ray_depth > min_ray_depth)
+	{
+		terminate = 1.0 - glm::length(intersect.material->reflectance) / sqrt(3.0);
+		if (terminate > rnd(0, 1))
+		{
+			return glm::dvec3(0.0);
+		}
 	}
 
 	glm::dvec3 BRDF;
@@ -83,7 +103,7 @@ glm::dvec3 Camera::sampleExplicitLightRay(Ray ray, Scene& scene, size_t ray_dept
 		glm::dvec3 direct = scene.sampleLights(intersect) * BRDF;
 		glm::dvec3 indirect = sampleExplicitLightRay(reflect, scene, ray_depth + 1) * BRDF * M_PI;
 
-		return emittance + direct + indirect;
+		return (emittance + direct + indirect) / (1.0 - terminate);
 	}
 	else //if (intersect.surface->material->type == Material::SPECULAR)
 	{
@@ -94,7 +114,7 @@ glm::dvec3 Camera::sampleExplicitLightRay(Ray ray, Scene& scene, size_t ray_dept
 
 		glm::dvec3 indirect = sampleExplicitLightRay(reflect, scene, ray_depth + 1) * BRDF;
 
-		return indirect;
+		return indirect / (1.0 - terminate);
 	}
 }
 
@@ -120,15 +140,7 @@ void Camera::samplePixel(size_t x, size_t y, int supersamples, Scene& scene)
 
 void Camera::sampleImage(int supersamples, Scene& scene)
 {
-	//void (Camera::*f)(int, Scene&, size_t, size_t) = &Camera::sampleImageThread;
-
-	//std::function<void(int, Scene&, size_t, size_t)> fs = &Camera::sampleImageThread;
-
 	std::function<void(Camera*, int, Scene&, size_t, size_t)> f = &Camera::sampleImageThread;
-
-	//std::function<void(int, Scene&, size_t, size_t)> f = [=](int supersamples, Scene& scene, size_t thread, size_t num_threads) {
-	//	this->sampleImageThread(supersamples, scene, thread, num_threads);
-	//};
 
 	std::vector<std::unique_ptr<std::thread>> threads(std::thread::hardware_concurrency() - 2);
 	for (size_t thread = 0; thread < threads.size(); thread++)
