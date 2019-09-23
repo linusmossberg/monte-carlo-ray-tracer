@@ -46,27 +46,27 @@ struct Image
 	void save(const std::string& filename) const
 	{
 		HeaderTGA header((uint16_t)width, (uint16_t)height);
-		std::ofstream out(filename + ".tga", std::ios::binary);
+		//std::ofstream out(filename + ".tga", std::ios::binary);
 		std::ofstream out_tonemapped(filename + "_tonemapped.tga", std::ios::binary);
-		out.write(reinterpret_cast<char*>(&header), sizeof(header));
+		//out.write(reinterpret_cast<char*>(&header), sizeof(header));
 		out_tonemapped.write(reinterpret_cast<char*>(&header), sizeof(header));
 		for (const auto& p : blob)
 		{
 			glm::dvec3 fp = filmic(p);
 			for (int c = 2; c >= 0; c--)
 			{
-				double v = pow(p[c], 1.0 / 2.2);
+				//double v = pow(p[c], 1.0 / 2.2);
+				//v = v > 1.0 ? 1.0 : v < 0.0 ? 0.0 : v;
+				//uint8_t pv = (uint8_t)(v * 255.0);
+				//out.write(reinterpret_cast<char*>(&pv), sizeof(pv));
+
+				double v = pow(fp[c], 1.0 / 2.2);
 				v = v > 1.0 ? 1.0 : v < 0.0 ? 0.0 : v;
 				uint8_t pv = (uint8_t)(v * 255.0);
-				out.write(reinterpret_cast<char*>(&pv), sizeof(pv));
-
-				v = pow(fp[c], 1.0 / 2.2);
-				v = v > 1.0 ? 1.0 : v < 0.0 ? 0.0 : v;
-				pv = (uint8_t)(v * 255.0);
 				out_tonemapped.write(reinterpret_cast<char*>(&pv), sizeof(pv));
 			}
 		}
-		out.close();
+		//out.close();
 		out_tonemapped.close();
 	}
 

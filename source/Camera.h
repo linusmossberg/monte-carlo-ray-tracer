@@ -5,6 +5,9 @@
 #include <algorithm>
 #include <iomanip>
 #include <chrono>
+#include <deque>
+#include <numeric>
+#include <functional>
 
 #include <glm/glm.hpp>
 #include <glm/vec3.hpp>
@@ -30,13 +33,14 @@ public:
 		sensor_width(mm2m(sensor_width)), 
 		image(width, height) { }
 
-	glm::dvec3 sampleRay(const Ray& ray, Scene& scene, int ray_depth, Surface::Base* ignore = nullptr);
+	glm::dvec3 sampleNaiveRay(const Ray& ray, Scene& scene, size_t ray_depth);
+	glm::dvec3 sampleExplicitLightRay(Ray ray, Scene& scene, size_t ray_depth);
 
 	void samplePixel(size_t x, size_t y, int supersamples, Scene& scene);
 
 	void sampleImage(int supersamples, Scene& scene);
 
-	void sampleImage(int supersamples, Scene& scene, size_t start, size_t end);
+	void sampleImageThread(int supersamples, Scene& scene, size_t start, size_t end);
 
 	void saveImage(const std::string& filename) const
 	{
@@ -50,4 +54,9 @@ private:
 
 	double focal_length, sensor_width;
 	Image image;
+
+	size_t max_ray_depth = 8;
+
+	// Keeps track of the thread with most estimated time remaining
+	static std::pair<size_t, size_t> max_t; // <thread, msec_left>
 };

@@ -2,9 +2,11 @@
 
 #include <glm/glm.hpp>
 #include <glm/vec3.hpp>
+#include <glm/gtx/rotate_vector.hpp>
 
 #include "Ray.h"
 #include "Material.h"
+#include "Util.h"
 
 namespace Surface
 {
@@ -21,6 +23,10 @@ namespace Surface
 
 		virtual bool intersect(const Ray& ray, Intersection& intersection) const = 0;
 
+		virtual glm::dvec3 operator()(double u, double v) const = 0; // point on surface
+
+		virtual double area() const = 0;
+
 		std::shared_ptr<Material> material;
 	};
 
@@ -36,6 +42,20 @@ namespace Surface
 		~Sphere() {};
 
 		virtual bool intersect(const Ray& ray, Intersection& intersection) const;
+
+		virtual glm::dvec3 operator()(double u, double v) const
+		{
+			double z = 1.0 - 2.0 * u;
+			double r = sqrt(std::max(0.0, 1.0 - pow(z, 2)));
+			double phi = 2 * M_PI * v;
+
+			return origin + radius * glm::dvec3(r * cos(phi), r * sin(phi), z);
+		}
+
+		virtual double area() const
+		{
+			return 4.0 * M_PI * pow(radius, 2.0);
+		}
 
 	private:
 		glm::dvec3 origin;
@@ -55,9 +75,18 @@ namespace Surface
 
 		virtual bool intersect(const Ray& ray, Intersection& intersection) const;
 
-		glm::dvec3 operator()(double u, double v) const
+		virtual glm::dvec3 operator()(double u, double v) const
 		{
+			double su = sqrt(u);
+			u = 1 - su;
+			v = v * su;
+
 			return (1 - u - v) * v0 + u * v1 + v * v2;
+		}
+
+		virtual double area() const
+		{
+			return glm::length(glm::cross(E1, E2)) / 2.0;
 		}
 
 	private:

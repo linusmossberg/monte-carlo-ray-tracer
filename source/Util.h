@@ -5,6 +5,7 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 #include <iomanip>
+#include <sstream>
 
 #include <glm/glm.hpp>
 #include <glm/vec3.hpp>
@@ -30,16 +31,34 @@ static glm::dvec3 orthogonalUnitVector(const glm::dvec3& v)
 	return glm::normalize(glm::dvec3(-v.y, v.x, 0.0));
 }
 
-static void writeTimeDuration(size_t msec_duration, std::ostream &out)
+static void writeTimeDuration(size_t msec_duration, size_t thread, std::ostream &out)
 {
 	size_t hours = msec_duration / 3600000;
 	size_t minutes = (msec_duration % 3600000) / 60000;
 	size_t seconds = (msec_duration % 60000) / 1000;
 	size_t milliseconds = msec_duration % 1000;
 
-	out << "Time remaining: "
+	// Create string first to avoid jumbled output when multiple threads write simultaneously
+	std::stringstream ss;
+	ss	<< "\rTime remaining: "
 		<< std::setfill('0') << std::setw(2) << hours << ":"
 		<< std::setfill('0') << std::setw(2) << minutes << ":"
 		<< std::setfill('0') << std::setw(2) << seconds << "."
-		<< std::setfill('0') << std::setw(3) << milliseconds << std::endl;
+		<< std::setfill('0') << std::setw(3) << milliseconds << " (thread " << thread << ")";
+
+	out << ss.str();
+}
+
+static glm::dvec3 localToGlobalUnitVector(const glm::dvec3 V, const glm::dvec3 N)
+{
+	glm::dvec3 X, Y;
+
+	if (abs(N.x) > abs(N.y))
+		X = glm::dvec3(-N.z, 0, N.x) / sqrt(pow(N.x, 2) + pow(N.z, 2));
+	else
+		X = glm::dvec3(0, N.z, -N.y) / sqrt(pow(N.y, 2) + pow(N.z, 2));
+
+	Y = glm::cross(N, X);
+
+	return glm::normalize(X*V.x + Y*V.y + N*V.z);
 }

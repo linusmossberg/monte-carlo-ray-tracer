@@ -5,7 +5,10 @@
 #include <glm/glm.hpp>
 #include <glm/vec3.hpp>
 
+#include "Surface.h"
 #include "Material.h"
+
+namespace Surface { class Base; }
 
 class Ray
 {
@@ -23,6 +26,7 @@ public:
 	
 	// Normalized direction -> t corresponds to euclidian distance in metric units
 	glm::dvec3 start, direction;
+	bool specular = false;
 };
 
 struct Intersection
@@ -30,6 +34,7 @@ struct Intersection
 	glm::dvec3 position;
 	glm::dvec3 normal;
 	double t = std::numeric_limits<double>::max();
+	std::shared_ptr<Surface::Base> surface;
 	std::shared_ptr<Material> material;
 
 	explicit operator bool() const

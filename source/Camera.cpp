@@ -1,14 +1,14 @@
 #include "Camera.h"
 #include "Random.h"
 
-glm::dvec3 Camera::sampleRay(const Ray& ray, Scene& scene, int ray_depth, Surface::Base* ignore)
+glm::dvec3 Camera::sampleNaiveRay(const Ray& ray, Scene& scene, size_t ray_depth)
 {
-	if (ray_depth <= 0)
+	if (ray_depth >= max_ray_depth)
 	{
 		return glm::dvec3(0.0);
 	}
 
-	Intersection intersect = scene.intersect(ray, ignore);
+	Intersection intersect = scene.intersect(ray);
 
 	if (!intersect)
 	{
@@ -16,7 +16,7 @@ glm::dvec3 Camera::sampleRay(const Ray& ray, Scene& scene, int ray_depth, Surfac
 	}
 
 	Ray reflect;
-	reflect.start = intersect.position;
+	reflect.start = intersect.position + intersect.normal * 0.0000001;
 	glm::dvec3 BRDF;
 
 	if (intersect.material->type == Material::LAMBERTIAN)
@@ -25,32 +25,76 @@ glm::dvec3 Camera::sampleRay(const Ray& ray, Scene& scene, int ray_depth, Surfac
 		double r = sqrt(rnd(0.0, 1.0));
 		double azimuth = rnd(0.0, 2.0*M_PI);
 
-		// Project up to hemisphere by rotating up angle inclination. 
+		// Project up to hemisphere.
 		// The result is a cosine-weighted hemispherical sample.
-		double inclination = acos(r);
+		glm::dvec3 local_dir(r * cos(azimuth), r * sin(azimuth), sin(acos(r)));
 
-		glm::dvec3 tangent = orthogonalUnitVector(intersect.normal);
-		reflect.direction = glm::rotate(glm::rotate(intersect.normal, inclination, tangent), azimuth, intersect.normal);
-
+		reflect.direction = localToGlobalUnitVector(local_dir, intersect.normal);
 		BRDF = intersect.material->reflectance / M_PI;
-	}
-	else //if (intersect.material->type == Material::SPECULAR)
-	{
-		reflect.direction = glm::reflect(ray.direction, intersect.normal);
-		BRDF = intersect.material->reflectance;
-	}
 
-	glm::dvec3 incoming = sampleRay(reflect, scene, ray_depth - 1, ignore);
+		glm::dvec3 incoming = sampleNaiveRay(reflect, scene, ray_depth + 1);
 
-	if (intersect.material->type == Material::LAMBERTIAN)
-	{
 		// Cosine term eliminated by cosine-weighted probability density function p(x) = cos(theta)/pi
 		// L0 = reflectance * incoming, multiply by pi to eliminate 1/pi from the BRDF.
 		return intersect.material->emittance + (BRDF * incoming * M_PI);
 	}
 	else //if (intersect.material->type == Material::SPECULAR)
 	{
+		reflect.direction = glm::reflect(ray.direction, intersect.normal);
+		BRDF = intersect.material->reflectance;
+
+		glm::dvec3 incoming = sampleNaiveRay(reflect, scene, ray_depth + 1);
+
 		return intersect.material->emittance + (BRDF * incoming);
+	}
+}
+
+glm::dvec3 Camera::sampleExplicitLightRay(Ray ray, Scene& scene, size_t ray_depth)
+{
+	if (ray_depth >= max_ray_depth)
+	{
+		return glm::dvec3(0.0);
+	}
+
+	Intersection intersect = scene.intersect(ray);
+
+	if (!intersect)
+	{
+		return glm::dvec3(0.0);
+	}
+
+	glm::dvec3 BRDF;
+
+	Ray reflect;
+	reflect.start = intersect.position + intersect.normal * 0.0000001;
+
+	if (intersect.surface->material->type == Material::LAMBERTIAN)
+	{
+		// Generate random cosine-weighted sample on hemisphere for our new direction
+		double r = sqrt(rnd(0.0, 1.0));
+		double azimuth = rnd(0.0, 2.0*M_PI);
+		glm::dvec3 local_dir(r * cos(azimuth), r * sin(azimuth), sin(acos(r)));
+
+		reflect.direction = localToGlobalUnitVector(local_dir, intersect.normal);
+
+		BRDF = intersect.material->reflectance / M_PI;
+
+		glm::dvec3 emittance = double(ray_depth == 0 || (ray.specular && ray_depth == 1)) * intersect.material->emittance;
+		glm::dvec3 direct = scene.sampleLights(intersect) * BRDF;
+		glm::dvec3 indirect = sampleExplicitLightRay(reflect, scene, ray_depth + 1) * BRDF * M_PI;
+
+		return emittance + direct + indirect;
+	}
+	else //if (intersect.surface->material->type == Material::SPECULAR)
+	{
+		reflect.direction = glm::reflect(ray.direction, intersect.normal);
+		reflect.specular = true;
+
+		BRDF = intersect.material->reflectance;
+
+		glm::dvec3 indirect = sampleExplicitLightRay(reflect, scene, ray_depth + 1) * BRDF;
+
+		return indirect;
 	}
 }
 
@@ -65,9 +109,10 @@ void Camera::samplePixel(size_t x, size_t y, int supersamples, Scene& scene)
 		{
 			glm::dvec2 pixel_space_pos(x + s_x * sub_step + rnd(0.0, sub_step), y + s_y * sub_step + rnd(0.0, sub_step));
 			glm::dvec2 center_offset = pixel_size * (glm::dvec2(image.width, image.height) / 2.0 - pixel_space_pos);
+
 			glm::dvec3 sensor_pos = eye + forward * focal_length + left * center_offset.x + up * center_offset.y;
 
-			image(x, y) += sampleRay(Ray(eye, sensor_pos), scene, 8);
+			image(x, y) += sampleExplicitLightRay(Ray(eye, sensor_pos), scene, 0);
 		}
 	}
 	image(x, y) /= pow(supersamples, 2);
@@ -75,16 +120,20 @@ void Camera::samplePixel(size_t x, size_t y, int supersamples, Scene& scene)
 
 void Camera::sampleImage(int supersamples, Scene& scene)
 {
-	void (Camera::*f)(int, Scene&, size_t, size_t) = &Camera::sampleImage;
+	//void (Camera::*f)(int, Scene&, size_t, size_t) = &Camera::sampleImageThread;
+
+	//std::function<void(int, Scene&, size_t, size_t)> fs = &Camera::sampleImageThread;
+
+	std::function<void(Camera*, int, Scene&, size_t, size_t)> f = &Camera::sampleImageThread;
+
+	//std::function<void(int, Scene&, size_t, size_t)> f = [=](int supersamples, Scene& scene, size_t thread, size_t num_threads) {
+	//	this->sampleImageThread(supersamples, scene, thread, num_threads);
+	//};
 
 	std::vector<std::unique_ptr<std::thread>> threads(std::thread::hardware_concurrency() - 2);
-
-	size_t step = (size_t)floor((double)image.width / threads.size());
-	for (size_t i = 0; i < threads.size(); i++)
+	for (size_t thread = 0; thread < threads.size(); thread++)
 	{
-		size_t start = i * step;
-		size_t end = i != (threads.size() - 1) ? start + step : image.width;
-		threads[i] = std::make_unique<std::thread>(f, this, supersamples, std::ref(scene), start, end);
+		threads[thread] = std::make_unique<std::thread>(f, this, supersamples, std::ref(scene), thread, threads.size());
 	}
 
 	for (auto &thread : threads)
@@ -93,12 +142,20 @@ void Camera::sampleImage(int supersamples, Scene& scene)
 	}
 }
 
-void Camera::sampleImage(int supersamples, Scene& scene, size_t start, size_t end)
+std::pair<size_t, size_t> Camera::max_t = std::make_pair(0, 0);
+
+void Camera::sampleImageThread(int supersamples, Scene& scene, size_t thread, size_t num_threads)
 {
 	Random::seed(std::random_device{}()); // Each thread uses different seed.
 
+	std::deque<double> times;
+	const size_t N = 10;
+
+	size_t step = (size_t)floor((double)image.width / num_threads);
+	size_t start = thread * step;
+	size_t end = thread != (num_threads - 1) ? start + step : image.width;
+	
 	auto t_before = std::chrono::high_resolution_clock::now();
-	size_t x_before = start;
 	for (size_t x = start; x < end; x++)
 	{
 		for (size_t y = 0; y < image.height; y++)
@@ -106,20 +163,21 @@ void Camera::sampleImage(int supersamples, Scene& scene, size_t start, size_t en
 			samplePixel(x, y, supersamples, scene);
 		}
 
-		if (end == image.width)
+		auto t_after = std::chrono::high_resolution_clock::now();
+		auto delta_t = std::chrono::duration_cast<std::chrono::milliseconds>(t_after - t_before);
+		t_before = std::chrono::high_resolution_clock::now();
+
+		times.push_back((double)delta_t.count());
+		if (times.size() > N)
+			times.pop_front();
+
+		double moving_average = std::accumulate(times.begin(), times.end(), 0.0) / times.size();
+		size_t msec_left = size_t((end - (x + 1)) * moving_average);
+
+		if ((thread != max_t.first && msec_left > max_t.second) || thread == max_t.first)
 		{
-			auto t_after = std::chrono::high_resolution_clock::now();
-			auto delta_t = std::chrono::duration_cast<std::chrono::milliseconds>(t_after - t_before);
-			size_t delta_x = x - x_before;
-			if (delta_t.count() >= 10000 && delta_x > 0)
-			{
-				size_t msec_left = size_t((end - x) * 1.0 * delta_t.count() / delta_x);
-
-				writeTimeDuration(msec_left, std::cout);
-
-				t_before = std::chrono::high_resolution_clock::now();
-				x_before = x;
-			}
+			max_t = std::make_pair(thread, msec_left);
+			writeTimeDuration(msec_left, thread, std::cout);
 		}
 	}
 }

@@ -9,28 +9,70 @@
 class Scene
 {
 public:
-	Intersection intersect(const Ray& ray, Surface::Base* &ignore)
+	Intersection intersect(const Ray& ray)
 	{
 		Intersection intersect;
-		Surface::Base* next_ignore = nullptr;
 		for (const auto& surface : surfaces)
 		{
-			if (surface.get() != ignore)
+			Intersection t_intersect;
+			if (surface->intersect(ray, t_intersect))
 			{
-				Intersection t_intersect;
-				if (surface->intersect(ray, t_intersect))
+				if (t_intersect.t < intersect.t)
 				{
-					if (t_intersect.t < intersect.t)
-					{
-						intersect = t_intersect;
-						next_ignore = surface.get();
-					}
+					intersect = t_intersect;
+					intersect.surface = surface;
 				}
 			}
 		}
-		ignore = next_ignore;
 		return intersect;
 	}
 
+	glm::dvec3 estimateDirect(const Intersection &intersection, Surface::Base* light)
+	{
+		if (intersection.material->type != Material::SPECULAR)
+		{
+			glm::dvec3 light_pos = (*light)(rnd(0, 1), rnd(0, 1));
+			Ray shadow_ray(intersection.position + intersection.normal * 0.0000001, light_pos);
+
+			double cos_theta = glm::dot(shadow_ray.direction, intersection.normal);
+
+			Intersection shadow_intersection = intersect(shadow_ray);
+
+			if (shadow_intersection.surface.get() == light && glm::length(shadow_intersection.position - light_pos) < 0.0000001 && cos_theta > 0.0)
+			{
+				double cos_light_theta = glm::clamp(glm::dot(shadow_intersection.normal, -shadow_ray.direction), 0.0, 1.0);
+				double t = light->area() * cos_light_theta / pow(shadow_intersection.t, 2.0);
+				return light->material->emittance * t * cos_theta;
+			}
+		}
+		return glm::dvec3(0.0);
+	}
+
+	glm::dvec3 sampleLights(const Intersection &intersection)
+	{
+		glm::dvec3 direct_light(0.0);
+		for (const auto &light : emissives)
+		{
+			if (light == intersection.surface)
+			{
+				continue;
+			}
+			direct_light += estimateDirect(intersection, light.get());
+		}
+		return direct_light;
+	}
+
+	void findEmissive()
+	{
+		for (const auto &surface : surfaces)
+		{
+			if (glm::length(surface->material->emittance) >= 0.0000001)
+			{
+				emissives.push_back(surface);
+			}
+		}
+	}
+
 	std::vector<std::shared_ptr<Surface::Base>> surfaces;
+	std::vector<std::shared_ptr<Surface::Base>> emissives; // subset of surfaces
 };
