@@ -25,7 +25,7 @@ int main()
 	Material light(glm::dvec3(0.8), glm::dvec3(4*33.333));
 	Material light2(glm::dvec3(0.8), 30.0 * glm::pow(glm::dvec3(1.000, 0.973, 0.788), glm::dvec3(4.0)));
 	Material light3(glm::dvec3(0.8), 30.0 * glm::pow(glm::dvec3(0.890, 0.961, 1.000), glm::dvec3(4.0)));
-
+	
 	Scene scene;
 	scene.surfaces.resize(16);
 	std::generate(scene.surfaces.begin(), scene.surfaces.end(), [&]() {
@@ -39,7 +39,7 @@ int main()
 	scene.surfaces[1]->material = std::make_shared<Material>(specular);
 	scene.surfaces[11]->material = std::make_shared<Material>(specular);
 
-	double a = 1.0, b = 0.7, c = -5.0, d = 0.0;
+	double a = 1.0, b = 0.7, c = -5, d = 10;
 	glm::dvec3 v0(-a, -b, c), v1(a, b, c), v2(-a, b, c), v3(a, -b, c);
 	glm::dvec3 v4(-a, -b, d), v5(a, -b, d), v6(a, b, d), v7(-a, b, d);
 
@@ -67,7 +67,7 @@ int main()
 	scene.findEmissive();
 
 	camera.sampleImage(6, scene);
-	camera.saveImage("test24");
+	camera.saveImage("test25");
 	
 	return 0;
 }

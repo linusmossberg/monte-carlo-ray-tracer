@@ -73,8 +73,16 @@ public:
 		}
 	}
 
+	glm::dvec3 skyColor(const Ray& ray) const
+	{
+		double f = (glm::dot(glm::dvec3(0.0, 1.0, 0.0), ray.direction) * 0.7 + 1.0) / 2.0;
+		if (f < 0.5)
+		{
+			return glm::dvec3(0.5); // ground color
+		}
+		return glm::dvec3(1.0 - f, 0.5, f);
+	}
+
 	std::vector<std::shared_ptr<Surface::Base>> surfaces;
 	std::vector<std::shared_ptr<Surface::Base>> emissives; // subset of surfaces
-
-	glm::dvec3 sky_color = glm::dvec3(0.0);
 };

@@ -3,7 +3,7 @@
 
 glm::dvec3 Camera::sampleNaiveRay(const Ray& ray, Scene& scene, size_t ray_depth)
 {
-	if (ray_depth > max_ray_depth)
+	if (ray_depth == max_ray_depth)
 	{
 		return glm::dvec3(0.0);
 	}
@@ -12,7 +12,7 @@ glm::dvec3 Camera::sampleNaiveRay(const Ray& ray, Scene& scene, size_t ray_depth
 
 	if (!intersect)
 	{
-		return glm::dvec3(0.0);
+		return scene.skyColor(ray);
 	}
 
 	double terminate = 0.0;
@@ -61,7 +61,7 @@ glm::dvec3 Camera::sampleNaiveRay(const Ray& ray, Scene& scene, size_t ray_depth
 
 glm::dvec3 Camera::sampleExplicitLightRay(Ray ray, Scene& scene, size_t ray_depth)
 {
-	if (ray_depth > max_ray_depth)
+	if (ray_depth == max_ray_depth)
 	{
 		return glm::dvec3(0.0);
 	}
@@ -70,7 +70,7 @@ glm::dvec3 Camera::sampleExplicitLightRay(Ray ray, Scene& scene, size_t ray_dept
 
 	if (!intersect)
 	{
-		return scene.sky_color;
+		return scene.skyColor(ray);
 	}
 
 	double terminate = 0.0;
