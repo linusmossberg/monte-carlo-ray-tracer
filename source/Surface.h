@@ -46,7 +46,7 @@ namespace Surface
 		virtual glm::dvec3 operator()(double u, double v) const
 		{
 			double z = 1.0 - 2.0 * u;
-			double r = sqrt(std::max(0.0, 1.0 - pow(z, 2)));
+			double r = sqrt(fmax(0.0, 1.0 - pow2(z)));
 			double phi = 2 * M_PI * v;
 
 			return origin + radius * glm::dvec3(r * cos(phi), r * sin(phi), z);
@@ -54,7 +54,7 @@ namespace Surface
 
 		virtual double area() const
 		{
-			return 4.0 * M_PI * pow(radius, 2.0);
+			return 4.0 * M_PI * pow2(radius);
 		}
 
 	private:

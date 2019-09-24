@@ -1,4 +1,5 @@
 # Monte Carlo Ray Tracer
+![](renders/russian-roulette_sky_48sqrtspp_tonemapped.png)
 ![](renders/direct-light_64sqrtspp_tonemapped.png)
 ![](renders/direct-light_32sqrtspp_tonemapped.png)
 ![](renders/10h-110ss-10b-naive_tonemapped.png)

@@ -15,6 +15,7 @@ public:
 	enum Type 
 	{
 		LAMBERTIAN,
+		ORENNAYAR,
 		SPECULAR
 	};
 

@@ -12,26 +12,17 @@
 
 #include "Random.h"
 
-static double rnd(const double& v1, const double& v2)
+inline double rnd(double v1, double v2)
 {
 	return Random::range(v1, v2);
 }
 
-static double mm2m(const double& mm)
+inline double mm2m(double mm)
 {
 	return mm / 1000.0;
 }
 
-static glm::dvec3 orthogonalUnitVector(const glm::dvec3& v)
-{
-	if (abs(v.x) + abs(v.y) < 0.0000001)
-	{
-		return glm::dvec3(0.0, 1.0, 0.0);
-	}
-	return glm::normalize(glm::dvec3(-v.y, v.x, 0.0));
-}
-
-static void writeTimeDuration(size_t msec_duration, size_t thread, std::ostream &out)
+inline void writeTimeDuration(size_t msec_duration, size_t thread, std::ostream &out)
 {
 	size_t hours = msec_duration / 3600000;
 	size_t minutes = (msec_duration % 3600000) / 60000;
@@ -49,16 +40,60 @@ static void writeTimeDuration(size_t msec_duration, size_t thread, std::ostream 
 	out << ss.str();
 }
 
-static glm::dvec3 localToGlobalUnitVector(const glm::dvec3 V, const glm::dvec3 N)
+inline double pow2(double x)
 {
-	glm::dvec3 X, Y;
-
-	if (abs(N.x) > abs(N.y))
-		X = glm::dvec3(-N.z, 0, N.x) / sqrt(pow(N.x, 2) + pow(N.z, 2));
-	else
-		X = glm::dvec3(0, N.z, -N.y) / sqrt(pow(N.y, 2) + pow(N.z, 2));
-
-	Y = glm::cross(N, X);
-
-	return glm::normalize(X*V.x + Y*V.y + N*V.z);
+	return x * x;
 }
+
+//inline glm::dvec3 localToGlobalUnitVector(const glm::dvec3& V, const glm::dvec3& N)
+//{
+//	glm::dvec3 X, Y;
+//
+//	//if (abs(N.x) > abs(N.y))
+//	//	X = glm::dvec3(-N.z, 0, N.x) / sqrt(pow2(N.x) + pow2(N.z));
+//	//else
+//	//	X = glm::dvec3(0, N.z, -N.y) / sqrt(pow2(N.y) + pow2(N.z));
+//
+//	X = orthogonalUnitVector(N);
+//
+//	Y = glm::cross(N, X);
+//
+//	return glm::normalize(X*V.x + Y * V.y + N * V.z);
+//}
+
+inline glm::dvec3 orthogonalUnitVector(const glm::dvec3& v)
+{
+	if (abs(v.x) > abs(v.y))
+		return glm::dvec3(-v.z, 0, v.x) / sqrt(pow2(v.x) + pow2(v.z));
+	else
+		return glm::dvec3(0, v.z, -v.y) / sqrt(pow2(v.y) + pow2(v.z));
+}
+
+struct CoordinateSystem
+{
+	CoordinateSystem(const glm::dvec3& N)
+	{
+		glm::dvec3 X = orthogonalUnitVector(N);
+		T = glm::dmat3(X, glm::cross(N, X), N);
+	}
+
+	glm::dvec3 localToGlobal(const glm::dvec3& v) const
+	{
+		return glm::normalize(T * v);
+	}
+
+	glm::dvec3 globalToLocal(const glm::dvec3& v) const
+	{
+		return glm::normalize(glm::inverse(T) * v);
+	}
+
+	static glm::dvec3 localToGlobalUnitVector(const glm::dvec3& v, const glm::dvec3& N)
+	{
+		glm::dvec3 tX = orthogonalUnitVector(N);
+		glm::dvec3 tY = glm::cross(N, tX);
+
+		return glm::normalize(tX * v.x + tY * v.y + N * v.z);
+	}
+
+	glm::dmat3 T;
+};

@@ -7,8 +7,8 @@ bool Surface::Sphere::intersect(const Ray& ray, Intersection& intersection) cons
 	double b = glm::dot(2.0 * ray.direction, ray.start - origin);
 	double c = glm::dot(ray.start - origin, ray.start - origin) - radius * radius;
 
-	double t = -b / 2 - sqrt(pow(b / 2, 2) - c);
-	t = t > 0 ? t : -b / 2 + sqrt(pow(b / 2, 2) - c);
+	double t = -b / 2 - sqrt(pow2(b / 2) - c);
+	t = t > 0 ? t : -b / 2 + sqrt(pow2(b / 2) - c);
 
 	if (isnan(t) || t < 0)
 	{

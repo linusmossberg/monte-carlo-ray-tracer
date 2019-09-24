@@ -41,7 +41,7 @@ public:
 			if (shadow_intersection.surface.get() == light && glm::length(shadow_intersection.position - light_pos) < 0.0000001 && cos_theta > 0.0)
 			{
 				double cos_light_theta = glm::clamp(glm::dot(shadow_intersection.normal, -shadow_ray.direction), 0.0, 1.0);
-				double t = light->area() * cos_light_theta / pow(shadow_intersection.t, 2.0);
+				double t = light->area() * cos_light_theta / pow2(shadow_intersection.t);
 				return light->material->emittance * t * cos_theta;
 			}
 		}

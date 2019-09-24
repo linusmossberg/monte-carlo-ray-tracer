@@ -18,7 +18,7 @@ private:
 	uint8_t end[2] = { 24, 32 };
 };
 
-static glm::dvec3 filmic(glm::dvec3 in)
+inline glm::dvec3 filmic(glm::dvec3 in)
 {
 	const double A = 0.15, B = 0.50, C = 0.10, D = 0.20, E = 0.02, F = 0.30, W = 11.2;
 
@@ -32,7 +32,7 @@ static glm::dvec3 filmic(glm::dvec3 in)
 	return Uncharted2Tonemap(in) / Uncharted2Tonemap(glm::dvec3(W));
 }
 
-static glm::dvec3 reinhard(glm::dvec3 in)
+inline glm::dvec3 reinhard(glm::dvec3 in)
 {
 	in *= 1.5;
 	return in / (1.0 + in);

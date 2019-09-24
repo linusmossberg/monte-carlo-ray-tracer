@@ -39,7 +39,7 @@ glm::dvec3 Camera::sampleNaiveRay(const Ray& ray, Scene& scene, size_t ray_depth
 		// The result is a cosine-weighted hemispherical sample.
 		glm::dvec3 local_dir(r * cos(azimuth), r * sin(azimuth), sin(acos(r)));
 
-		reflect.direction = localToGlobalUnitVector(local_dir, intersect.normal);
+		reflect.direction = CoordinateSystem::localToGlobalUnitVector(local_dir, intersect.normal);
 		BRDF = intersect.material->reflectance / M_PI;
 
 		glm::dvec3 incoming = sampleNaiveRay(reflect, scene, ray_depth + 1);
@@ -95,9 +95,43 @@ glm::dvec3 Camera::sampleExplicitLightRay(Ray ray, Scene& scene, size_t ray_dept
 		double azimuth = rnd(0.0, 2.0*M_PI);
 		glm::dvec3 local_dir(r * cos(azimuth), r * sin(azimuth), sin(acos(r)));
 
-		reflect.direction = localToGlobalUnitVector(local_dir, intersect.normal);
+		reflect.direction = CoordinateSystem::localToGlobalUnitVector(local_dir, intersect.normal);
 
 		BRDF = intersect.material->reflectance / M_PI;
+
+		glm::dvec3 emittance = double(ray_depth == 0 || (ray.specular && ray_depth == 1)) * intersect.material->emittance;
+		glm::dvec3 direct = scene.sampleLights(intersect) * BRDF;
+		glm::dvec3 indirect = sampleExplicitLightRay(reflect, scene, ray_depth + 1) * BRDF * M_PI;
+
+		return (emittance + direct + indirect) / (1.0 - terminate);
+	}
+	else if (intersect.surface->material->type == Material::ORENNAYAR)
+	{
+		double r = sqrt(rnd(0.0, 1.0));
+		double azimuth = rnd(0.0, 2.0*M_PI);
+		glm::dvec3 local_dir(r * cos(azimuth), r * sin(azimuth), sin(acos(r)));
+
+		CoordinateSystem cs(intersect.normal);
+
+		reflect.direction = cs.localToGlobal(local_dir);
+
+		glm::dvec3 o = cs.globalToLocal(-ray.direction);
+		glm::dvec3 i = cs.globalToLocal(reflect.direction);
+		glm::dvec3 color = intersect.material->reflectance;
+		double roughness = 0.3;
+
+		double variance = pow2(roughness);
+		double A = 1.0 - 0.5 * variance / (variance + 0.33);
+		double B = 0.45 * variance / (variance + 0.09);
+
+		// equivalent to dot(normalize(i.x, i.y, 0), normalize(o.x, o.y, 0)), 
+		// i.e. remove z-component (normal) and get the cos angle between vectors with dot
+		double cos_delta_phi = glm::clamp((i.x*o.x + i.y*o.y) / sqrt((pow2(i.x) + pow2(i.y)) * (pow2(o.x) + pow2(o.y))), 0.0, 1.0);
+
+		// C = sin(alpha) * tan(beta), i.z = dot(i, (0,0,1))
+		double C = sqrt((1.0 - pow2(i.z)) * (1.0 - pow2(o.z))) / std::max(i.z, o.z);
+
+		BRDF = (color / M_PI) * (A + B * cos_delta_phi * C);
 
 		glm::dvec3 emittance = double(ray_depth == 0 || (ray.specular && ray_depth == 1)) * intersect.material->emittance;
 		glm::dvec3 direct = scene.sampleLights(intersect) * BRDF;
@@ -135,7 +169,7 @@ void Camera::samplePixel(size_t x, size_t y, int supersamples, Scene& scene)
 			image(x, y) += sampleExplicitLightRay(Ray(eye, sensor_pos), scene, 0);
 		}
 	}
-	image(x, y) /= pow(supersamples, 2);
+	image(x, y) /= pow2(supersamples);
 }
 
 void Camera::sampleImage(int supersamples, Scene& scene)

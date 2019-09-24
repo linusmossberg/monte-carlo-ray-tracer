@@ -10,7 +10,7 @@ struct Random
 
 	static void seed(unsigned seed);
 
-	static double range(const double& v1, const double& v2);
+	static double range(double v1, double v2);
 
 private:
 	// thread_local to create one static random engine per thread.

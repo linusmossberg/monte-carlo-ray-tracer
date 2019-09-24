@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <algorithm>
+#include <chrono>
 
 #include <glm/vec3.hpp>
 
@@ -20,7 +21,7 @@ int main()
 	Material gray(glm::dvec3(0.7), glm::dvec3(0.0));
 	Material black(glm::dvec3(0.0), glm::dvec3(0.0));
 	Material blue(glm::pow(glm::dvec3(0.5, 0.882, 1.0), glm::dvec3(2.2)), glm::dvec3(0.0));
-	Material green(glm::pow(glm::dvec3(0.5, 1.0, 0.5), glm::dvec3(2.2)), glm::dvec3(0.0));
+	Material green(glm::pow(glm::dvec3(0.5, 1.0, 0.5), glm::dvec3(2.2)), glm::dvec3(0.0), Material::ORENNAYAR);
 	Material specular(glm::dvec3(0.99), glm::dvec3(0.0), Material::Type::SPECULAR);
 	Material light(glm::dvec3(0.8), glm::dvec3(4*33.333));
 	Material light2(glm::dvec3(0.8), 30.0 * glm::pow(glm::dvec3(1.000, 0.973, 0.788), glm::dvec3(4.0)));
@@ -56,10 +57,12 @@ int main()
 
 	scene.surfaces.push_back(std::make_shared<Surface::Sphere>(glm::dvec3(-.15-0.15, -.55, -3.0), 0.15, blue));
 	scene.surfaces.push_back(std::make_shared<Surface::Sphere>(glm::dvec3(.15-0.15, -.55, -3.0), 0.15, red));
-	scene.surfaces.push_back(std::make_shared<Surface::Sphere>(glm::dvec3(.0-0.15, -.55, -3.0 + 1/(5*sqrt(2))), 0.15, green));
+	scene.surfaces.push_back(std::make_shared<Surface::Sphere>(glm::dvec3(.0-0.15, -.55, -3.0 + 3.0*sqrt(3.0)/20.0), 0.15, green));
 	scene.surfaces.push_back(std::make_shared<Surface::Sphere>(glm::dvec3(.0, .0, -2.5), 0.1/2, light));
 
-	Camera camera(glm::dvec3(0.0, -0.16, 0.7), glm::dvec3(0.0, 0.0, -1.0), glm::dvec3(0.0, 1.0, 0.0), 50.0, 35.0, 960, 540);
+	Camera camera(glm::dvec3(0.0, -0.16, 0.7), glm::dvec3(0.0, 0.0, -1.0), glm::dvec3(0.0, 1.0, 0.0), 43.0, 35.0, 960, 540);
+	camera.setPosition(glm::dvec3(1.0, 0.2, -2.7));
+	camera.lookAt(glm::dvec3(-.15, -.55-0.025, -3.0 + tan(M_PI / 6.0)*0.15));
 
 	scene.surfaces.erase(scene.surfaces.begin() + 9);
 	scene.surfaces.erase(scene.surfaces.begin() + 0);
@@ -67,7 +70,7 @@ int main()
 	scene.findEmissive();
 
 	camera.sampleImage(6, scene);
-	camera.saveImage("test25");
+	camera.saveImage("OREN-NAYAR_0-5_9");
 	
 	return 0;
 }

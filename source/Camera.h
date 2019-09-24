@@ -37,26 +37,35 @@ public:
 	glm::dvec3 sampleExplicitLightRay(Ray ray, Scene& scene, size_t ray_depth);
 
 	void samplePixel(size_t x, size_t y, int supersamples, Scene& scene);
-
 	void sampleImage(int supersamples, Scene& scene);
-
-	void sampleImageThread(int supersamples, Scene& scene, size_t start, size_t end);
-
 	void saveImage(const std::string& filename) const
 	{
 		image.save(filename);
 	}
 
-private:
-	glm::dvec3 eye;
+	void setPosition(const glm::dvec3& p)
+	{
+		eye = p;
+	}
 
+	void lookAt(const glm::dvec3& p)
+	{
+		forward = glm::normalize(p - eye);
+		left = glm::cross(glm::dvec3(0.0, 1.0, 0.0), forward);
+		up = glm::cross(forward, left);
+	}
+
+private:
+	void sampleImageThread(int supersamples, Scene& scene, size_t thread, size_t num_threads);
+
+	glm::dvec3 eye;
 	glm::dvec3 forward, left, up;
 
 	double focal_length, sensor_width;
 	Image image;
 
 	size_t min_ray_depth = 3;
-	size_t max_ray_depth = std::numeric_limits<size_t>::max(); // prevent integer overflow
+	size_t max_ray_depth = 512; // prevent call stack overflow
 
 	// Keeps track of the thread with most estimated time remaining
 	static std::pair<size_t, size_t> max_t; // <thread, msec_left>

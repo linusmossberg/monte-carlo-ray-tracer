@@ -15,7 +15,7 @@ unsigned Random::seed()
 }
 
 // Generates random numbers in range [min,max[
-double Random::range(const double& v1, const double& v2)
+double Random::range(double v1, double v2)
 {
 	double min = fmin(v1, v2);
 	double max = fmax(v1, v2);
