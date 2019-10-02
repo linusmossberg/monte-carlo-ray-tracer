@@ -152,7 +152,7 @@ glm::dvec3 Camera::sampleExplicitLightRay(Ray ray, Scene& scene, size_t ray_dept
 	}
 }
 
-void Camera::samplePixel(size_t x, size_t y, int supersamples, Scene& scene)
+void Camera::samplePixel(size_t x, size_t y, size_t supersamples, Scene& scene)
 {
 	double pixel_size = sensor_width / image.width;
 	double sub_step = 1.0 / supersamples;
@@ -172,7 +172,7 @@ void Camera::samplePixel(size_t x, size_t y, int supersamples, Scene& scene)
 	image(x, y) /= pow2(supersamples);
 }
 
-void Camera::sampleImage(int supersamples, Scene& scene)
+void Camera::sampleImage(size_t supersamples, Scene& scene)
 {
 	std::function<void(Camera*, int, Scene&, size_t, size_t)> f = &Camera::sampleImageThread;
 
@@ -190,7 +190,7 @@ void Camera::sampleImage(int supersamples, Scene& scene)
 
 std::pair<size_t, size_t> Camera::max_t = std::make_pair(0, 0);
 
-void Camera::sampleImageThread(int supersamples, Scene& scene, size_t thread, size_t num_threads)
+void Camera::sampleImageThread(size_t supersamples, Scene& scene, size_t thread, size_t num_threads)
 {
 	Random::seed(std::random_device{}()); // Each thread uses different seed.
 

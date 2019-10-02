@@ -12,6 +12,9 @@ public:
 	Material(const glm::dvec3& reflectance, const glm::dvec3& emission, uint8_t type = 0)
 		: reflectance(reflectance), emittance(emission), type(type) { }
 
+	Material(const glm::dvec3& reflectance, const glm::dvec3& emission, double roughness, bool specular)
+		: reflectance(reflectance), emittance(emission), roughness(roughness), specular(specular) { }
+
 	enum Type 
 	{
 		LAMBERTIAN,
@@ -20,5 +23,7 @@ public:
 	};
 
 	glm::dvec3 reflectance, emittance;
-	uint8_t type;
+	double roughness = 0.0;
+	bool specular = 0;
+	uint8_t type = 0;
 };

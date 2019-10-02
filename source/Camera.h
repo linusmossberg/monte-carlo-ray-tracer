@@ -36,8 +36,8 @@ public:
 	glm::dvec3 sampleNaiveRay(const Ray& ray, Scene& scene, size_t ray_depth);
 	glm::dvec3 sampleExplicitLightRay(Ray ray, Scene& scene, size_t ray_depth);
 
-	void samplePixel(size_t x, size_t y, int supersamples, Scene& scene);
-	void sampleImage(int supersamples, Scene& scene);
+	void samplePixel(size_t x, size_t y, size_t supersamples, Scene& scene);
+	void sampleImage(size_t supersamples, Scene& scene);
 	void saveImage(const std::string& filename) const
 	{
 		image.save(filename);
@@ -56,7 +56,7 @@ public:
 	}
 
 private:
-	void sampleImageThread(int supersamples, Scene& scene, size_t thread, size_t num_threads);
+	void sampleImageThread(size_t supersamples, Scene& scene, size_t thread, size_t num_threads);
 
 	glm::dvec3 eye;
 	glm::dvec3 forward, left, up;

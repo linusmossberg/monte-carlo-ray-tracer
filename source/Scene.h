@@ -9,6 +9,12 @@
 class Scene
 {
 public:
+	Scene(std::vector<std::shared_ptr<Surface::Base>> surfaces, size_t sqrtspp, const std::string &savename)
+		: surfaces(surfaces), sqrtspp(sqrtspp), savename(savename)
+	{
+		findEmissive();
+	}
+
 	Intersection intersect(const Ray& ray)
 	{
 		Intersection intersect;
@@ -85,4 +91,6 @@ public:
 
 	std::vector<std::shared_ptr<Surface::Base>> surfaces;
 	std::vector<std::shared_ptr<Surface::Base>> emissives; // subset of surfaces
+	size_t sqrtspp;
+	std::string savename;
 };
