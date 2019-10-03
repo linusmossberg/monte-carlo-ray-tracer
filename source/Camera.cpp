@@ -105,7 +105,7 @@ glm::dvec3 Camera::sampleExplicitLightRay(Ray ray, Scene& scene, size_t ray_dept
 
 		return (emittance + direct + indirect) / (1.0 - terminate);
 	}
-	else if (intersect.surface->material->type == Material::ORENNAYAR)
+	else if (intersect.surface->material->type == Material::OREN_NAYAR)
 	{
 		double r = sqrt(rnd(0.0, 1.0));
 		double azimuth = rnd(0.0, 2.0*M_PI);
@@ -118,9 +118,8 @@ glm::dvec3 Camera::sampleExplicitLightRay(Ray ray, Scene& scene, size_t ray_dept
 		glm::dvec3 o = cs.globalToLocal(-ray.direction);
 		glm::dvec3 i = cs.globalToLocal(reflect.direction);
 		glm::dvec3 color = intersect.material->reflectance;
-		double roughness = 0.3;
 
-		double variance = pow2(roughness);
+		double variance = pow2(intersect.material->roughness);
 		double A = 1.0 - 0.5 * variance / (variance + 0.33);
 		double B = 0.45 * variance / (variance + 0.09);
 

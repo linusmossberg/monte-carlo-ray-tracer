@@ -19,11 +19,6 @@ inline double rnd(double v1, double v2)
 	return Random::range(v1, v2);
 }
 
-inline double mm2m(double mm)
-{
-	return mm / 1000.0;
-}
-
 inline void writeTimeDuration(size_t msec_duration, size_t thread, std::ostream &out)
 {
 	size_t hours = msec_duration / 3600000;
@@ -57,7 +52,7 @@ inline size_t printSceneOptionTable(const std::vector<std::pair<std::filesystem:
 
 	std::cout << " " << std::string(max_opt + max_fil + max_cam + 5, '_') << std::endl;
 
-	auto printLine = [](std::vector<std::pair<std::string, int>> line) {
+	auto printLine = [](std::vector<std::pair<std::string, size_t>> line) {
 		std::cout << "| ";
 		for (const auto& l : line)
 		{
@@ -90,6 +85,8 @@ inline size_t printSceneOptionTable(const std::vector<std::pair<std::filesystem:
 		else
 			break;
 	}
+	std::cout << std::endl;
+
 	return scene_option;
 }
 

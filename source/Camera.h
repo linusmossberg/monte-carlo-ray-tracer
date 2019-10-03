@@ -25,13 +25,22 @@ class Camera
 {
 public:
 	Camera(glm::dvec3 eye, glm::dvec3 forward, glm::dvec3 up, double focal_length, double sensor_width, size_t width, size_t height) 
-		: eye(eye), 
-		forward(forward), 
-		left(glm::cross(up, forward)), 
-		up(up), 
-		focal_length(mm2m(focal_length)), 
-		sensor_width(mm2m(sensor_width)), 
+		: eye(eye),
+		forward(glm::normalize(forward)),
+		left(glm::cross(glm::normalize(up), glm::normalize(forward))),
+		up(glm::normalize(up)),
+		focal_length(focal_length/1000.0),
+		sensor_width(sensor_width/1000.0),
 		image(width, height) { }
+
+	Camera(glm::dvec3 eye, glm::dvec3 look_at, double focal_length, double sensor_width, size_t width, size_t height)
+		: eye(eye),
+		focal_length(focal_length/1000.0),
+		sensor_width(sensor_width/1000.0),
+		image(width, height)
+	{
+		lookAt(look_at);
+	}
 
 	glm::dvec3 sampleNaiveRay(const Ray& ray, Scene& scene, size_t ray_depth);
 	glm::dvec3 sampleExplicitLightRay(Ray ray, Scene& scene, size_t ray_depth);

@@ -49,11 +49,22 @@ public:
 
 		const auto& c = j["cameras"][camera_idx];
 
-		Camera camera(j2v(c["eye"]), j2v(c["forward"]), j2v(c["up"]), c["focal_length"], c["sensor_width"], c["image_size"][0], c["image_size"][1]);
-
-		if (c.find("lookat") != c.end())
+		std::unique_ptr<Camera> camera;
+		if (c.find("look_at") != c.end())
 		{
-			camera.lookAt(j2v(c["lookat"]));
+			camera = std::make_unique<Camera>(
+				j2v(c["eye"]), j2v(c["look_at"]), 
+				c["focal_length"], c["sensor_width"], 
+				c["width"], c["height"]
+			);
+		}
+		else
+		{
+			camera = std::make_unique<Camera>(
+				j2v(c["eye"]), j2v(c["forward"]), j2v(c["up"]), 
+				c["focal_length"], c["sensor_width"], 
+				c["width"], c["height"]
+			);
 		}
 
 		std::unordered_map<std::string, Material> materials;
@@ -62,10 +73,16 @@ public:
 			materials[m["name"]] = Material(j2v(m["reflectance"]), j2v(m["emittance"]), m["roughness"], m["specular"]);
 		}
 
-		std::vector<glm::dvec3> vertices;
-		for (const auto& v : j["vertices"])
+		int i = 0;
+		std::vector<std::vector<glm::dvec3>> vertices; // [set][vertices]
+		for (const auto &s : j["vertices"])
 		{
-			vertices.push_back(j2v(v));
+			vertices.push_back(std::vector<glm::dvec3>());
+			for (const auto &v : s)
+			{
+				vertices[i].push_back(j2v(v));
+			}
+			i++;
 		}
 
 		std::vector<std::shared_ptr<Surface::Base>> surfaces;
@@ -80,10 +97,21 @@ public:
 			std::string type = s["type"];
 			if (type == "object")
 			{
+				const auto& v = vertices[s["set"]];
+				double total_area = 0.0;
 				for (const auto& t : s["triangles"])
 				{
-					const auto& v = vertices;
-					surfaces.push_back(std::make_shared<Surface::Triangle>(v[t[0]], v[t[1]], v[t[2]], materials[material]));
+					total_area += Surface::Triangle(v[t[0]], v[t[1]], v[t[2]]).area();
+				}
+				
+				for (const auto& t : s["triangles"])
+				{
+					// Entire object emits the flux of assigned material emittance in scene file.
+					// The flux of the material therefore needs to be distributed amongst object triangles.
+					Material mat = materials[material];
+					double area = Surface::Triangle(v[t[0]], v[t[1]], v[t[2]]).area();
+					mat.emittance *= area / total_area;
+					surfaces.push_back(std::make_shared<Surface::Triangle>(v[t[0]], v[t[1]], v[t[2]], mat));
 				}
 			}
 			else if (type == "triangle")
@@ -100,8 +128,8 @@ public:
 
 		Scene scene(Scene(surfaces, j["settings"]["sqrtspp"], j["settings"]["savename"]));
 
-		camera.sampleImage(scene.sqrtspp, scene);
-		camera.saveImage(scene.savename);
+		camera->sampleImage(scene.sqrtspp, scene);
+		camera->saveImage(scene.savename);
 
 		return scene;
 	}

@@ -74,6 +74,7 @@ public:
 		{
 			if (glm::length(surface->material->emittance) >= 0.0000001)
 			{
+				surface->material->emittance /= surface->area(); // flux to radiosity
 				emissives.push_back(surface);
 			}
 		}

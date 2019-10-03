@@ -43,9 +43,9 @@ int main()
 
 	size_t scene_option = printSceneOptionTable(options);
 
-	std::string name = options[scene_option].first.filename().string();
-	name.erase(name.find("."), name.length());
-	std::cout << std::endl << "Scene " << name << " with camera " << options[scene_option].second << " selected." << std::endl << std::endl;
+	std::string file = options[scene_option].first.filename().string();
+	file.erase(file.find("."), file.length());
+	std::cout << "Scene file " << file << " with camera " << options[scene_option].second << " selected." << std::endl << std::endl;
 	
 	try
 	{
