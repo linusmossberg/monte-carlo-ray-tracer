@@ -41,51 +41,7 @@ int main()
 		return -1;
 	}
 
-	size_t max_opt = 13, max_fil = 0, max_cam = 7;
-	for (const auto& o : options)
-	{
-		std::string file = o.first.filename().string();
-		file.erase(file.find("."), file.length());
-
-		if (file.size() > max_fil)
-		{
-			max_fil = file.size();
-		}
-	}
-	max_fil++;
-
-	std::cout << " " << std::string(max_opt + max_fil + max_cam + 5, '_') << std::endl;
-
-	std::cout << "| " << std::left << std::setw(max_opt) << "Scene option";
-	std::cout << "| " << std::left << std::setw(max_fil) << "File";
-	std::cout << "| " << std::left << std::setw(max_cam) << "Camera" ;
-	std::cout << "| " << std::endl;
-
-	std::cout << "|" << std::string(max_opt + 1, '_') << '|' << std::string(max_fil + 1, '_') << '|' << std::string(max_cam + 1, '_') << '|' << std::endl;
-
-	for (int i = 0; i < options.size(); i++)
-	{
-		std::string file = options[i].first.filename().string();
-		file.erase(file.find("."), file.length());
-
-		std::cout << "| " << std::left << std::setw(max_opt) << i;
-		std::cout << "| " << std::left << std::setw(max_fil) << file;
-		std::cout << "| " << std::left << std::setw(max_cam) << options[i].second;
-		std::cout << "| " << std::endl;
-
-		std::cout << "|" << std::string(max_opt + 1, '_') << '|' << std::string(max_fil + 1, '_') << '|' << std::string(max_cam + 1, '_') << '|' << std::endl;
-	}
-
-	int scene_option;
-	std::cout << std::endl << "Select scene option: ";
-	//while (std::cin >> scene_option)
-	//{
-	//	if (scene_option < 0 || scene_option >= options.size())
-	//		std::cout << "Invalid scene number, try again: ";
-	//	else
-	//		break;
-	//}
-	scene_option = 0;
+	size_t scene_option = printSceneOptionTable(options);
 
 	std::string name = options[scene_option].first.filename().string();
 	name.erase(name.find("."), name.length());

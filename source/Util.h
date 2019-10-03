@@ -4,6 +4,8 @@
 #include <cstdlib>
 #define _USE_MATH_DEFINES
 #include <math.h>
+#include <iostream>
+#include <filesystem>
 #include <iomanip>
 #include <sstream>
 
@@ -38,6 +40,57 @@ inline void writeTimeDuration(size_t msec_duration, size_t thread, std::ostream 
 		<< std::setfill('0') << std::setw(3) << milliseconds << " (thread " << thread << ")";
 
 	out << ss.str();
+}
+
+inline size_t printSceneOptionTable(const std::vector<std::pair<std::filesystem::path, int>> &options)
+{
+	size_t max_opt = 13, max_fil = 0, max_cam = 7;
+	for (const auto& o : options)
+	{
+		std::string file = o.first.filename().string();
+		file.erase(file.find("."), file.length());
+
+		if (file.size() > max_fil)
+			max_fil = file.size();
+	}
+	max_fil++;
+
+	std::cout << " " << std::string(max_opt + max_fil + max_cam + 5, '_') << std::endl;
+
+	auto printLine = [](std::vector<std::pair<std::string, int>> line) {
+		std::cout << "| ";
+		for (const auto& l : line)
+		{
+			std::cout << std::left << std::setw(l.second) << l.first;
+			std::cout << "| ";
+		}
+		std::cout << std::endl;
+	};
+
+	printLine({ { "Scene option", max_opt }, { "File", max_fil }, { "Camera", max_cam } });
+
+	std::string sep("|" + std::string(max_opt + 1, '_') + '|' + std::string(max_fil + 1, '_') + '|' + std::string(max_cam + 1, '_') + '|');
+	std::cout << sep << std::endl;
+
+	for (int i = 0; i < options.size(); i++)
+	{
+		std::string file = options[i].first.filename().string();
+		file.erase(file.find("."), file.length());
+
+		printLine({ {std::to_string(i), max_opt},{file, max_fil},{std::to_string(options[i].second), max_cam} });
+		std::cout << sep << std::endl;
+	}
+
+	int scene_option;
+	std::cout << std::endl << "Select scene option: ";
+	while (std::cin >> scene_option)
+	{
+		if (scene_option < 0 || scene_option >= options.size())
+			std::cout << "Invalid scene number, try again: ";
+		else
+			break;
+	}
+	return scene_option;
 }
 
 inline double pow2(double x)
@@ -97,3 +150,5 @@ struct CoordinateSystem
 
 	glm::dmat3 T;
 };
+
+
