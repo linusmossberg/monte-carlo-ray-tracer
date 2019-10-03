@@ -169,14 +169,14 @@ void Camera::samplePixel(size_t x, size_t y, size_t supersamples, Scene& scene)
 			image(x, y) += sampleExplicitLightRay(Ray(eye, sensor_pos), scene, 0);
 		}
 	}
-	image(x, y) /= pow2(supersamples);
+	image(x, y) /= pow2((double)supersamples);
 }
 
 void Camera::sampleImage(size_t supersamples, Scene& scene)
 {
-	std::function<void(Camera*, int, Scene&, size_t, size_t)> f = &Camera::sampleImageThread;
+	std::function<void(Camera*, size_t, Scene&, size_t, size_t)> f = &Camera::sampleImageThread;
 
-	std::vector<std::unique_ptr<std::thread>> threads(std::thread::hardware_concurrency() - 2);
+	std::vector<std::unique_ptr<std::thread>> threads(std::thread::hardware_concurrency() - 1);
 	for (size_t thread = 0; thread < threads.size(); thread++)
 	{
 		threads[thread] = std::make_unique<std::thread>(f, this, supersamples, std::ref(scene), thread, threads.size());
