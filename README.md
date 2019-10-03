@@ -1,5 +1,5 @@
 # Monte Carlo Ray Tracer
-![](renders/44sqrtspp-hexagon_tonemapped.png)
+![](renders/oren_nayar_test.png)
 ![](renders/russian-roulette_sky_48sqrtspp_tonemapped.png)
 ![](renders/direct-light_64sqrtspp_tonemapped.png)
 ![](renders/direct-light_32sqrtspp_tonemapped.png)

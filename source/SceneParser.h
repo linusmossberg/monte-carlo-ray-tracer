@@ -107,7 +107,7 @@ public:
 				for (const auto& t : s["triangles"])
 				{
 					// Entire object emits the flux of assigned material emittance in scene file.
-					// The flux of the material therefore needs to be distributed amongst object triangles.
+					// The flux of the material therefore needs to be distributed amongst all object triangles.
 					Material mat = materials[material];
 					double area = Surface::Triangle(v[t[0]], v[t[1]], v[t[2]]).area();
 					mat.emittance *= area / total_area;
