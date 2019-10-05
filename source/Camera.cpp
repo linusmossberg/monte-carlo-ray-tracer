@@ -18,44 +18,42 @@ glm::dvec3 Camera::sampleNaiveRay(const Ray& ray, Scene& scene, size_t ray_depth
 	double terminate = 0.0;
 	if (ray_depth > min_ray_depth)
 	{
-		terminate = 1.0 - glm::length(intersect.material->reflectance) / sqrt(3.0);
+		terminate = 1.0 - intersect.material->reflect_probability;
 		if (terminate > rnd(0, 1))
 		{
 			return glm::dvec3(0.0);
 		}
 	}
 
-	Ray reflect;
-	reflect.start = intersect.position + intersect.normal * 0.0000001;
+	Ray new_ray;
+	new_ray.start = intersect.position + intersect.normal * 0.0000001;
 	glm::dvec3 BRDF;
+
+	glm::dvec3 emittance(0.0);
+	if (glm::dot(ray.direction, intersect.normal) > 0.0000001)
+	{
+		emittance = intersect.material->emittance;
+	}
 
 	if (intersect.material->type == Material::LAMBERTIAN)
 	{
-		// Generate uniform sample on unit circle at radius r and angle azimuth
-		double r = sqrt(rnd(0.0, 1.0));
-		double azimuth = rnd(0.0, 2.0*M_PI);
+		new_ray.direction = MaterialUtil::CosWeightedSample(intersect.normal);
+		BRDF = MaterialUtil::Lambertian(intersect.material.get());
 
-		// Project up to hemisphere.
-		// The result is a cosine-weighted hemispherical sample.
-		glm::dvec3 local_dir(r * cos(azimuth), r * sin(azimuth), sin(acos(r)));
-
-		reflect.direction = CoordinateSystem::localToGlobalUnitVector(local_dir, intersect.normal);
-		BRDF = intersect.material->reflectance / M_PI;
-
-		glm::dvec3 incoming = sampleNaiveRay(reflect, scene, ray_depth + 1);
+		glm::dvec3 incoming = sampleNaiveRay(new_ray, scene, ray_depth + 1);
 
 		// Cosine term eliminated by cosine-weighted probability density function p(x) = cos(theta)/pi
 		// L0 = reflectance * incoming, multiply by pi to eliminate 1/pi from the BRDF.
-		return (intersect.material->emittance + (BRDF * incoming * M_PI)) / (1.0 - terminate);
+		return (emittance + (BRDF * incoming * M_PI)) / (1.0 - terminate);
 	}
 	else //if (intersect.material->type == Material::SPECULAR)
 	{
-		reflect.direction = glm::reflect(ray.direction, intersect.normal);
-		BRDF = intersect.material->reflectance;
+		new_ray.direction = glm::reflect(-ray.direction, intersect.normal);
+		BRDF = MaterialUtil::Specular(intersect.material.get());
 
-		glm::dvec3 incoming = sampleNaiveRay(reflect, scene, ray_depth + 1);
+		glm::dvec3 incoming = sampleNaiveRay(new_ray, scene, ray_depth + 1);
 
-		return (intersect.material->emittance + (BRDF * incoming)) / (1.0 - terminate);
+		return (emittance + (BRDF * incoming)) / (1.0 - terminate);
 	}
 }
 
@@ -66,7 +64,7 @@ glm::dvec3 Camera::sampleExplicitLightRay(Ray ray, Scene& scene, size_t ray_dept
 		return glm::dvec3(0.0);
 	}
 
-	Intersection intersect = scene.intersect(ray);
+	Intersection intersect = scene.intersect(ray, true);
 
 	if (!intersect)
 	{
@@ -76,7 +74,7 @@ glm::dvec3 Camera::sampleExplicitLightRay(Ray ray, Scene& scene, size_t ray_dept
 	double terminate = 0.0;
 	if (ray_depth > min_ray_depth)
 	{
-		terminate = 1.0 - glm::length(intersect.material->reflectance) / sqrt(3.0);
+		terminate = 1.0 - intersect.material->reflect_probability;
 		if (terminate > rnd(0, 1))
 		{
 			return glm::dvec3(0.0);
@@ -85,69 +83,91 @@ glm::dvec3 Camera::sampleExplicitLightRay(Ray ray, Scene& scene, size_t ray_dept
 
 	glm::dvec3 BRDF;
 
-	Ray reflect;
-	reflect.start = intersect.position + intersect.normal * 0.0000001;
+	Ray new_ray;
+	new_ray.start = intersect.position + intersect.normal * 0.0000001;
+	new_ray.medium_ior = ray.medium_ior;
 
 	if (intersect.surface->material->type == Material::LAMBERTIAN)
 	{
-		// Generate random cosine-weighted sample on hemisphere for our new direction
-		double r = sqrt(rnd(0.0, 1.0));
-		double azimuth = rnd(0.0, 2.0*M_PI);
-		glm::dvec3 local_dir(r * cos(azimuth), r * sin(azimuth), sin(acos(r)));
+		new_ray.direction = MaterialUtil::CosWeightedSample(intersect.normal);
 
-		reflect.direction = CoordinateSystem::localToGlobalUnitVector(local_dir, intersect.normal);
+		BRDF = MaterialUtil::Lambertian(intersect.material.get());
 
-		BRDF = intersect.material->reflectance / M_PI;
-
-		glm::dvec3 emittance = double(ray_depth == 0 || (ray.specular && ray_depth == 1)) * intersect.material->emittance;
+		glm::dvec3 emittance = double(ray_depth == 0 || ray.specular) * intersect.material->emittance;
 		glm::dvec3 direct = scene.sampleLights(intersect) * BRDF;
-		glm::dvec3 indirect = sampleExplicitLightRay(reflect, scene, ray_depth + 1) * BRDF * M_PI;
+		glm::dvec3 indirect = sampleExplicitLightRay(new_ray, scene, ray_depth + 1) * BRDF * M_PI;
 
 		return (emittance + direct + indirect) / (1.0 - terminate);
 	}
 	else if (intersect.surface->material->type == Material::OREN_NAYAR)
 	{
-		double r = sqrt(rnd(0.0, 1.0));
-		double azimuth = rnd(0.0, 2.0*M_PI);
-		glm::dvec3 local_dir(r * cos(azimuth), r * sin(azimuth), sin(acos(r)));
-
 		CoordinateSystem cs(intersect.normal);
 
-		reflect.direction = cs.localToGlobal(local_dir);
+		new_ray.direction = MaterialUtil::CosWeightedSample(cs);
 
-		glm::dvec3 o = cs.globalToLocal(-ray.direction);
-		glm::dvec3 i = cs.globalToLocal(reflect.direction);
-		glm::dvec3 color = intersect.material->reflectance;
+		BRDF = MaterialUtil::OrenNayar(intersect.material.get(), new_ray.direction, -ray.direction, cs);
 
-		double variance = pow2(intersect.material->roughness);
-		double A = 1.0 - 0.5 * variance / (variance + 0.33);
-		double B = 0.45 * variance / (variance + 0.09);
-
-		// equivalent to dot(normalize(i.x, i.y, 0), normalize(o.x, o.y, 0)), 
-		// i.e. remove z-component (normal) and get the cos angle between vectors with dot
-		double cos_delta_phi = glm::clamp((i.x*o.x + i.y*o.y) / sqrt((pow2(i.x) + pow2(i.y)) * (pow2(o.x) + pow2(o.y))), 0.0, 1.0);
-
-		// C = sin(alpha) * tan(beta), i.z = dot(i, (0,0,1))
-		double C = sqrt((1.0 - pow2(i.z)) * (1.0 - pow2(o.z))) / std::max(i.z, o.z);
-
-		BRDF = (color / M_PI) * (A + B * cos_delta_phi * C);
-
-		glm::dvec3 emittance = double(ray_depth == 0 || (ray.specular && ray_depth == 1)) * intersect.material->emittance;
+		glm::dvec3 emittance = double(ray_depth == 0 || ray.specular) * intersect.material->emittance;
 		glm::dvec3 direct = scene.sampleLights(intersect) * BRDF;
-		glm::dvec3 indirect = sampleExplicitLightRay(reflect, scene, ray_depth + 1) * BRDF * M_PI;
+		glm::dvec3 indirect = sampleExplicitLightRay(new_ray, scene, ray_depth + 1) * BRDF * M_PI;
 
 		return (emittance + direct + indirect) / (1.0 - terminate);
 	}
-	else //if (intersect.surface->material->type == Material::SPECULAR)
+	else if (intersect.surface->material->type == Material::TRANSPARENT)
 	{
-		reflect.direction = glm::reflect(ray.direction, intersect.normal);
-		reflect.specular = true;
+		double n1 = ray.medium_ior; 
+		double n2 = abs(ray.medium_ior - scene.ior) < 1e-7 ? intersect.material->ior : scene.ior;
 
-		BRDF = intersect.material->reflectance;
+		double R = MaterialUtil::Fresnel(n1, n2, intersect.normal, -ray.direction);
 
-		glm::dvec3 indirect = sampleExplicitLightRay(reflect, scene, ray_depth + 1) * BRDF;
+		new_ray.direction = glm::refract(ray.direction, intersect.normal, n1 / n2);
+		// glm has a bug and returns NaN on all components for brewster angle (sqrt(k) w/o checking k >= 0 properly)
+		if (R > rnd(0.0, 1.0) || std::isnan(new_ray.direction.x))
+		{
+			new_ray.direction = glm::reflect(ray.direction, intersect.normal);
+			new_ray.medium_ior = n1;
+		}
+		else
+		{
+			new_ray.start = intersect.position - intersect.normal * 0.0000001;
+			new_ray.medium_ior = n2;
+		}
+		new_ray.specular = true;
+
+		BRDF = MaterialUtil::Specular(intersect.material.get()); // R or (1-R) is eliminated
+		glm::dvec3 indirect = sampleExplicitLightRay(new_ray, scene, ray_depth + 1) * BRDF;
 
 		return indirect / (1.0 - terminate);
+	}
+	else
+	{
+		double n1 = ray.medium_ior;
+		double n2 = intersect.material->ior;
+
+		double R = MaterialUtil::Fresnel(n1, n2, intersect.normal, -ray.direction);
+
+		if (R > rnd(0.0, 1.0))
+		{
+			new_ray.direction = glm::reflect(ray.direction, intersect.normal);
+			new_ray.specular = true;
+
+			BRDF = MaterialUtil::Specular(intersect.material.get()); // R is eliminated
+			glm::dvec3 indirect = sampleExplicitLightRay(new_ray, scene, ray_depth + 1) * BRDF;
+
+			return indirect / (1.0 - terminate);
+		}
+		else
+		{
+			new_ray.direction = MaterialUtil::CosWeightedSample(intersect.normal);
+
+			BRDF = MaterialUtil::Lambertian(intersect.material.get()); // (1-R) is eliminated
+
+			glm::dvec3 emittance = double(ray_depth == 0 || ray.specular) * intersect.material->emittance;
+			glm::dvec3 direct = scene.sampleLights(intersect) * BRDF;
+			glm::dvec3 indirect = sampleExplicitLightRay(new_ray, scene, ray_depth + 1) * BRDF * M_PI;
+
+			return (emittance + direct + indirect) / (1.0 - terminate);
+		}
 	}
 }
 
@@ -175,7 +195,7 @@ void Camera::sampleImage(size_t supersamples, Scene& scene)
 {
 	std::function<void(Camera*, size_t, Scene&, size_t, size_t)> f = &Camera::sampleImageThread;
 
-	std::vector<std::unique_ptr<std::thread>> threads(std::thread::hardware_concurrency() - 1);
+	std::vector<std::unique_ptr<std::thread>> threads(std::thread::hardware_concurrency() - 3);
 	for (size_t thread = 0; thread < threads.size(); thread++)
 	{
 		threads[thread] = std::make_unique<std::thread>(f, this, supersamples, std::ref(scene), thread, threads.size());

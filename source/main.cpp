@@ -32,12 +32,14 @@ int main()
 	catch (const std::exception& ex)
 	{
 		std::cout << ex.what() << std::endl;
+		waitForInput();
 		return -1;
 	}
 
 	if (options.size() == 0)
 	{
 		std::cout << "No scenes found." << std::endl;
+		waitForInput();
 		return -1;
 	}
 
@@ -54,6 +56,7 @@ int main()
 	catch (const std::exception& ex)
 	{
 		std::cout << ex.what() << std::endl;
+		waitForInput();
 		return -1;
 	}
 	

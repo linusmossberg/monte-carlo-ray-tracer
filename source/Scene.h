@@ -9,13 +9,13 @@
 class Scene
 {
 public:
-	Scene(std::vector<std::shared_ptr<Surface::Base>> surfaces, size_t sqrtspp, const std::string &savename)
-		: surfaces(surfaces), sqrtspp(sqrtspp), savename(savename)
+	Scene(std::vector<std::shared_ptr<Surface::Base>> surfaces, size_t sqrtspp, const std::string &savename, double ior)
+		: surfaces(surfaces), sqrtspp(sqrtspp), savename(savename), ior(ior)
 	{
 		findEmissive();
 	}
 
-	Intersection intersect(const Ray& ray)
+	Intersection intersect(const Ray& ray, bool align_normal = false)
 	{
 		Intersection intersect;
 		for (const auto& surface : surfaces)
@@ -30,12 +30,16 @@ public:
 				}
 			}
 		}
+		if (align_normal && glm::dot(ray.direction, intersect.normal) > 0)
+		{
+			intersect.normal = -intersect.normal;
+		}
 		return intersect;
 	}
 
 	glm::dvec3 estimateDirect(const Intersection &intersection, Surface::Base* light)
 	{
-		if (intersection.material->type != Material::SPECULAR)
+		if (intersection.material->type != Material::TRANSPARENT)
 		{
 			glm::dvec3 light_pos = (*light)(rnd(0, 1), rnd(0, 1));
 			Ray shadow_ray(intersection.position + intersection.normal * 0.0000001, light_pos);
@@ -94,4 +98,5 @@ public:
 	std::vector<std::shared_ptr<Surface::Base>> emissives; // subset of surfaces
 	size_t sqrtspp;
 	std::string savename;
+	double ior;
 };

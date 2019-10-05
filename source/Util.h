@@ -8,6 +8,7 @@
 #include <filesystem>
 #include <iomanip>
 #include <sstream>
+#include <conio.h>
 
 #include <glm/glm.hpp>
 #include <glm/vec3.hpp>
@@ -17,6 +18,17 @@
 inline double rnd(double v1, double v2)
 {
 	return Random::range(v1, v2);
+}
+
+inline std::ostream& operator<<(std::ostream& out, const glm::dvec3& v)
+{
+	return out << std::string("( " + std::to_string(v.x) + ", " + std::to_string(v.y) + ", " + std::to_string(v.z) + ")\n");
+}
+
+inline void waitForInput()
+{
+	std::cout << std::endl << "Press any key to exit." << std::endl;
+	_getch();
 }
 
 inline void writeTimeDuration(size_t msec_duration, size_t thread, std::ostream &out)

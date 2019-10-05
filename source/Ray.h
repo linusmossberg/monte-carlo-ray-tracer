@@ -26,6 +26,7 @@ public:
 	
 	// Normalized direction -> t corresponds to euclidian distance in metric units
 	glm::dvec3 start, direction;
+	double medium_ior = 1.0;
 	bool specular = false;
 };
 

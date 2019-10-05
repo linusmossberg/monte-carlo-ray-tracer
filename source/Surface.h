@@ -66,10 +66,10 @@ namespace Surface
 	{
 	public:
 		Triangle(const glm::dvec3& v0, const glm::dvec3& v1, const glm::dvec3& v2)
-			: v0(v0), v1(v1), v2(v2), E1(v1 - v0), E2(v2 - v0), normal(glm::normalize(glm::cross(E2, E1))) { }
+			: v0(v0), v1(v1), v2(v2), E1(v1 - v0), E2(v2 - v0), normal(glm::normalize(glm::cross(E1, E2))) { }
 
 		Triangle(const glm::dvec3& v0, const glm::dvec3& v1, const glm::dvec3& v2, const Material& material)
-			: Base(material), v0(v0), v1(v1), v2(v2), E1(v1 - v0), E2(v2 - v0), normal(glm::normalize(glm::cross(E2, E1))) { }
+			: Base(material), v0(v0), v1(v1), v2(v2), E1(v1 - v0), E2(v2 - v0), normal(glm::normalize(glm::cross(E1, E2))) { }
 
 		~Triangle() {};
 
