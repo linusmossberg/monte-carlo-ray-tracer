@@ -59,6 +59,8 @@ int main()
 		waitForInput();
 		return -1;
 	}
+
+	waitForInput();
 	
 	return 0;
 }

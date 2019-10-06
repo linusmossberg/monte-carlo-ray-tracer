@@ -38,6 +38,35 @@ inline glm::dvec3 reinhard(glm::dvec3 in)
 	return in / (1.0 + in);
 }
 
+inline glm::dvec3 adjustments(glm::dvec3 in, double midpoint)
+{
+	//double contrast = 1.05;
+	//return contrast * (in - glm::dvec3(midpoint)) + glm::dvec3(midpoint);
+	return in;
+}
+
+inline glm::dvec3 gammaCorrect(glm::dvec3 in)
+{
+	return glm::pow(in, glm::dvec3(1.0 / 2.2));
+}
+
+inline std::vector<uint8_t> truncate(glm::dvec3 in)
+{
+	in = glm::clamp(in, glm::dvec3(0.0), glm::dvec3(1.0)) * std::nextafter(256.0, 0.0);
+
+	if (in.b > 255.0)
+		if ((uint8_t)in.b != 255)
+			std::cout << "error!\n";
+	if (in.r > 255.0)
+		if ((uint8_t)in.r != 255)
+			std::cout << "error!\n";
+	if (in.g > 255.0)
+		if ((uint8_t)in.g != 255)
+			std::cout << "error!\n";
+
+	return { (uint8_t)in.b, (uint8_t)in.g, (uint8_t)in.r };
+}
+
 struct Image
 {
 	Image(size_t width, size_t height)
@@ -45,34 +74,33 @@ struct Image
 
 	void save(const std::string& filename) const
 	{
+		double midpoint = getMidpoint();
+
 		HeaderTGA header((uint16_t)width, (uint16_t)height);
-		std::ofstream out(filename + ".tga", std::ios::binary);
-		std::ofstream out_tonemapped(filename + "_tonemapped.tga", std::ios::binary);
-		out.write(reinterpret_cast<char*>(&header), sizeof(header));
+		std::ofstream out_tonemapped(filename + ".tga", std::ios::binary);
 		out_tonemapped.write(reinterpret_cast<char*>(&header), sizeof(header));
 		for (const auto& p : blob)
 		{
-			glm::dvec3 fp = filmic(p);
-			for (int c = 2; c >= 0; c--)
-			{
-				double v = pow(p[c], 1.0 / 2.2);
-				v = v > 1.0 ? 1.0 : v < 0.0 ? 0.0 : v;
-				uint8_t pv = (uint8_t)(v * 255.0);
-				out.write(reinterpret_cast<char*>(&pv), sizeof(pv));
-
-				v = pow(fp[c], 1.0 / 2.2);
-				v = v > 1.0 ? 1.0 : v < 0.0 ? 0.0 : v;
-				pv = (uint8_t)(v * 255.0);
-				out_tonemapped.write(reinterpret_cast<char*>(&pv), sizeof(pv));
-			}
+			std::vector<uint8_t> fp = truncate(gammaCorrect(adjustments(filmic(p), midpoint)));
+			out_tonemapped.write(reinterpret_cast<char*>(fp.data()), fp.size() * sizeof(uint8_t));
 		}
-		out.close();
 		out_tonemapped.close();
 	}
 
 	glm::dvec3& operator()(size_t col, size_t row)
 	{
 		return blob[row * width + col];
+	}
+
+	double getMidpoint() const
+	{
+		double sum = 0.0;
+		for (const auto& p : blob)
+		{
+			glm::dvec3 fp = glm::clamp(filmic(p), glm::dvec3(0.0), glm::dvec3(1.0));
+			sum += (fp.x + fp.y + fp.z) / 3.0;
+		}
+		return sum / blob.size();
 	}
 
 	size_t width, height;

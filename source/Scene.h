@@ -60,16 +60,17 @@ public:
 
 	glm::dvec3 sampleLights(const Intersection &intersection)
 	{
-		glm::dvec3 direct_light(0.0);
-		for (const auto &light : emissives)
-		{
-			if (light == intersection.surface)
-			{
-				continue;
-			}
-			direct_light += estimateDirect(intersection, light.get());
-		}
-		return direct_light;
+		//glm::dvec3 direct_light(0.0);
+		size_t idx = static_cast<size_t>(std::floor(rnd(0.0, static_cast<double>(emissives.size()))));
+		//for (const auto &light : emissives)
+		//{
+		//	if (light == intersection.surface)
+		//	{
+		//		continue;
+		//	}
+		//	direct_light += estimateDirect(intersection, light.get());
+		//}
+		return estimateDirect(intersection, emissives.at(idx).get()) * static_cast<double>(emissives.size());
 	}
 
 	void findEmissive()

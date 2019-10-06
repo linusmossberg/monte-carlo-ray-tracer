@@ -1,4 +1,6 @@
 # Monte Carlo Ray Tracer
+![](renders/80sqrtspp-transparent-glossy.png)
+![](renders/hexagon-transparent-44sqrtspp_tonemapped.png)
 ![](renders/oren_nayar_test.png)
 ![](renders/russian-roulette_sky_48sqrtspp_tonemapped.png)
 ![](renders/direct-light_64sqrtspp_tonemapped.png)

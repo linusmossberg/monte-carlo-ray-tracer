@@ -195,7 +195,7 @@ void Camera::sampleImage(size_t supersamples, Scene& scene)
 {
 	std::function<void(Camera*, size_t, Scene&, size_t, size_t)> f = &Camera::sampleImageThread;
 
-	std::vector<std::unique_ptr<std::thread>> threads(std::thread::hardware_concurrency() - 3);
+	std::vector<std::unique_ptr<std::thread>> threads(std::thread::hardware_concurrency() - 1);
 	for (size_t thread = 0; thread < threads.size(); thread++)
 	{
 		threads[thread] = std::make_unique<std::thread>(f, this, supersamples, std::ref(scene), thread, threads.size());
