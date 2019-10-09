@@ -1,21 +1,21 @@
-#include "Material.h"
+#include "Material.hpp"
 
-glm::dvec3 Material::Diffuse(const glm::dvec3 &i, const glm::dvec3 &o)
+glm::dvec3 Material::DiffuseBRDF(const glm::dvec3 &i, const glm::dvec3 &o)
 {
-	return roughness > 1e-7 ? OrenNayar(i, o) : Lambertian();
+	return roughness > 1e-7 ? OrenNayarBRDF(i, o) : LambertianBRDF();
 }
 
-glm::dvec3 Material::Specular()
+glm::dvec3 Material::SpecularBRDF()
 {
 	return specular_reflectance;
 }
 
-glm::dvec3 Material::Lambertian()
+glm::dvec3 Material::LambertianBRDF()
 {
 	return reflectance / M_PI;
 }
 
-glm::dvec3 Material::OrenNayar(const glm::dvec3 &i, const glm::dvec3 &o)
+glm::dvec3 Material::OrenNayarBRDF(const glm::dvec3 &i, const glm::dvec3 &o)
 {
 	// TODO: Check if compiler optimizes this, otherwise pre-compute in constructor
 	const double variance = pow2(roughness);

@@ -1,6 +1,10 @@
 #pragma once
 
 #include <random>
+#define _USE_MATH_DEFINES
+#include <math.h>
+
+#include <glm/vec3.hpp>
 
 struct Random
 {
@@ -13,6 +17,8 @@ struct Random
 	static double range(double v1, double v2);
 
 	static size_t uirange(size_t v1, size_t v2);
+
+	static glm::dvec3 CosWeightedSample();
 
 private:
 	// thread_local to create one static random engine per thread.

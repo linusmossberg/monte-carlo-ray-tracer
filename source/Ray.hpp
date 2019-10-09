@@ -5,10 +5,8 @@
 #include <glm/glm.hpp>
 #include <glm/vec3.hpp>
 
-#include "Surface.h"
-#include "Material.h"
-
-namespace Surface { class Base; }
+#include "Material.hpp"
+#include "Random.hpp"
 
 class Ray
 {
@@ -27,38 +25,9 @@ public:
 		return start + direction * t;
 	}
 
-	void diffuseReflect(const CoordinateSystem& cs, double n1)
-	{
-		direction = cs.localToGlobal(MaterialUtil::CosWeightedSample());
-		start += cs.normal * offset;
-		specular = false;
-		medium_ior = n1;
-	}
-
-	void specularReflect(const glm::dvec3 &in, const glm::dvec3 &normal, double n1)
-	{
-		direction = glm::reflect(in, normal);
-		start += normal * offset;
-		specular = true;
-		medium_ior = n1;
-	}
-
-	void specularRefract(const glm::dvec3 &in, const glm::dvec3 &normal, double n1, double n2)
-	{
-		direction = glm::refract(in, normal, n1 / n2);
-		if (std::isnan(direction.x))
-		{
-			/* SPECULAR REFLECT, BREWSTER ANGLE */
-			specularReflect(in, normal, n1);
-		}
-		else
-		{
-			/* SPECULAR REFRACT */
-			start -= normal * offset;
-			specular = true;
-			medium_ior = n2;
-		}
-	}
+	void reflectDiffuse(const CoordinateSystem& cs, double n1);
+	void reflectSpecular(const glm::dvec3 &in, const glm::dvec3 &normal, double n1);
+	void refractSpecular(const glm::dvec3 &in, const glm::dvec3 &normal, double n1, double n2);
 	
 	// Normalized direction -> t corresponds to euclidian distance in metric units
 	glm::dvec3 start, direction;

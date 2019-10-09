@@ -1,4 +1,4 @@
-#include "Random.h"
+#include "Random.hpp"
 
 thread_local std::mt19937_64 Random::engine;
 thread_local unsigned Random::engine_seed;
@@ -15,23 +15,26 @@ unsigned Random::seed()
 }
 
 // Generates random numbers in range [min,max[
-double Random::range(double v1, double v2)
+double Random::range(double min, double max)
 {
-	double min = fmin(v1, v2);
-	double max = fmax(v1, v2);
-
-	std::uniform_real_distribution<double> dist(min, std::nextafter(max, min));
-
-	return dist(engine);
+	return std::uniform_real_distribution<double>(min, std::nextafter(max, min))(engine);
 }
 
 // Generates random unsigned integers in range [min,max]
-size_t Random::uirange(size_t v1, size_t v2)
+size_t Random::uirange(size_t min, size_t max)
 {
-	size_t min = std::min(v1, v2);
-	size_t max = std::min(v1, v2);
+	return std::uniform_int_distribution<size_t>(min, max)(engine);
+}
 
-	std::uniform_int_distribution<size_t> dist(min, max);
+glm::dvec3 Random::CosWeightedSample()
+{
+	// Generate uniform sample on unit circle at radius r and angle azimuth
+	double r = sqrt(range(0.0, 1.0));
+	double azimuth = range(0.0, 2.0*M_PI);
 
-	return dist(engine);
+	// Project up to hemisphere.
+	// The result is a cosine-weighted hemispherical sample.
+	glm::dvec3 local_dir(r * cos(azimuth), r * sin(azimuth), sin(acos(r)));
+
+	return local_dir;
 }

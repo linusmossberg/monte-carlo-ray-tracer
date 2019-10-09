@@ -13,13 +13,6 @@
 #include <glm/glm.hpp>
 #include <glm/vec3.hpp>
 
-#include "Random.h"
-
-inline double rnd(double v1, double v2)
-{
-	return Random::range(v1, v2);
-}
-
 inline std::ostream& operator<<(std::ostream& out, const glm::dvec3& v)
 {
 	return out << std::string("( " + std::to_string(v.x) + ", " + std::to_string(v.y) + ", " + std::to_string(v.z) + ")\n");
@@ -31,32 +24,63 @@ inline void waitForInput()
 	_getch();
 }
 
-inline void writeTimeDuration(size_t msec_duration, size_t thread, std::ostream &out)
+inline std::string formatDate(const std::chrono::time_point<std::chrono::system_clock> &date)
+{
+	std::time_t now = std::chrono::system_clock::to_time_t(date);
+	struct tm timeinfo;
+	localtime_s(&timeinfo, &now);
+
+	std::string s(26, ' ');
+	std::strftime(s.data(), s.size(), "%Y-%m-%d %H:%M:%S", &timeinfo);
+
+	auto p = s.find_last_not_of(' ');
+	s.erase(p, s.size() - p);
+
+	return s;
+}
+
+inline std::string formatTimeDuration(size_t msec_duration)
 {
 	size_t hours = msec_duration / 3600000;
 	size_t minutes = (msec_duration % 3600000) / 60000;
 	size_t seconds = (msec_duration % 60000) / 1000;
-	size_t milliseconds = msec_duration % 1000;
+	//size_t milliseconds = msec_duration % 1000;
+	//seconds += size_t(std::round(milliseconds / 1000.0));
 
-	std::time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now() + std::chrono::milliseconds(msec_duration));
-	std::string s(26, '\0');
-	ctime_s(s.data(), s.size(), &now);
-	s.erase(0, 4);
-	s.erase(15, s.size() - 15);
+	std::stringstream ss;
+	ss << std::setfill('0') << std::setw(2) << hours << ":"
+		<< std::setfill('0') << std::setw(2) << minutes << ":"
+		<< std::setfill('0') << std::setw(2) << seconds;
+
+	return ss.str();
+}
+
+inline void printProgressInfo(size_t msec_duration, size_t sps, std::ostream &out)
+{
+	auto formatSPS = [&sps]()
+	{
+		std::string int_string = std::to_string(sps);
+		size_t pos = int_string.length() - 3;
+		while (pos > 0 && pos < int_string.length())
+		{
+			int_string.insert(pos, " ");
+			pos -= 3;
+		}
+		return int_string;
+	};
+
+	auto ETA = std::chrono::system_clock::now() + std::chrono::milliseconds(msec_duration);
 
 	// Create string first to avoid jumbled output when multiple threads write simultaneously
 	std::stringstream ss;
-	ss	<< "\rTime remaining: "
-		<< std::setfill('0') << std::setw(2) << hours << ":"
-		<< std::setfill('0') << std::setw(2) << minutes << ":"
-		<< std::setfill('0') << std::setw(2) << seconds << "."
-		<< std::setfill('0') << std::setw(3) << milliseconds
-		<< ", ETA: " << s;
+	ss << "\rTime remaining: " << formatTimeDuration(msec_duration)
+		<< " || ETA: " << formatDate(ETA)
+		<< " || Samples/s: " << formatSPS() + "    ";
 
 	out << ss.str();
 }
 
-inline size_t printSceneOptionTable(const std::vector<std::pair<std::filesystem::path, int>> &options)
+inline size_t getSceneOption(const std::vector<std::pair<std::filesystem::path, int>> &options)
 {
 	size_t max_opt = 13, max_fil = 0, max_cam = 7;
 	for (const auto& o : options)

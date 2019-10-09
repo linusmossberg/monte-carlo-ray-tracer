@@ -7,9 +7,9 @@
 #include <nlohmann/json.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "Scene.h"
-#include "Camera.h"
-#include "Material.h"
+#include "Scene.hpp"
+#include "Camera.hpp"
+#include "Material.hpp"
 
 inline glm::dvec3 j2v(const nlohmann::json &j)
 {
@@ -39,9 +39,9 @@ inline glm::dvec3 getOptional(const nlohmann::json &j, std::string value, const 
 
 struct CameraScenePair
 {
-	CameraScenePair(Camera &c, Scene &s) : camera(c), scene(s) { }
+	CameraScenePair(std::unique_ptr<Camera> c, Scene &s) : camera(std::move(c)), scene(s) { }
 
-	Camera camera;
+	std::unique_ptr<Camera> camera;
 	Scene scene;
 };
 
@@ -103,12 +103,12 @@ public:
 			double roughness                = getOptional(m, "roughness", 0.0);
 			double ior                      = getOptional(m, "ior", 1.0);
 			double transparency             = getOptional(m, "transparency", 0.0);
-			bool perfect_specular           = getOptional(m, "perfect_specular", false);
+			bool perfect_mirror             = getOptional(m, "perfect_mirror", false);
 			glm::dvec3 reflectance          = getOptional(m, "reflectance", glm::dvec3(0.0));
 			glm::dvec3 specular_reflectance = getOptional(m, "specular_reflectance", glm::dvec3(0.0));
 			glm::dvec3 emittance            = getOptional(m, "emittance", glm::dvec3(0.0));
 
-			materials[m.at("name")] = Material(reflectance, specular_reflectance, emittance, roughness, ior, transparency, perfect_specular);
+			materials[m.at("name")] = Material(reflectance, specular_reflectance, emittance, roughness, ior, transparency, perfect_mirror);
 		}
 
 		int i = 0;
@@ -169,6 +169,6 @@ public:
 
 		Scene scene(surfaces, j.at("sqrtspp"), j.at("savename"), j.at("ior"));
 
-		return CameraScenePair(*camera, scene);
+		return CameraScenePair(std::move(camera), scene);
 	}
 };

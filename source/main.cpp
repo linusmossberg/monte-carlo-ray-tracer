@@ -11,11 +11,11 @@
 
 #include <glm/vec3.hpp>
 
-#include "SceneParser.h"
-#include "Random.h"
-#include "Util.h"
-#include "Scene.h"
-#include "Camera.h"
+#include "SceneParser.hpp"
+#include "Random.hpp"
+#include "Util.hpp"
+#include "Scene.hpp"
+#include "Camera.hpp"
 
 int main()
 {
@@ -44,7 +44,7 @@ int main()
 		return -1;
 	}
 
-	size_t scene_option = printSceneOptionTable(options);
+	size_t scene_option = getSceneOption(options);
 
 	std::string file = options[scene_option].first.filename().string();
 	file.erase(file.find("."), file.length());
@@ -62,13 +62,15 @@ int main()
 		return -1;
 	}
 
-	csp->camera.sampleImage(csp->scene);
-	csp->camera.saveImage(csp->scene.savename);
+	auto before = std::chrono::system_clock::now();
 
-	std::time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-	std::string s(26, '\0');
-	ctime_s(s.data(), s.size(), &now);
-	std::cout << std::endl << std::endl << "Finished: " << s;
+	csp->camera->sampleImage(csp->scene);
+	csp->camera->saveImage(csp->scene.savename);
+
+	auto now = std::chrono::system_clock::now();
+
+	std::cout << std::endl << std::endl << "Render Completed: " << formatDate(now);
+	std::cout << ", Elapsed Time: " << formatTimeDuration(std::chrono::duration_cast<std::chrono::milliseconds>(now - before).count()) << std::endl;
 
 	waitForInput();
 	

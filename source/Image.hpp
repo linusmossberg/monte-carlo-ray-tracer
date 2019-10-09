@@ -59,7 +59,7 @@ inline std::vector<uint8_t> truncate(glm::dvec3 in)
 struct Image
 {
 	Image(size_t width, size_t height)
-		: blob(std::vector<glm::dvec3>((uint64_t)width* height, glm::dvec3())), width(width), height(height) { }
+		: blob(std::vector<glm::dvec3>((uint64_t)width* height, glm::dvec3())), width(width), height(height), num_pixels(width*height) { }
 
 	void save(const std::string& filename) const
 	{
@@ -93,7 +93,7 @@ struct Image
 	}
 
 	size_t width, height;
-
+	size_t num_pixels;
 private:
 	std::vector<glm::dvec3> blob;
 };

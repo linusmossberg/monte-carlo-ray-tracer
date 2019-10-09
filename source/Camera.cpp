@@ -1,5 +1,5 @@
-#include "Camera.h"
-#include "Random.h"
+#include "Camera.hpp"
+#include "Random.hpp"
 
 glm::dvec3 Camera::sampleRay(Ray ray, size_t ray_depth)
 {
@@ -19,7 +19,7 @@ glm::dvec3 Camera::sampleRay(Ray ray, size_t ray_depth)
 	if (ray_depth > min_ray_depth)
 	{
 		terminate = 1.0 - intersect.material->reflect_probability;
-		if (terminate > rnd(0, 1))
+		if (terminate > Random::range(0, 1))
 		{
 			return glm::dvec3(0.0);
 		}
@@ -34,47 +34,35 @@ glm::dvec3 Camera::sampleRay(Ray ray, size_t ray_depth)
 	double n1 = ray.medium_ior;
 	double n2 = abs(ray.medium_ior - scene->ior) < 1e-7 ? intersect.material->ior : scene->ior;
 
-	if (intersect.material->perfect_specular)
+	if (intersect.material->perfect_mirror || Material::Fresnel(n1, n2, intersect.normal, -ray.direction) > Random::range(0, 1))
 	{
-		/* SPECULAR REFLECT */
-		BRDF = intersect.material->Specular();
-		new_ray.specularReflect(ray.direction, intersect.normal, n1);
+		/* SPECULAR REFLECTION */
+		BRDF = intersect.material->SpecularBRDF();
+		new_ray.reflectSpecular(ray.direction, intersect.normal, n1);
 	}
 	else
 	{
-		double R = MaterialUtil::Fresnel(n1, n2, intersect.normal, -ray.direction); // Fresnel factor
-
-		if (R > rnd(0, 1))
+		if (intersect.material->transparency > Random::range(0, 1))
 		{
-			/* SPECULAR REFLECT */
-			BRDF = intersect.material->Specular();
-			new_ray.specularReflect(ray.direction, intersect.normal, n1);
+			/* TRANSMISSION */
+			BRDF = intersect.material->SpecularBRDF();
+			new_ray.refractSpecular(ray.direction, intersect.normal, n1, n2);
 		}
 		else
 		{
-			if (intersect.material->transparency > rnd(0, 1))
-			{
-				/* TRANSMISSION */
-				BRDF = intersect.material->Specular();
-				new_ray.specularRefract(ray.direction, intersect.normal, n1, n2);
-			}
-			else
-			{
-				/* DIFFUSE REFLECTION */
-				CoordinateSystem cs(intersect.normal);
+			/* DIFFUSE REFLECTION */
+			CoordinateSystem cs(intersect.normal);
 
-				new_ray.diffuseReflect(cs, n1);
-				BRDF = intersect.material->Diffuse(cs.globalToLocal(new_ray.direction), cs.globalToLocal(-ray.direction));
+			new_ray.reflectDiffuse(cs, n1);
+			BRDF = intersect.material->DiffuseBRDF(cs.globalToLocal(new_ray.direction), cs.globalToLocal(-ray.direction)) * M_PI;
 
-				direct = naive ? glm::dvec3(0) : scene->sampleLights(intersect) * BRDF;
-				BRDF *= M_PI;
-			}
+			direct = naive ? glm::dvec3(0) : scene->sampleLights(intersect);
 		}
 	}
 
-	indirect = sampleRay(new_ray, ray_depth + 1) * BRDF;
+	indirect = sampleRay(new_ray, ray_depth + 1);
 
-	return (emittance + direct + indirect) / (1.0 - terminate);
+	return (emittance + BRDF * (direct + indirect)) / (1.0 - terminate);
 }
 
 void Camera::samplePixel(size_t x, size_t y)
@@ -86,7 +74,7 @@ void Camera::samplePixel(size_t x, size_t y)
 	{
 		for (int s_y = 0; s_y < scene->sqrtspp; s_y++)
 		{
-			glm::dvec2 pixel_space_pos(x + s_x * sub_step + rnd(0.0, sub_step), y + s_y * sub_step + rnd(0.0, sub_step));
+			glm::dvec2 pixel_space_pos(x + s_x * sub_step + Random::range(0.0, sub_step), y + s_y * sub_step + Random::range(0.0, sub_step));
 			glm::dvec2 center_offset = pixel_size * (glm::dvec2(image.width, image.height) / 2.0 - pixel_space_pos);
 
 			glm::dvec3 sensor_pos = eye + forward * focal_length + left * center_offset.x + up * center_offset.y;
@@ -109,20 +97,19 @@ void Camera::sampleImage(Scene& s)
 		threads[thread] = std::make_unique<std::thread>(f, this, thread, threads.size());
 	}
 
+	std::function<void(Camera*)> p = &Camera::printInfoThread;
+	std::thread print_thread(p, this);
+	print_thread.detach();
+
 	for (auto &thread : threads)
 	{
 		thread->join();
 	}
 }
 
-std::pair<size_t, size_t> Camera::max_t = std::make_pair(0, 0);
-
 void Camera::sampleImageThread(size_t thread, size_t num_threads)
 {
 	Random::seed(std::random_device{}()); // Each thread uses different seed.
-
-	std::deque<double> times;
-	const size_t N = 10;
 
 	size_t step = (size_t)floor((double)image.width / num_threads);
 	size_t start = thread * step;
@@ -134,23 +121,42 @@ void Camera::sampleImageThread(size_t thread, size_t num_threads)
 		for (size_t y = 0; y < image.height; y++)
 		{
 			samplePixel(x, y);
+			num_sampled_pixels++;
 		}
+	}
+}
 
-		auto t_after = std::chrono::high_resolution_clock::now();
-		auto delta_t = std::chrono::duration_cast<std::chrono::milliseconds>(t_after - t_before);
-		t_before = std::chrono::high_resolution_clock::now();
+void Camera::printInfoThread()
+{
+	while (true)
+	{
+		std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
-		times.push_back((double)delta_t.count());
-		if (times.size() > N)
-			times.pop_front();
+		if (num_sampled_pixels == image.num_pixels)
+			break;
 
-		double moving_average = std::accumulate(times.begin(), times.end(), 0.0) / times.size();
-		size_t msec_left = size_t((end - (x + 1)) * moving_average);
-
-		if ((thread != max_t.first && msec_left > max_t.second) || thread == max_t.first)
+		if (num_sampled_pixels != last_num_sampled_pixels)
 		{
-			max_t = std::make_pair(thread, msec_left);
-			writeTimeDuration(msec_left, thread, std::cout);
+			size_t delta_pixels = num_sampled_pixels - last_num_sampled_pixels;
+			size_t pixels_left = image.num_pixels - num_sampled_pixels;
+
+			auto now = std::chrono::steady_clock::now();
+			auto delta_t = std::chrono::duration_cast<std::chrono::milliseconds>(now - last_update);
+
+			times.push_back(static_cast<double>(delta_pixels) / delta_t.count());
+			if (times.size() > num_times)
+				times.pop_front();
+
+			// moving average
+			double pixels_per_msec = std::accumulate(times.begin(), times.end(), 0.0) / times.size();
+
+			size_t msec_left = static_cast<size_t>(pixels_left / pixels_per_msec);
+			size_t sps = static_cast<size_t>(pixels_per_msec * 1000.0 * pow2(static_cast<double>(scene->sqrtspp)));
+
+			printProgressInfo(msec_left, sps, std::cout);
+
+			last_update = now;
+			last_num_sampled_pixels = num_sampled_pixels;
 		}
 	}
 }

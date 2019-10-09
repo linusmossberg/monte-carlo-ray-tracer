@@ -3,8 +3,9 @@
 #include <vector>
 #include <memory>
 
-#include "Surface.h"
-#include "Ray.h"
+#include "Surface.hpp"
+#include "Ray.hpp"
+#include "Random.hpp"
 
 class Scene
 {
@@ -46,7 +47,7 @@ public:
 		{
 			const auto &light = emissives[Random::uirange(0, emissives.size() - 1)];
 
-			glm::dvec3 light_pos = light->operator()(rnd(0, 1), rnd(0, 1));
+			glm::dvec3 light_pos = light->operator()(Random::range(0, 1), Random::range(0, 1));
 			Ray shadow_ray(intersection.position + intersection.normal * 1e-7, light_pos);
 
 			double cos_theta = glm::dot(shadow_ray.direction, intersection.normal);
@@ -59,7 +60,7 @@ public:
 				double cos_light_theta = glm::clamp(glm::dot(shadow_intersection.normal, -shadow_ray.direction), 0.0, 1.0);
 				double t = light->area() * cos_light_theta / pow2(shadow_intersection.t);
 
-				return light->material->emittance * t * cos_theta * static_cast<double>(emissives.size());
+				return (light->material->emittance * t * cos_theta * static_cast<double>(emissives.size())) / M_PI; // *pi to make the BRDF*pi applicable later
 			}
 		}
 		return glm::dvec3(0.0);

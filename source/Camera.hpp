@@ -8,6 +8,7 @@
 #include <deque>
 #include <numeric>
 #include <functional>
+#include <atomic>
 
 #include <glm/glm.hpp>
 #include <glm/vec3.hpp>
@@ -16,10 +17,10 @@
 #include <glm/gtx/rotate_vector.hpp>
 #include <glm/gtx/vector_angle.hpp>
 
-#include "Scene.h"
-#include "Surface.h"
-#include "Image.h"
-#include "Util.h"
+#include "Scene.hpp"
+#include "Surface.hpp"
+#include "Image.hpp"
+#include "Util.hpp"
 
 class Camera
 {
@@ -72,6 +73,8 @@ private:
 	void samplePixel(size_t x, size_t y);
 	void sampleImageThread(size_t thread, size_t num_threads);
 
+	void printInfoThread();
+
 	glm::dvec3 eye;
 	glm::dvec3 forward, left, up;
 
@@ -83,8 +86,11 @@ private:
 
 	std::shared_ptr<Scene> scene;
 
-	bool naive = false;
+	std::atomic_size_t num_sampled_pixels = 0;
+	size_t last_num_sampled_pixels = 0;
+	std::chrono::time_point<std::chrono::steady_clock> last_update = std::chrono::steady_clock::now();
+	const size_t num_times = 32;
+	std::deque<double> times;
 
-	// Keeps track of the thread with most estimated time remaining
-	static std::pair<size_t, size_t> max_t; // <thread, msec_left>
+	bool naive = false;
 };

@@ -4,9 +4,8 @@
 #include <glm/vec3.hpp>
 #include <glm/gtx/rotate_vector.hpp>
 
-#include "Ray.h"
-#include "Material.h"
-#include "Util.h"
+#include "Ray.hpp"
+#include "Material.hpp"
 
 namespace Surface
 {
