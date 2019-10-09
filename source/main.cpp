@@ -2,6 +2,7 @@
 #include <string>
 #include <algorithm>
 #include <chrono>
+#include <ctime>
 #include <iomanip>
 #include <filesystem>
 
@@ -49,9 +50,10 @@ int main()
 	file.erase(file.find("."), file.length());
 	std::cout << "Scene file " << file << " with camera " << options[scene_option].second << " selected." << std::endl << std::endl;
 	
+	std::unique_ptr<CameraScenePair> csp;
 	try
 	{
-		Scene scene = SceneParser::parseScene(options[scene_option].first, options[scene_option].second);
+		csp = std::make_unique<CameraScenePair>(SceneParser::parseScene(options[scene_option].first, options[scene_option].second));
 	}
 	catch (const std::exception& ex)
 	{
@@ -59,6 +61,14 @@ int main()
 		waitForInput();
 		return -1;
 	}
+
+	csp->camera.sampleImage(csp->scene);
+	csp->camera.saveImage(csp->scene.savename);
+
+	std::time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+	std::string s(26, '\0');
+	ctime_s(s.data(), s.size(), &now);
+	std::cout << std::endl << std::endl << "Finished: " << s;
 
 	waitForInput();
 	

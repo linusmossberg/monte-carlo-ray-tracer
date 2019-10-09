@@ -12,22 +12,24 @@ public:
 	Scene(std::vector<std::shared_ptr<Surface::Base>> surfaces, size_t sqrtspp, const std::string &savename, double ior)
 		: surfaces(surfaces), sqrtspp(sqrtspp), savename(savename), ior(ior)
 	{
-		findEmissive();
+		generateEmissives();
 	}
 
-	Intersection intersect(const Ray& ray, bool align_normal = false)
+	Intersection intersect(const Ray& ray, bool align_normal = false, double min_distance = -1)
 	{
+		bool use_stop_condition = min_distance > 0;
+
 		Intersection intersect;
 		for (const auto& surface : surfaces)
 		{
 			Intersection t_intersect;
 			if (surface->intersect(ray, t_intersect))
 			{
+				if (use_stop_condition && t_intersect.t < min_distance)
+					return Intersection();
+
 				if (t_intersect.t < intersect.t)
-				{
 					intersect = t_intersect;
-					intersect.surface = surface;
-				}
 			}
 		}
 		if (align_normal && glm::dot(ray.direction, intersect.normal) > 0)
@@ -37,47 +39,37 @@ public:
 		return intersect;
 	}
 
-	glm::dvec3 estimateDirect(const Intersection &intersection, Surface::Base* light)
+	glm::dvec3 sampleLights(const Intersection &intersection)
 	{
-		if (intersection.material->type != Material::TRANSPARENT)
+		// Pick one light source and scale with 1/probability of picking light source
+		if (emissives.size())
 		{
-			glm::dvec3 light_pos = (*light)(rnd(0, 1), rnd(0, 1));
-			Ray shadow_ray(intersection.position + intersection.normal * 0.0000001, light_pos);
+			const auto &light = emissives[Random::uirange(0, emissives.size() - 1)];
+
+			glm::dvec3 light_pos = light->operator()(rnd(0, 1), rnd(0, 1));
+			Ray shadow_ray(intersection.position + intersection.normal * 1e-7, light_pos);
 
 			double cos_theta = glm::dot(shadow_ray.direction, intersection.normal);
 
-			Intersection shadow_intersection = intersect(shadow_ray);
+			double min_distance = glm::length(light_pos - intersection.position) - 1e-7;
+			Intersection shadow_intersection = intersect(shadow_ray, false, min_distance);
 
-			if (shadow_intersection.surface.get() == light && glm::length(shadow_intersection.position - light_pos) < 0.0000001 && cos_theta > 0.0)
+			if (shadow_intersection && glm::length(shadow_intersection.position - light_pos) < 1e-7 && cos_theta > 0)
 			{
 				double cos_light_theta = glm::clamp(glm::dot(shadow_intersection.normal, -shadow_ray.direction), 0.0, 1.0);
 				double t = light->area() * cos_light_theta / pow2(shadow_intersection.t);
-				return light->material->emittance * t * cos_theta;
+
+				return light->material->emittance * t * cos_theta * static_cast<double>(emissives.size());
 			}
 		}
 		return glm::dvec3(0.0);
 	}
 
-	glm::dvec3 sampleLights(const Intersection &intersection)
-	{
-		//glm::dvec3 direct_light(0.0);
-		size_t idx = static_cast<size_t>(std::floor(rnd(0.0, static_cast<double>(emissives.size()))));
-		//for (const auto &light : emissives)
-		//{
-		//	if (light == intersection.surface)
-		//	{
-		//		continue;
-		//	}
-		//	direct_light += estimateDirect(intersection, light.get());
-		//}
-		return estimateDirect(intersection, emissives.at(idx).get()) * static_cast<double>(emissives.size());
-	}
-
-	void findEmissive()
+	void generateEmissives()
 	{
 		for (const auto &surface : surfaces)
 		{
-			if (glm::length(surface->material->emittance) >= 0.0000001)
+			if (glm::length(surface->material->emittance) >= 1e-7)
 			{
 				surface->material->emittance /= surface->area(); // flux to radiosity
 				emissives.push_back(surface);

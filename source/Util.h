@@ -38,13 +38,20 @@ inline void writeTimeDuration(size_t msec_duration, size_t thread, std::ostream 
 	size_t seconds = (msec_duration % 60000) / 1000;
 	size_t milliseconds = msec_duration % 1000;
 
+	std::time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now() + std::chrono::milliseconds(msec_duration));
+	std::string s(26, '\0');
+	ctime_s(s.data(), s.size(), &now);
+	s.erase(0, 4);
+	s.erase(15, s.size() - 15);
+
 	// Create string first to avoid jumbled output when multiple threads write simultaneously
 	std::stringstream ss;
 	ss	<< "\rTime remaining: "
 		<< std::setfill('0') << std::setw(2) << hours << ":"
 		<< std::setfill('0') << std::setw(2) << minutes << ":"
 		<< std::setfill('0') << std::setw(2) << seconds << "."
-		<< std::setfill('0') << std::setw(3) << milliseconds << " (thread " << thread << ")";
+		<< std::setfill('0') << std::setw(3) << milliseconds
+		<< ", ETA: " << s;
 
 	out << ss.str();
 }
@@ -107,22 +114,6 @@ inline double pow2(double x)
 	return x * x;
 }
 
-//inline glm::dvec3 localToGlobalUnitVector(const glm::dvec3& V, const glm::dvec3& N)
-//{
-//	glm::dvec3 X, Y;
-//
-//	//if (abs(N.x) > abs(N.y))
-//	//	X = glm::dvec3(-N.z, 0, N.x) / sqrt(pow2(N.x) + pow2(N.z));
-//	//else
-//	//	X = glm::dvec3(0, N.z, -N.y) / sqrt(pow2(N.y) + pow2(N.z));
-//
-//	X = orthogonalUnitVector(N);
-//
-//	Y = glm::cross(N, X);
-//
-//	return glm::normalize(X*V.x + Y * V.y + N * V.z);
-//}
-
 inline glm::dvec3 orthogonalUnitVector(const glm::dvec3& v)
 {
 	if (abs(v.x) > abs(v.y))
@@ -134,6 +125,7 @@ inline glm::dvec3 orthogonalUnitVector(const glm::dvec3& v)
 struct CoordinateSystem
 {
 	CoordinateSystem(const glm::dvec3& N)
+		: normal(N)
 	{
 		glm::dvec3 X = orthogonalUnitVector(N);
 		T = glm::dmat3(X, glm::cross(N, X), N);
@@ -157,7 +149,70 @@ struct CoordinateSystem
 		return glm::normalize(tX * v.x + tY * v.y + N * v.z);
 	}
 
+	glm::dvec3 normal;
+
+private:
 	glm::dmat3 T;
 };
+
+//class Direction : public glm::dvec3
+//{
+//public:
+//	Direction() 
+//	{
+//		x = 1;
+//		y = 0;
+//		z = 0;
+//	};
+//
+//	Direction(const glm::dvec3& v) 
+//	{
+//		double l = glm::length(v);
+//		if (l > 0)
+//		{
+//			x = v.x / l;
+//			y = v.y / l;
+//			z = v.z / l;
+//		}
+//		else
+//		{
+//			*this = Direction();
+//		}
+//	}
+//
+//	Direction(const double &v)
+//	{
+//		if (v != 0)
+//		{
+//			double d = v > 0 ? 1 / sqrt(3) : -1 / sqrt(3);
+//			 x = d;
+//			 y = d;
+//			 z = d;
+//		}
+//		else
+//		{
+//			*this = Direction();
+//		}
+//	}
+//
+//	Direction(double vx, double vy, double vz)
+//	{
+//		*this = Direction(glm::dvec3(vx, vy, vz));
+//	}
+//
+//	const Direction& operator=(const glm::dvec3& v)
+//	{
+//		*this = Direction(v);
+//		return (const Direction&)*this;
+//	}
+//
+//	double dot(const glm::dvec3& x, const glm::dvec3& y)
+//	{
+//		return glm::dot(x, y);
+//	}
+//
+//	operator glm::dvec3() { return glm::dvec3(x, y, z); }
+//};
+
 
 

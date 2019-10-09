@@ -37,6 +37,14 @@ inline glm::dvec3 getOptional(const nlohmann::json &j, std::string value, const 
 	return ret;
 }
 
+struct CameraScenePair
+{
+	CameraScenePair(Camera &c, Scene &s) : camera(c), scene(s) { }
+
+	Camera camera;
+	Scene scene;
+};
+
 class SceneParser
 {
 public:
@@ -62,7 +70,7 @@ public:
 		return options;
 	}
 
-	static Scene parseScene(const std::filesystem::path path, int camera_idx)
+	static CameraScenePair parseScene(const std::filesystem::path path, int camera_idx)
 	{
 		std::ifstream scene_file(path);
 		nlohmann::json j;
@@ -87,18 +95,20 @@ public:
 				c.at("width"), c.at("height")
 			);
 		}
+		camera->setNaive(getOptional(j, "naive", false));
 
 		std::unordered_map<std::string, Material> materials;
 		for (const auto& m : j.at("materials"))
 		{
 			double roughness                = getOptional(m, "roughness", 0.0);
 			double ior                      = getOptional(m, "ior", 1.0);
-			bool transparent                = getOptional(m, "transparent", false);
+			double transparency             = getOptional(m, "transparency", 0.0);
+			bool perfect_specular           = getOptional(m, "perfect_specular", false);
 			glm::dvec3 reflectance          = getOptional(m, "reflectance", glm::dvec3(0.0));
 			glm::dvec3 specular_reflectance = getOptional(m, "specular_reflectance", glm::dvec3(0.0));
 			glm::dvec3 emittance            = getOptional(m, "emittance", glm::dvec3(0.0));
 
-			materials[m.at("name")] = Material(reflectance, specular_reflectance, emittance, roughness, ior, transparent);
+			materials[m.at("name")] = Material(reflectance, specular_reflectance, emittance, roughness, ior, transparency, perfect_specular);
 		}
 
 		int i = 0;
@@ -149,16 +159,16 @@ public:
 			}
 			else if (type == "sphere")
 			{	
-				surfaces.push_back(std::make_shared<Surface::Sphere>(j2v(s.at("origin")), s.at("radius"), materials.at(material)));
+				// TODO: Remove radius scale and change radii of spheres in scene file
+				double radius = s.at("radius");
+				radius *= 0.99;
+				surfaces.push_back(std::make_shared<Surface::Sphere>(j2v(s.at("origin")), radius, materials.at(material)));
 			}
 		}
 		scene_file.close();
 
 		Scene scene(surfaces, j.at("sqrtspp"), j.at("savename"), j.at("ior"));
 
-		camera->sampleImage(scene.sqrtspp, scene);
-		camera->saveImage(scene.savename);
-
-		return scene;
+		return CameraScenePair(*camera, scene);
 	}
 };

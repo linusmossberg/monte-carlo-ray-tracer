@@ -42,11 +42,8 @@ public:
 		lookAt(look_at);
 	}
 
-	glm::dvec3 sampleNaiveRay(const Ray& ray, Scene& scene, size_t ray_depth);
-	glm::dvec3 sampleExplicitLightRay(Ray ray, Scene& scene, size_t ray_depth);
+	void sampleImage(Scene& s);
 
-	void samplePixel(size_t x, size_t y, size_t supersamples, Scene& scene);
-	void sampleImage(size_t supersamples, Scene& scene);
 	void saveImage(const std::string& filename) const
 	{
 		image.save(filename);
@@ -57,15 +54,23 @@ public:
 		eye = p;
 	}
 
+	void setNaive(bool n)
+	{
+		naive = n;
+	}
+
 	void lookAt(const glm::dvec3& p)
 	{
 		forward = glm::normalize(p - eye);
-		left = glm::cross(glm::dvec3(0.0, 1.0, 0.0), forward);
-		up = glm::cross(forward, left);
+		left = glm::normalize(glm::cross(glm::dvec3(0.0, 1.0, 0.0), forward));
+		up = glm::normalize(glm::cross(forward, left));
 	}
 
 private:
-	void sampleImageThread(size_t supersamples, Scene& scene, size_t thread, size_t num_threads);
+
+	glm::dvec3 sampleRay(Ray ray, size_t ray_depth = 0);
+	void samplePixel(size_t x, size_t y);
+	void sampleImageThread(size_t thread, size_t num_threads);
 
 	glm::dvec3 eye;
 	glm::dvec3 forward, left, up;
@@ -75,6 +80,10 @@ private:
 
 	size_t min_ray_depth = 3;
 	size_t max_ray_depth = 512; // prevent call stack overflow
+
+	std::shared_ptr<Scene> scene;
+
+	bool naive = false;
 
 	// Keeps track of the thread with most estimated time remaining
 	static std::pair<size_t, size_t> max_t; // <thread, msec_left>

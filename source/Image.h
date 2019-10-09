@@ -53,17 +53,6 @@ inline glm::dvec3 gammaCorrect(glm::dvec3 in)
 inline std::vector<uint8_t> truncate(glm::dvec3 in)
 {
 	in = glm::clamp(in, glm::dvec3(0.0), glm::dvec3(1.0)) * std::nextafter(256.0, 0.0);
-
-	if (in.b > 255.0)
-		if ((uint8_t)in.b != 255)
-			std::cout << "error!\n";
-	if (in.r > 255.0)
-		if ((uint8_t)in.r != 255)
-			std::cout << "error!\n";
-	if (in.g > 255.0)
-		if ((uint8_t)in.g != 255)
-			std::cout << "error!\n";
-
 	return { (uint8_t)in.b, (uint8_t)in.g, (uint8_t)in.r };
 }
 

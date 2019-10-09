@@ -24,3 +24,14 @@ double Random::range(double v1, double v2)
 
 	return dist(engine);
 }
+
+// Generates random unsigned integers in range [min,max]
+size_t Random::uirange(size_t v1, size_t v2)
+{
+	size_t min = std::min(v1, v2);
+	size_t max = std::min(v1, v2);
+
+	std::uniform_int_distribution<size_t> dist(min, max);
+
+	return dist(engine);
+}
