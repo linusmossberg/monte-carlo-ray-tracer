@@ -8,7 +8,7 @@
 
 struct Random
 {
-	Random() {}
+	Random() { }
 
 	static unsigned seed();
 

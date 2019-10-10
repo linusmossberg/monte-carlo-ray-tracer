@@ -55,7 +55,7 @@ inline std::string formatTimeDuration(size_t msec_duration)
 	return ss.str();
 }
 
-inline void printProgressInfo(size_t msec_duration, size_t sps, std::ostream &out)
+inline void printProgressInfo(double progress, size_t msec_duration, size_t sps, std::ostream &out)
 {
 	auto formatSPS = [&sps]()
 	{
@@ -69,11 +69,34 @@ inline void printProgressInfo(size_t msec_duration, size_t sps, std::ostream &ou
 		return int_string;
 	};
 
+	auto formatProgress = [&progress]()
+	{
+		std::string d_str = std::to_string(progress);
+		size_t dot_pos = d_str.find('.');
+		std::string l(""), r("");
+		if (dot_pos != std::string::npos)
+		{
+			l = d_str.substr(0, dot_pos);
+			r = d_str.substr(dot_pos + 1);
+		}
+		else
+		{
+			l = d_str;
+		}
+
+		size_t r_len = (4 - l.length());
+
+		std::string r_n = r.length() >= r_len ? r.substr(0, r_len) : r + std::string(' ', static_cast<int>(r_len - r.length()));
+
+		return l + "." + r_n + "%";
+	};
+
 	auto ETA = std::chrono::system_clock::now() + std::chrono::milliseconds(msec_duration);
 
 	// Create string first to avoid jumbled output when multiple threads write simultaneously
 	std::stringstream ss;
 	ss << "\rTime remaining: " << formatTimeDuration(msec_duration)
+		<< " || " << formatProgress()
 		<< " || ETA: " << formatDate(ETA)
 		<< " || Samples/s: " << formatSPS() + "    ";
 

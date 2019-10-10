@@ -29,7 +29,7 @@ size_t Random::uirange(size_t min, size_t max)
 glm::dvec3 Random::CosWeightedSample()
 {
 	// Generate uniform sample on unit circle at radius r and angle azimuth
-	double r = sqrt(range(0.0, 1.0));
+	double r = sqrt(range(0,1));
 	double azimuth = range(0.0, 2.0*M_PI);
 
 	// Project up to hemisphere.

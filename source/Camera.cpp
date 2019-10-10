@@ -34,7 +34,7 @@ glm::dvec3 Camera::sampleRay(Ray ray, size_t ray_depth)
 	double n1 = ray.medium_ior;
 	double n2 = abs(ray.medium_ior - scene->ior) < 1e-7 ? intersect.material->ior : scene->ior;
 
-	if (intersect.material->perfect_mirror || Material::Fresnel(n1, n2, intersect.normal, -ray.direction) > Random::range(0, 1))
+	if (intersect.material->perfect_mirror || Material::Fresnel(n1, n2, intersect.normal, -ray.direction) > Random::range(0,1))
 	{
 		/* SPECULAR REFLECTION */
 		BRDF = intersect.material->SpecularBRDF();
@@ -42,9 +42,9 @@ glm::dvec3 Camera::sampleRay(Ray ray, size_t ray_depth)
 	}
 	else
 	{
-		if (intersect.material->transparency > Random::range(0, 1))
+		if (intersect.material->transparency > Random::range(0,1))
 		{
-			/* TRANSMISSION */
+			/* SPECULAR REFRACTION */
 			BRDF = intersect.material->SpecularBRDF();
 			new_ray.refractSpecular(ray.direction, intersect.normal, n1, n2);
 		}
@@ -115,7 +115,6 @@ void Camera::sampleImageThread(size_t thread, size_t num_threads)
 	size_t start = thread * step;
 	size_t end = thread != (num_threads - 1) ? start + step : image.width;
 	
-	auto t_before = std::chrono::high_resolution_clock::now();
 	for (size_t x = start; x < end; x++)
 	{
 		for (size_t y = 0; y < image.height; y++)
@@ -150,10 +149,11 @@ void Camera::printInfoThread()
 			// moving average
 			double pixels_per_msec = std::accumulate(times.begin(), times.end(), 0.0) / times.size();
 
+			double progress = 100.0 * static_cast<double>(num_sampled_pixels) / image.num_pixels;
 			size_t msec_left = static_cast<size_t>(pixels_left / pixels_per_msec);
 			size_t sps = static_cast<size_t>(pixels_per_msec * 1000.0 * pow2(static_cast<double>(scene->sqrtspp)));
 
-			printProgressInfo(msec_left, sps, std::cout);
+			printProgressInfo(progress, msec_left, sps, std::cout);
 
 			last_update = now;
 			last_num_sampled_pixels = num_sampled_pixels;

@@ -47,7 +47,7 @@ public:
 		{
 			const auto &light = emissives[Random::uirange(0, emissives.size() - 1)];
 
-			glm::dvec3 light_pos = light->operator()(Random::range(0, 1), Random::range(0, 1));
+			glm::dvec3 light_pos = light->operator()(Random::range(0,1), Random::range(0,1));
 			Ray shadow_ray(intersection.position + intersection.normal * 1e-7, light_pos);
 
 			double cos_theta = glm::dot(shadow_ray.direction, intersection.normal);

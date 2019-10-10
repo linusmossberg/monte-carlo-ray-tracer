@@ -21,12 +21,12 @@ void Ray::refractSpecular(const glm::dvec3 &in, const glm::dvec3 &normal, double
 	direction = glm::refract(in, normal, n1 / n2);
 	if (std::isnan(direction.x))
 	{
-		/* BREWSTER ANGLE, SPECULAR REFLECT */
+		/* BREWSTER ANGLE, SPECULAR REFLECTION */
 		reflectSpecular(in, normal, n1);
 	}
 	else
 	{
-		/* SPECULAR REFRACT */
+		/* SPECULAR REFRACTION */
 		start -= normal * offset;
 		specular = true;
 		medium_ior = n2;
