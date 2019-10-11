@@ -56,7 +56,10 @@ glm::dvec3 Camera::sampleRay(Ray ray, size_t ray_depth)
 			new_ray.reflectDiffuse(cs, n1);
 			BRDF = intersect.material->DiffuseBRDF(cs.globalToLocal(new_ray.direction), cs.globalToLocal(-ray.direction)) * M_PI;
 
-			direct = naive ? glm::dvec3(0) : scene->sampleLights(intersect);
+			if (!naive) 
+			{
+				direct = scene->sampleLights(intersect);
+			}
 		}
 	}
 

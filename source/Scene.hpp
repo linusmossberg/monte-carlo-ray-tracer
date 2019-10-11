@@ -52,15 +52,22 @@ public:
 
 			double cos_theta = glm::dot(shadow_ray.direction, intersection.normal);
 
-			double min_distance = glm::length(light_pos - intersection.position) - 1e-7;
+			if (cos_theta <= 0)
+				return glm::dvec3(0.0);
+
+			double min_distance = glm::distance(light_pos, intersection.position) - 1e-7;
+			
 			Intersection shadow_intersection = intersect(shadow_ray, false, min_distance);
 
-			if (shadow_intersection && glm::length(shadow_intersection.position - light_pos) < 1e-7 && cos_theta > 0)
+			if (shadow_intersection)
 			{
-				double cos_light_theta = glm::clamp(glm::dot(shadow_intersection.normal, -shadow_ray.direction), 0.0, 1.0);
-				double t = light->area() * cos_light_theta / pow2(shadow_intersection.t);
+				double cos_light_theta = glm::dot(shadow_intersection.normal, -shadow_ray.direction);
 
-				return (light->material->emittance * t * cos_theta * static_cast<double>(emissives.size())) / M_PI; // *pi to make the BRDF*pi applicable later
+				if (cos_light_theta <= 0 || glm::distance(shadow_intersection.position, light_pos) > 1e-7)
+					return glm::dvec3(0.0);
+
+				double t = light->area() * cos_light_theta / pow2(shadow_intersection.t);
+				return (light->material->emittance * t * cos_theta * static_cast<double>(emissives.size())) / M_PI; // * pi to make the BRDF*pi applicable later
 			}
 		}
 		return glm::dvec3(0.0);

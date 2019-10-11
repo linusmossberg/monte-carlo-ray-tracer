@@ -41,7 +41,7 @@ public:
 	double roughness, ior, transparency, reflect_probability;
 
 	// Represents ior = infinity -> fresnel factor = 1.0 -> all rays specularly reflected
-	bool perfect_mirror; 
+	bool perfect_mirror;
 
 private:
 	// Used for russian roulette path termination

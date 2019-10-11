@@ -31,7 +31,7 @@ inline std::string formatDate(const std::chrono::time_point<std::chrono::system_
 	localtime_s(&timeinfo, &now);
 
 	std::string s(26, ' ');
-	std::strftime(s.data(), s.size(), "%Y-%m-%d %H:%M:%S", &timeinfo);
+	std::strftime(s.data(), s.size(), "%Y-%m-%d %H:%M", &timeinfo);
 
 	auto p = s.find_last_not_of(' ');
 	s.erase(p, s.size() - p);
