@@ -36,5 +36,5 @@ glm::dvec3 Random::CosWeightedHemiSample()
     // Project up to hemisphere.
     // The result is a cosine-weighted hemispherical sample.
     // z = sin(acos(r)) = sqrt(1-r^2) = sqrt(1-sqrt(u)^2) = sqrt(1-u) 
-    return glm::dvec3(r * cos(azimuth), r* sin(azimuth), std::sqrt(1 - u));
+    return glm::dvec3(r * cos(azimuth), r * sin(azimuth), std::sqrt(1 - u));
 }
