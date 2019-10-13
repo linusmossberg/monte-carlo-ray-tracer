@@ -4,14 +4,26 @@
 
 bool Surface::Sphere::intersect(const Ray& ray, Intersection& intersection) const 
 {
-    double b = glm::dot(2.0 * ray.direction, ray.start - origin);
-    double c = glm::dot(ray.start - origin, ray.start - origin) - radius * radius;
+    glm::dvec3 so = ray.start - origin;
+    double b = glm::dot(ray.direction, so);
+    double c = glm::dot(so, so) - pow2(radius);
 
-    double t = -b / 2 - sqrt(pow2(b / 2) - c);
-    t = t > 0 ? t : -b / 2 + sqrt(pow2(b / 2) - c);
-
-    if (isnan(t) || t < 0)
+    double discriminant = pow2(b) - c;
+    if (discriminant < 0)
+    {
         return false;
+    }
+
+    double v = std::sqrt(discriminant);
+    double t = -b - v;
+    if (t < 0)
+    {
+        t = v - b;
+        if (t < 0)
+        {
+            return false;
+        }
+    }
     
     intersection.t = t;
     intersection.position = ray(t);
