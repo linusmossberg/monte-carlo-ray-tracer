@@ -9,14 +9,7 @@
 #include <fstream>
 #include <sstream>
 
-/**/
-#include "windows.h"
-#include "psapi.h"
-/**/
-
 #include <glm/vec3.hpp>
-
-#include <nanoflann.hpp>
 
 #include "SceneParser.hpp"
 #include "Random.hpp"
@@ -24,6 +17,7 @@
 #include "Scene.hpp"
 #include "Camera.hpp"
 #include "PhotonMap.hpp"
+#include "Tests.hpp"
 
 int main()
 {
@@ -70,45 +64,7 @@ int main()
         return -1;
     }
 
-    std::cout << "max_points, build_msec, find_msec, count, control_count, mem_usage_MB" << std::endl;
-    for (uint16_t max_points = 1; max_points <= 100; max_points += 3)
-    {
-        auto build_before = std::chrono::system_clock::now();
-        PhotonMap test(csp->scene, max_points);
-        auto build_now = std::chrono::system_clock::now();
-
-        glm::vec3 p(5.0f, -5.0f, 0.0);
-        size_t ps = 100000;
-        size_t count = 0;
-        auto before = std::chrono::system_clock::now();
-        for (size_t i = 0; i < ps; i++)
-        {
-            std::vector<OctreeData*> results;
-            test.global.getPointsInRadius(p, 0.1f, results);
-            count = results.size();
-        }
-        auto now = std::chrono::system_clock::now();
-
-        size_t check_count = 0;
-        for (const auto& pt : test.global_vec)
-        {
-            if (glm::distance(pt.pos(), p) <= 0.1f)
-            {
-                check_count++;
-            }
-        }
-
-        PROCESS_MEMORY_COUNTERS_EX pmc;
-        GetProcessMemoryInfo(GetCurrentProcess(), (PROCESS_MEMORY_COUNTERS*)& pmc, sizeof(pmc));
-        SIZE_T vmem_used = pmc.PrivateUsage;
-
-        std::cout << max_points << ", ";
-        std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(build_now - build_before).count() << ", ";
-        std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(now - before).count() << ", ";
-        std::cout << count << ", ";
-        std::cout << check_count << ", ";
-        std::cout << vmem_used / 1e6 << std::endl;
-    }
+    testPhotonMap(csp->scene, 1e5, 1e3, 1, 100, 3);
 
     auto before = std::chrono::system_clock::now();
 

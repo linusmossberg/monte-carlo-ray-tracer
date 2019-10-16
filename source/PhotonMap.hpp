@@ -2,13 +2,12 @@
 
 #include <vector>
 
-#include <nanoflann.hpp>
 #include <glm/glm.hpp>
 #include <glm/vec3.hpp>
+#include <glm/gtx/component_wise.hpp>
 
 #include "Util.hpp"
 #include "Scene.hpp"
-//#include "Octree.hpp"
 #include "Octree.hpp"
 
 struct Photon : public OctreeData
@@ -32,14 +31,24 @@ public:
 class PhotonMap
 {
 public:
-    PhotonMap(Scene& s, uint16_t max_points)
-        : global(glm::vec3(5,0,0), glm::vec3(8, 5, 6) + glm::vec3(0.01f), max_points)
+    PhotonMap(Scene& s, size_t photon_emissions, uint16_t max_node_points)
+        : global(glm::vec3(5,0,0), glm::vec3(8, 5, 6) + glm::vec3(0.01f), max_node_points)
     {
         scene = std::make_shared<Scene>(s);
+
+        double total_add_flux = 0.0;
         for (const auto& light : scene->emissives)
         {
-            glm::dvec3 flux = light->material->emittance * light->area() / 2000000.0;
-            for (int i = 0; i < 2000000; i++)
+            total_add_flux += glm::compAdd(light->material->emittance * light->area());
+        }
+
+        for (const auto& light : scene->emissives)
+        {
+            glm::dvec3 light_flux = light->material->emittance * light->area();
+            double photon_emissions_share = glm::compAdd(light_flux) / total_add_flux;
+            size_t num_light_emissions = static_cast<size_t>(photon_emissions * photon_emissions_share);
+            glm::dvec3 photon_flux = light_flux / static_cast<double>(num_light_emissions);
+            for (size_t i = 0; i < num_light_emissions; i++)
             {
                 glm::dvec3 pos = (*light)(Random::range(0, 1), Random::range(0, 1));
                 glm::dvec3 normal = light->normal(pos);
@@ -47,7 +56,7 @@ public:
 
                 pos += normal * 1e-7;
 
-                emitPhoton(Ray(pos, pos + dir, scene->ior), flux);
+                emitPhoton(Ray(pos, pos + dir, scene->ior), photon_flux);
             }
         }
     }
@@ -87,8 +96,7 @@ public:
             else
             {
                 /* DIFFUSE REFLECTION */
-                global.insert(std::make_unique<Photon>(flux, intersect.position, ray.direction));
-                global_vec.push_back(Photon(flux, intersect.position, ray.direction));
+                global.insert(std::make_shared<Photon>(flux, intersect.position, ray.direction));
 
                 if (ray_depth == 0) 
                     createShadowPhotons(Ray(intersect.position - intersect.normal * 1e-7, intersect.position + ray.direction));
@@ -115,8 +123,7 @@ public:
         // TODO: Might need to evaluate fresnel and transparency to probabilistically determine if shadow photon should be created
         if ((abs(intersect.material->transparency - 1.0) > 1e-7) && !intersect.material->perfect_mirror)
         {
-            global_vec.push_back(Photon(intersect.position));
-            global.insert(std::make_unique<Photon>(intersect.position));
+            global.insert(std::make_shared<Photon>(intersect.position));
         }
 
         glm::dvec3 pos(intersect.position - intersect.normal * 1e-7);
@@ -124,8 +131,6 @@ public:
     }
 
     Octree global;
-
-    std::vector<Photon> global_vec;
 
     std::shared_ptr<Scene> scene;
 };

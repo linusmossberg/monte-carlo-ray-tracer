@@ -8,7 +8,10 @@
 #include <filesystem>
 #include <iomanip>
 #include <sstream>
+
+/*WINDOWS*/
 #include <conio.h>
+/*WINDOWS*/
 
 #include <glm/glm.hpp>
 #include <glm/vec3.hpp>
