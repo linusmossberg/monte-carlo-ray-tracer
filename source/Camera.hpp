@@ -82,7 +82,7 @@ private:
     Image image;
 
     size_t min_ray_depth = 3;
-    size_t max_ray_depth = 512; // prevent call stack overflow
+    size_t max_ray_depth = 64; // prevent call stack overflow
 
     std::shared_ptr<Scene> scene;
 

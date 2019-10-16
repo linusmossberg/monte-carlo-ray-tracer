@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <list>
 #include <memory>
 #include <iostream>
 
@@ -52,7 +53,7 @@ public:
         insertInChildOctant(data);
     }
 
-    void dataInBox(const glm::vec3& min, const glm::vec3& max, std::vector<std::shared_ptr<OctreeData>>& result)
+    void dataInBox(const glm::vec3& min, const glm::vec3& max, std::vector<std::shared_ptr<OctreeData>>& result) const
     {
         if (leaf())
         {
@@ -82,8 +83,9 @@ public:
         }
     }
 
-    void dataInRadius(const glm::vec3& point, float radius, std::vector<std::shared_ptr<OctreeData>>& result)
+    std::vector<std::shared_ptr<OctreeData>> dataInRadius(const glm::vec3& point, float radius) const
     {
+        std::vector<std::shared_ptr<OctreeData>> result;
         dataInBox(point - glm::vec3(radius), point + glm::vec3(radius), result);
 
         std::vector<std::shared_ptr<OctreeData>>::iterator i;
@@ -98,6 +100,7 @@ public:
                 ++i;
             }
         }
+        return result;
     }
 
 private:

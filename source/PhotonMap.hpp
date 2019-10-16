@@ -63,10 +63,24 @@ public:
 
     void emitPhoton(const Ray& ray, const glm::dvec3& flux, size_t ray_depth = 0)
     {
+        if (ray_depth == max_ray_depth)
+        {
+            printToLog("Max photon ray depth reached.");
+            return;
+        }
+
         Intersection intersect = scene->intersect(ray, true);
 
-        if (!intersect)
-            return;
+        if (!intersect) return;
+
+        // Use russian roulette regardless of material.
+        // Otherwise call stack overflow (or bias if prevented) is guaranteed with some scenes.
+        bool should_terminate = false;
+        double terminate = 1.0 - intersect.material->reflect_probability;
+        if (terminate > Random::range(0, 1))
+        {
+            should_terminate = true;
+        }
 
         Ray new_ray(intersect.position);
 
@@ -78,6 +92,8 @@ public:
         if (intersect.material->perfect_mirror || Material::Fresnel(n1, n2, intersect.normal, -ray.direction) > Random::range(0, 1))
         {
             /* SPECULAR REFLECTION */
+            if (should_terminate) return;
+
             if(ray_depth == 0) 
                 createShadowPhotons(Ray(intersect.position - intersect.normal * 1e-7, intersect.position + ray.direction));
 
@@ -89,6 +105,8 @@ public:
             if (intersect.material->transparency > Random::range(0, 1))
             {
                 /* SPECULAR REFRACTION */
+                if (should_terminate) return;
+
                 // TODO: Maybe create shadow photons if reflection
                 BRDF = intersect.material->SpecularBRDF();
                 new_ray.refractSpecular(ray.direction, intersect.normal, n1, n2);
@@ -97,6 +115,7 @@ public:
             {
                 /* DIFFUSE REFLECTION */
                 global.insert(std::make_shared<Photon>(flux, intersect.position, ray.direction));
+                if (should_terminate) return;
 
                 if (ray_depth == 0) 
                     createShadowPhotons(Ray(intersect.position - intersect.normal * 1e-7, intersect.position + ray.direction));
@@ -106,11 +125,11 @@ public:
                     return;
 
                 CoordinateSystem cs(intersect.normal);
-                BRDF = intersect.material->DiffuseBRDF(cs.globalToLocal(new_ray.direction), cs.globalToLocal(-ray.direction)) / (1.0 - terminate);
+                BRDF = intersect.material->DiffuseBRDF(cs.globalToLocal(new_ray.direction), cs.globalToLocal(-ray.direction));
                 new_ray.reflectDiffuse(cs, n1);
             }
         }
-        emitPhoton(new_ray, flux * BRDF, ray_depth + 1);
+        emitPhoton(new_ray, flux * BRDF / (1.0 - terminate), ray_depth + 1);
     }
 
     void createShadowPhotons(const Ray& ray)
@@ -131,6 +150,8 @@ public:
     }
 
     Octree global;
-
     std::shared_ptr<Scene> scene;
+
+    // Prevent call stack overflow, unlikely to ever happen.
+    const size_t max_ray_depth = 64;
 };

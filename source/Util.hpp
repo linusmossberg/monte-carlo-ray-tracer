@@ -8,6 +8,7 @@
 #include <filesystem>
 #include <iomanip>
 #include <sstream>
+#include <fstream>
 
 /*WINDOWS*/
 #include <conio.h>
@@ -102,6 +103,12 @@ inline void printProgressInfo(double progress, size_t msec_duration, size_t sps,
         << " || Samples/s: " << formatSPS() + "    ";
 
     out << ss.str();
+}
+
+inline void printToLog(const std::string& message)
+{
+    std::ofstream log("log.txt", std::ios::app);
+    log << "[" << formatDate(std::chrono::system_clock::now()) << "]: " << message << std::endl;
 }
 
 inline size_t getSceneOption(const std::vector<std::pair<std::filesystem::path, int>> &options)

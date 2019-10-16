@@ -5,6 +5,7 @@ glm::dvec3 Camera::sampleRay(Ray ray, size_t ray_depth)
 {
     if (ray_depth == max_ray_depth)
     {
+        printToLog("Max ray depth reached.");
         return glm::dvec3(0.0);
     }
 
