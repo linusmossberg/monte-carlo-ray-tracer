@@ -83,9 +83,7 @@ inline void printProgressInfo(double progress, size_t msec_duration, size_t sps,
         {
             l = d_str;
         }
-
         size_t r_len = (4 - l.length());
-
         std::string r_n = r.length() >= r_len ? r.substr(0, r_len) : r + std::string(' ', static_cast<int>(r_len - r.length()));
 
         return l + "." + r_n + "%";
@@ -93,7 +91,7 @@ inline void printProgressInfo(double progress, size_t msec_duration, size_t sps,
 
     auto ETA = std::chrono::system_clock::now() + std::chrono::milliseconds(msec_duration);
 
-    // Create string first to avoid jumbled output when multiple threads write simultaneously
+    // Create string first to avoid jumbled output if multiple threads write simultaneously
     std::stringstream ss;
     ss << "\rTime remaining: " << formatTimeDuration(msec_duration)
         << " || " << formatProgress()
@@ -147,7 +145,7 @@ inline size_t getSceneOption(const std::vector<std::pair<std::filesystem::path, 
     while (std::cin >> scene_option)
     {
         if (scene_option < 0 || scene_option >= options.size())
-            std::cout << "Invalid scene number, try again: ";
+            std::cout << "Invalid scene option, try again: ";
         else
             break;
     }

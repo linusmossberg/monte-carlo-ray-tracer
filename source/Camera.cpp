@@ -25,7 +25,7 @@ glm::dvec3 Camera::sampleRay(Ray ray, size_t ray_depth)
         }
     }
 
-    Ray new_ray(intersect.position, 1e-7);
+    Ray new_ray(intersect.position);
 
     glm::dvec3 emittance = (ray_depth == 0 || ray.specular || naive) ? intersect.material->emittance : glm::dvec3(0);
     glm::dvec3 direct(0), indirect(0);
@@ -82,7 +82,7 @@ void Camera::samplePixel(size_t x, size_t y)
 
             glm::dvec3 sensor_pos = eye + forward * focal_length + left * center_offset.x + up * center_offset.y;
 
-            image(x, y) += sampleRay(Ray(eye, sensor_pos));
+            image(x, y) += sampleRay(Ray(eye, sensor_pos, scene->ior));
         }
     }
     image(x, y) /= pow2(static_cast<double>(scene->sqrtspp));

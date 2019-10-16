@@ -24,6 +24,8 @@ namespace Surface
 
         virtual glm::dvec3 operator()(double u, double v) const = 0; // point on surface
 
+        virtual glm::dvec3 normal(const glm::dvec3& pos) const = 0;
+
         double area() const
         {
             return area_;
@@ -58,6 +60,11 @@ namespace Surface
             return origin + radius * glm::dvec3(r * cos(phi), r * sin(phi), z);
         }
 
+        virtual glm::dvec3 normal(const glm::dvec3& pos) const
+        {
+            return (pos - origin) / radius;
+        }
+
     protected:
         virtual void computeArea()
         {
@@ -73,10 +80,10 @@ namespace Surface
     {
     public:
         Triangle(const glm::dvec3& v0, const glm::dvec3& v1, const glm::dvec3& v2)
-            : v0(v0), v1(v1), v2(v2), E1(v1 - v0), E2(v2 - v0), normal(glm::normalize(glm::cross(E1, E2))) { computeArea(); }
+            : v0(v0), v1(v1), v2(v2), E1(v1 - v0), E2(v2 - v0), normal_(glm::normalize(glm::cross(E1, E2))) { computeArea(); }
 
         Triangle(const glm::dvec3& v0, const glm::dvec3& v1, const glm::dvec3& v2, const Material& material)
-            : Base(material), v0(v0), v1(v1), v2(v2), E1(v1 - v0), E2(v2 - v0), normal(glm::normalize(glm::cross(E1, E2))) { computeArea(); }
+            : Base(material), v0(v0), v1(v1), v2(v2), E1(v1 - v0), E2(v2 - v0), normal_(glm::normalize(glm::cross(E1, E2))) { computeArea(); }
 
         ~Triangle() {};
 
@@ -86,6 +93,11 @@ namespace Surface
         {
             double su = std::sqrt(u);
             return (1 - su) * v0 + (1 - v) * su * v1 + v * su * v2;
+        }
+
+        virtual glm::dvec3 normal(const glm::dvec3& pos) const
+        {
+            return normal_;
         }
 
     protected:
@@ -98,6 +110,6 @@ namespace Surface
         glm::dvec3 v0, v1, v2;
 
         // Pre-computed edges and normal
-        glm::dvec3 E1, E2, normal;
+        glm::dvec3 E1, E2, normal_;
     };
 }

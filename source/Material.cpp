@@ -34,7 +34,5 @@ glm::dvec3 Material::OrenNayarBRDF(const glm::dvec3 &i, const glm::dvec3 &o)
 
 double Material::calculateReflectProbability()
 {
-    const glm::dvec3 &r = reflectance;
-    const glm::dvec3 &s = specular_reflectance;
-    return (r.x + r.y + r.z + s.x + s.y + s.z) / (6.0);
+    return (glm::compAdd(reflectance) + glm::compAdd(specular_reflectance)) / 6.0;
 }

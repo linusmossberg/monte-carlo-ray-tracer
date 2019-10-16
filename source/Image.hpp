@@ -4,6 +4,8 @@
 #include <cstdint>
 #include <fstream>
 
+#include <glm/gtx/component_wise.hpp>
+
 //Hard coded (except for dimensions) uncompressed 24bpp true-color TGA header.
 //After writing this to file, the RGB bytes can be dumped in sequence (left to right, top to bottom) to create a TGA image.
 struct HeaderTGA
@@ -93,7 +95,7 @@ struct Image
         for (const auto& p : blob)
         {
             glm::dvec3 fp = glm::clamp(filmic(p), glm::dvec3(0.0), glm::dvec3(1.0));
-            sum += (fp.x + fp.y + fp.z) / 3.0;
+            sum += glm::compAdd(fp) / 3.0;
         }
         return sum / blob.size();
     }
@@ -103,7 +105,7 @@ struct Image
         double max = 0.0;
         for (const auto& p : blob)
         {
-            double t = (p.x + p.y + p.z) / 3.0;
+            double t = glm::compAdd(p) / 3.0;
             if (max < t)
             {
                 max = t;
@@ -128,14 +130,14 @@ struct Image
 
         for (const auto& p : blob)
         {
-            double t = (p.x + p.y + p.z) / 3.0;
+            double t = glm::compAdd(p) / 3.0;
             histogram[static_cast<size_t>(std::floor(t / bin_size))]++;
         }
 
         size_t clip_num_pixels = static_cast<size_t>(blob.size() * 0.15);
         size_t count = 0;
         double L = 1.0;
-        for (size_t i = histogram.size() - 1; i  >= 0; i--)
+        for (size_t i = histogram.size() - 1; i >= 0; i--)
         {
             count += histogram[i];
             if (count >= clip_num_pixels)

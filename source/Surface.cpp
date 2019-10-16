@@ -64,7 +64,7 @@ bool Surface::Triangle::intersect(const Ray& ray, Intersection& intersection) co
 
     intersection.t = t;
     intersection.position = ray(t);
-    intersection.normal = normal;
+    intersection.normal = normal_;
     intersection.material = material;
 
     return true;

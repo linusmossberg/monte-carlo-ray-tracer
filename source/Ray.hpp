@@ -12,13 +12,13 @@ class Ray
 {
 public:
     Ray()
-        : start(0), direction(0, 0, 1), offset(1e-7) { }
+        : start(0), direction(0, 0, 1), medium_ior(1.0) { }
 
-    Ray(const glm::dvec3& start, const glm::dvec3& end, double offset = 1e-7)
-        : start(start), direction(glm::normalize(end - start)), offset(offset) { }
+    Ray(const glm::dvec3& start, const glm::dvec3& end, double medium_ior = 1.0)
+        : start(start), direction(glm::normalize(end - start)), medium_ior(medium_ior) { }
 
-    Ray(const glm::dvec3& start, double offset = 1e-7)
-        : start(start), direction(0,0,1), offset(offset) { }
+    Ray(const glm::dvec3& start)
+        : start(start), direction(0,0,1), medium_ior(1.0) { }
 
     glm::dvec3 operator()(double t) const
     {
@@ -31,8 +31,8 @@ public:
     
     // Normalized direction -> t corresponds to euclidian distance in metric units
     glm::dvec3 start, direction;
-    double medium_ior = 1.0;
-    double offset;
+    double medium_ior;
+    const double offset = 1e-7;
     bool specular = false;
 };
 

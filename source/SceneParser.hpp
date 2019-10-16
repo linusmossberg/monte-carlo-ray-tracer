@@ -97,11 +97,13 @@ public:
         }
         camera->setNaive(getOptional(j, "naive", false));
 
+        double scene_ior = j.at("ior");
+
         std::unordered_map<std::string, Material> materials;
         for (const auto& m : j.at("materials"))
         {
             double roughness                = getOptional(m, "roughness", 0.0);
-            double ior                      = getOptional(m, "ior", 1.0);
+            double ior                      = getOptional(m, "ior", scene_ior);
             double transparency             = getOptional(m, "transparency", 0.0);
             bool perfect_mirror             = getOptional(m, "perfect_mirror", false);
             glm::dvec3 reflectance          = getOptional(m, "reflectance", glm::dvec3(0.0));
@@ -167,7 +169,7 @@ public:
         }
         scene_file.close();
 
-        Scene scene(surfaces, j.at("sqrtspp"), j.at("savename"), j.at("ior"));
+        Scene scene(surfaces, j.at("sqrtspp"), j.at("savename"), scene_ior);
 
         return CameraScenePair(std::move(camera), scene);
     }

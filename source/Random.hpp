@@ -19,6 +19,8 @@ struct Random
     static size_t uirange(size_t v1, size_t v2);
 
     static glm::dvec3 CosWeightedHemiSample();
+    
+    static glm::dvec3 UniformHemiSample();
 
 private:
     // thread_local to create one static random engine per thread.
