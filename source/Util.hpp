@@ -10,9 +10,9 @@
 #include <sstream>
 #include <fstream>
 
-/*WINDOWS*/
-#include <conio.h>
-/*WINDOWS*/
+#ifdef _WIN32
+    #include <conio.h>
+#endif
 
 #include <glm/glm.hpp>
 #include <glm/vec3.hpp>
@@ -24,8 +24,15 @@ inline std::ostream& operator<<(std::ostream& out, const glm::dvec3& v)
 
 inline void waitForInput()
 {
+#ifdef _WIN32
     std::cout << std::endl << "Press any key to exit." << std::endl;
     _getch();
+#elif __linux_
+    std::cout << std::endl << "Press enter to exit." << std::endl;
+    std::cin.get();
+#else
+
+#endif
 }
 
 inline std::string formatDate(const std::chrono::time_point<std::chrono::system_clock> &date)
@@ -105,7 +112,7 @@ inline void printProgressInfo(double progress, size_t msec_duration, size_t sps,
     out << ss.str();
 }
 
-inline void printToLog(const std::string& message)
+inline void Log(const std::string& message)
 {
     std::ofstream log("log.txt", std::ios::app);
     log << "[" << formatDate(std::chrono::system_clock::now()) << "]: " << message << std::endl;

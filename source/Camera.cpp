@@ -5,7 +5,7 @@ glm::dvec3 Camera::sampleRay(Ray ray, size_t ray_depth)
 {
     if (ray_depth == max_ray_depth)
     {
-        printToLog("Max ray depth reached.");
+        Log("Max ray depth reached.");
         return glm::dvec3(0.0);
     }
 
@@ -57,10 +57,7 @@ glm::dvec3 Camera::sampleRay(Ray ray, size_t ray_depth)
             new_ray.reflectDiffuse(cs, n1);
             BRDF = intersect.material->DiffuseBRDF(cs.globalToLocal(new_ray.direction), cs.globalToLocal(-ray.direction)) * M_PI;
 
-            if (!naive) 
-            {
-                direct = scene->sampleLights(intersect);
-            }
+            if (!naive) direct = scene->sampleLights(intersect);
         }
     }
 

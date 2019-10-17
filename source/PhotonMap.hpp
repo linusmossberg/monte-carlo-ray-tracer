@@ -31,8 +31,8 @@ public:
 class PhotonMap
 {
 public:
-    PhotonMap(Scene& s, size_t photon_emissions, uint16_t max_node_points)
-        : global(glm::vec3(5,0,0), glm::vec3(8, 5, 6) + glm::vec3(0.01f), max_node_points)
+    PhotonMap(Scene& s, size_t photon_emissions, uint16_t max_node_data)
+        : global(glm::vec3(5,0,0), glm::vec3(8, 5, 6) + glm::vec3(0.01f), max_node_data)
     {
         scene = std::make_shared<Scene>(s);
 
@@ -65,7 +65,7 @@ public:
     {
         if (ray_depth == max_ray_depth)
         {
-            printToLog("Max photon ray depth reached.");
+            Log("Max photon ray depth reached.");
             return;
         }
 
@@ -73,14 +73,10 @@ public:
 
         if (!intersect) return;
 
-        // Use russian roulette regardless of material.
-        // Otherwise call stack overflow (or bias if prevented) is guaranteed with some scenes.
-        bool should_terminate = false;
+        // Use russian roulette regardless of material. Otherwise call stack 
+        // overflow (or bias if prevented) is guaranteed with some scenes.
         double terminate = 1.0 - intersect.material->reflect_probability;
-        if (terminate > Random::range(0, 1))
-        {
-            should_terminate = true;
-        }
+        bool should_terminate = terminate > Random::range(0, 1);
 
         Ray new_ray(intersect.position);
 
@@ -92,10 +88,10 @@ public:
         if (intersect.material->perfect_mirror || Material::Fresnel(n1, n2, intersect.normal, -ray.direction) > Random::range(0, 1))
         {
             /* SPECULAR REFLECTION */
-            if (should_terminate) return;
-
-            if(ray_depth == 0) 
+            if (ray_depth == 0 && Random::range(0, 1) < 0.1)
                 createShadowPhotons(Ray(intersect.position - intersect.normal * 1e-7, intersect.position + ray.direction));
+
+            if (should_terminate) return;
 
             BRDF = intersect.material->SpecularBRDF();
             new_ray.reflectSpecular(ray.direction, intersect.normal, n1);
@@ -114,15 +110,13 @@ public:
             else
             {
                 /* DIFFUSE REFLECTION */
-                global.insert(std::make_shared<Photon>(flux, intersect.position, ray.direction));
-                if (should_terminate) return;
+                global.insert(Photon(flux, intersect.position, ray.direction));
+                num_photons++;
 
-                if (ray_depth == 0) 
+                if (ray_depth == 0 && Random::range(0, 1) < 0.1)
                     createShadowPhotons(Ray(intersect.position - intersect.normal * 1e-7, intersect.position + ray.direction));
 
-                double terminate = 1.0 - intersect.material->reflect_probability;
-                if (terminate > Random::range(0, 1))
-                    return;
+                if (should_terminate) return;
 
                 CoordinateSystem cs(intersect.normal);
                 BRDF = intersect.material->DiffuseBRDF(cs.globalToLocal(new_ray.direction), cs.globalToLocal(-ray.direction));
@@ -136,22 +130,25 @@ public:
     {
         Intersection intersect = scene->intersect(ray, true);
 
-        if (!intersect)
-            return;
+        if (!intersect) return;
 
         // TODO: Might need to evaluate fresnel and transparency to probabilistically determine if shadow photon should be created
         if ((abs(intersect.material->transparency - 1.0) > 1e-7) && !intersect.material->perfect_mirror)
         {
-            global.insert(std::make_shared<Photon>(intersect.position));
+            global.insert(Photon(intersect.position));
+            num_shadow_photons++;
         }
 
         glm::dvec3 pos(intersect.position - intersect.normal * 1e-7);
         createShadowPhotons(Ray(pos, pos + ray.direction));
     }
 
-    Octree global;
+    Octree<Photon> global;
+
     std::shared_ptr<Scene> scene;
 
-    // Prevent call stack overflow, unlikely to ever happen.
-    const size_t max_ray_depth = 64;
+    const size_t max_ray_depth = 64; // Prevent call stack overflow, unlikely to ever happen.
+
+    size_t num_photons = 0;
+    size_t num_shadow_photons = 0;
 };

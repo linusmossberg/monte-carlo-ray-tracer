@@ -64,7 +64,7 @@ int main()
         return -1;
     }
 
-    testPhotonMap(csp->scene, 1e6, 1e4, 1, 1000, 25);
+    testPhotonMap(csp->scene, (size_t)2e6, (size_t)1e4, 1, 1000, 1, "photon_map_test.csv");
 
     auto before = std::chrono::system_clock::now();
 
