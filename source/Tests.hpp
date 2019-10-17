@@ -34,8 +34,8 @@ inline void testPhotonMap(
         if (max_node_data != start_node_points)
         {
             end = std::chrono::system_clock::now();
-            std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << std::endl;
-            log << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << std::endl;
+            std::cout << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() / 1000.0 << std::endl;
+            log << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() / 1000.0 << std::endl;
         }
 
         auto build_before = std::chrono::system_clock::now();
@@ -47,6 +47,7 @@ inline void testPhotonMap(
         auto before = std::chrono::system_clock::now();
         for (size_t i = 0; i < num_radius_searches; i++)
         {
+            glm::vec3 p(Random::range(4, 6), -5, Random::range(-1, 1));
             auto results = test.global.radiusSearch(p, 0.1f);
             count = results.size();
         }
@@ -57,22 +58,22 @@ inline void testPhotonMap(
         SIZE_T vmem_used = pmc.WorkingSetSize;
 
         std::cout << max_node_data << ", ";
-        std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(build_now - build_before).count() << ", ";
-        std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(now - before).count() << ", ";
+        std::cout << std::chrono::duration_cast<std::chrono::microseconds>(build_now - build_before).count() / 1000.0 << ", ";
+        std::cout << std::chrono::duration_cast<std::chrono::microseconds>(now - before).count() / 1000.0 << ", ";
         std::cout << count << ", ";
         std::cout << vmem_used / 1e6 << ", ";
 
         log << max_node_data << ", ";
-        log << std::chrono::duration_cast<std::chrono::milliseconds>(build_now - build_before).count() << ", ";
-        log << std::chrono::duration_cast<std::chrono::milliseconds>(now - before).count() << ", ";
+        log << std::chrono::duration_cast<std::chrono::microseconds>(build_now - build_before).count() / 1000.0 << ", ";
+        log << std::chrono::duration_cast<std::chrono::microseconds>(now - before).count() / 1000.0  << ", ";
         log << count << ", ";
         log << vmem_used / 1e6 << ", ";
 
         begin = std::chrono::system_clock::now();
     }
     end = std::chrono::system_clock::now();
-    std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << std::endl;
-    log << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << std::endl;
+    std::cout << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() / 1000.0 << std::endl;
+    log << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() / 1000.0 << std::endl;
 
     log.close();
 }
