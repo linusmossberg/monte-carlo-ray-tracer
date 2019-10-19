@@ -14,6 +14,11 @@ unsigned Random::seed()
     return engine_seed;
 }
 
+std::mt19937_64 Random::getEngine()
+{
+    return engine;
+}
+
 // Generates random numbers in range [min,max[
 double Random::range(double min, double max)
 {
@@ -43,7 +48,11 @@ glm::dvec3 Random::UniformHemiSample()
 {
     double u = range(0, 1);
     double r = std::sqrt(1.0f - u * u);
+
+    //double inclination = range(0, M_PI / 2);
     double azimuth = range(0, 2 * M_PI);
 
     return glm::dvec3(r * cos(azimuth), r * sin(azimuth), u);
+
+    //return glm::dvec3(sin(inclination) * cos(azimuth), sin(inclination) * sin(azimuth), cos(inclination));
 }

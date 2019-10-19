@@ -17,22 +17,20 @@
 #include <glm/glm.hpp>
 #include <glm/vec3.hpp>
 
-inline std::ostream& operator<<(std::ostream& out, const glm::dvec3& v)
-{
-    return out << std::string("( " + std::to_string(v.x) + ", " + std::to_string(v.y) + ", " + std::to_string(v.z) + ")\n");
-}
-
 inline void waitForInput()
 {
 #ifdef _WIN32
     std::cout << std::endl << "Press any key to exit." << std::endl;
     _getch();
-#elif __linux_
+#else
     std::cout << std::endl << "Press enter to exit." << std::endl;
     std::cin.get();
-#else
-
 #endif
+}
+
+inline std::ostream& operator<<(std::ostream& out, const glm::dvec3& v)
+{
+    return out << std::string("( " + std::to_string(v.x) + ", " + std::to_string(v.y) + ", " + std::to_string(v.z) + " )");
 }
 
 inline std::string formatDate(const std::chrono::time_point<std::chrono::system_clock> &date)
@@ -66,48 +64,48 @@ inline std::string formatTimeDuration(size_t msec_duration)
     return ss.str();
 }
 
+inline std::string formatProgress(double progress)
+{
+    std::string d_str = std::to_string(progress);
+    size_t dot_pos = d_str.find('.');
+    std::string l(""), r("");
+    if (dot_pos != std::string::npos)
+    {
+        l = d_str.substr(0, dot_pos);
+        r = d_str.substr(dot_pos + 1);
+    }
+    else
+    {
+        l = d_str;
+    }
+    size_t r_len = (4 - l.length());
+    std::string r_n = r.length() >= r_len ? r.substr(0, r_len) : r + std::string(' ', static_cast<int>(r_len - r.length()));
+
+    return l + "." + r_n + "%";
+};
+
+inline std::string formatLargeNumber(size_t n)
+{
+    std::string int_string = std::to_string(n);
+    size_t pos = int_string.length() - 3;
+    while (pos > 0 && pos < int_string.length())
+    {
+        int_string.insert(pos, " ");
+        pos -= 3;
+    }
+    return int_string;
+};
+
 inline void printProgressInfo(double progress, size_t msec_duration, size_t sps, std::ostream &out)
 {
-    auto formatSPS = [&sps]()
-    {
-        std::string int_string = std::to_string(sps);
-        size_t pos = int_string.length() - 3;
-        while (pos > 0 && pos < int_string.length())
-        {
-            int_string.insert(pos, " ");
-            pos -= 3;
-        }
-        return int_string;
-    };
-
-    auto formatProgress = [&progress]()
-    {
-        std::string d_str = std::to_string(progress);
-        size_t dot_pos = d_str.find('.');
-        std::string l(""), r("");
-        if (dot_pos != std::string::npos)
-        {
-            l = d_str.substr(0, dot_pos);
-            r = d_str.substr(dot_pos + 1);
-        }
-        else
-        {
-            l = d_str;
-        }
-        size_t r_len = (4 - l.length());
-        std::string r_n = r.length() >= r_len ? r.substr(0, r_len) : r + std::string(' ', static_cast<int>(r_len - r.length()));
-
-        return l + "." + r_n + "%";
-    };
-
     auto ETA = std::chrono::system_clock::now() + std::chrono::milliseconds(msec_duration);
 
     // Create string first to avoid jumbled output if multiple threads write simultaneously
     std::stringstream ss;
     ss << "\rTime remaining: " << formatTimeDuration(msec_duration)
-        << " || " << formatProgress()
-        << " || ETA: " << formatDate(ETA)
-        << " || Samples/s: " << formatSPS() + "    ";
+       << " || " << formatProgress(progress)
+       << " || ETA: " << formatDate(ETA)
+       << " || Samples/s: " << formatLargeNumber(sps) + "    ";
 
     out << ss.str();
 }
@@ -115,7 +113,9 @@ inline void printProgressInfo(double progress, size_t msec_duration, size_t sps,
 inline void Log(const std::string& message)
 {
     std::ofstream log("log.txt", std::ios::app);
-    log << "[" << formatDate(std::chrono::system_clock::now()) << "]: " << message << std::endl;
+    std::string temp = message;
+    temp.erase(std::remove(temp.begin(), temp.end(), '\n'), temp.end());
+    log << "[" << formatDate(std::chrono::system_clock::now()) << "]: " << temp << std::endl;
 }
 
 inline size_t getSceneOption(const std::vector<std::pair<std::filesystem::path, int>> &options)

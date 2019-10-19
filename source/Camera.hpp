@@ -18,9 +18,20 @@
 #include <glm/gtx/vector_angle.hpp>
 
 #include "Scene.hpp"
+#include "PhotonMap.hpp"
 #include "Surface.hpp"
 #include "Image.hpp"
+#include "MultiThreading.hpp"
 #include "Util.hpp"
+
+struct Bucket
+{
+    Bucket() : min(0), max(0) { }
+    Bucket(const glm::ivec2& min, const glm::ivec2& max) : min(min), max(max) { }
+
+    glm::ivec2 min;
+    glm::ivec2 max;
+};
 
 class Camera
 {
@@ -43,7 +54,7 @@ public:
         lookAt(look_at);
     }
 
-    void sampleImage(Scene& s);
+    void sampleImage(const Scene& s, std::unique_ptr<PhotonMap> pm = nullptr);
 
     void saveImage(const std::string& filename) const
     {
@@ -71,7 +82,7 @@ private:
 
     glm::dvec3 sampleRay(Ray ray, size_t ray_depth = 0);
     void samplePixel(size_t x, size_t y);
-    void sampleImageThread(size_t thread, size_t num_threads);
+    void sampleImageThread(WorkQueue<Bucket>& buckets);
 
     void printInfoThread();
 
@@ -81,10 +92,13 @@ private:
     double focal_length, sensor_width;
     Image image;
 
-    size_t min_ray_depth = 3;
-    size_t max_ray_depth = 64; // prevent call stack overflow
+    const size_t min_ray_depth = 3;
+    const size_t max_ray_depth = 64; // prevent call stack overflow
+
+    const size_t bucket_size = 32;
 
     std::shared_ptr<Scene> scene;
+    std::unique_ptr<PhotonMap> photon_map;
 
     std::atomic_size_t num_sampled_pixels = 0;
     size_t last_num_sampled_pixels = 0;

@@ -21,8 +21,9 @@
 
 int main()
 {
+    {
     Random::seed(std::random_device{}());
-
+    
     std::filesystem::path path(std::filesystem::current_path().string() + "\\scenes");
     std::cout << "Scene directory:" << std::endl << path.string() << std::endl << std::endl;
 
@@ -50,7 +51,7 @@ int main()
     std::string file = options[scene_option].first.filename().string();
     file.erase(file.find("."), file.length());
     std::cout << "Scene file " << file << " with camera " << options[scene_option].second << " selected." << std::endl << std::endl;
-    
+
     std::unique_ptr<CameraScenePair> csp;
     try
     {
@@ -63,21 +64,20 @@ int main()
         return -1;
     }
 
-    for (int i = 0; i < 1; i++)
-    {
-        testPhotonMap(csp->scene, (size_t)1e6, (size_t)1e5, 1, 250, 1, "photon_map_test_" + std::to_string(i) + ".csv");
-    }
+    //for (int i = 0; i < 1; i++)
+    //{
+    //    testPhotonMap(csp->scene, (size_t)1e6, (size_t)1e5, 1, 250, 1, "photon_map_test_" + std::to_string(i) + ".csv");
+    //}
 
     auto before = std::chrono::system_clock::now();
-
-    csp->camera->sampleImage(csp->scene);
+    //csp->camera->sampleImage(csp->scene);
+    csp->camera->sampleImage(csp->scene, std::make_unique<PhotonMap>(csp->scene, size_t(2e8), 160));
     csp->camera->saveImage(csp->scene.savename);
-
     auto now = std::chrono::system_clock::now();
 
     std::cout << std::endl << std::endl << "Render Completed: " << formatDate(now);
     std::cout << ", Elapsed Time: " << formatTimeDuration(std::chrono::duration_cast<std::chrono::milliseconds>(now - before).count()) << std::endl;
-
+    }
     waitForInput();
     
     return 0;

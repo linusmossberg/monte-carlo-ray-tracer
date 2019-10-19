@@ -80,48 +80,76 @@ void Camera::samplePixel(size_t x, size_t y)
 
             glm::dvec3 sensor_pos = eye + forward * focal_length + left * center_offset.x + up * center_offset.y;
 
-            image(x, y) += sampleRay(Ray(eye, sensor_pos, scene->ior));
+            if (photon_map)
+                image(x, y) += photon_map->sampleRay(Ray(eye, sensor_pos, scene->ior));
+            else
+                image(x, y) += sampleRay(Ray(eye, sensor_pos, scene->ior));
         }
     }
     image(x, y) /= pow2(static_cast<double>(scene->sqrtspp));
 }
 
-void Camera::sampleImage(Scene& s)
+void Camera::sampleImage(const Scene& s, std::unique_ptr<PhotonMap> pm)
 {
     scene = std::make_shared<Scene>(s);
 
-    std::function<void(Camera*, size_t, size_t)> f = &Camera::sampleImageThread;
+    if (pm) photon_map = std::move(pm);
 
-    std::vector<std::unique_ptr<std::thread>> threads(std::thread::hardware_concurrency() - 2);
-    for (size_t thread = 0; thread < threads.size(); thread++)
+    std::vector<Bucket> buckets_vec;
+
+    for (size_t x = 0; x < image.width; x += bucket_size)
     {
-        threads[thread] = std::make_unique<std::thread>(f, this, thread, threads.size());
+        size_t x_end = x + bucket_size;
+        if (x_end >= image.width) x_end = image.width;
+        for (size_t y = 0; y < image.height; y += bucket_size)
+        {
+            size_t y_end = y + bucket_size;
+            if (y_end >= image.height) y_end = image.height;
+            buckets_vec.push_back(Bucket(glm::ivec2(x, y), glm::ivec2(x_end, y_end)));
+        }
+    }
+
+    std::shuffle(buckets_vec.begin(), buckets_vec.end(), Random::getEngine());
+    WorkQueue<Bucket> buckets(buckets_vec);
+    buckets_vec.clear();
+
+    std::function<void(Camera*, WorkQueue<Bucket>&)> f = &Camera::sampleImageThread;
+
+    std::vector<std::unique_ptr<std::thread>> threads(std::thread::hardware_concurrency() - 1);
+    for (auto& thread : threads)
+    {
+        thread = std::make_unique<std::thread>(f, this, std::ref(buckets));
     }
 
     std::function<void(Camera*)> p = &Camera::printInfoThread;
     std::thread print_thread(p, this);
     print_thread.detach();
 
-    for (auto &thread : threads)
+    for (auto& thread : threads)
     {
         thread->join();
     }
+
+    std::stringstream ss;
+    ss << image(462, 83);
+    Log(ss.str());
+    std::cout << image(462, 83) << std::endl;
 }
 
-void Camera::sampleImageThread(size_t thread, size_t num_threads)
+void Camera::sampleImageThread(WorkQueue<Bucket>& buckets)
 {
     Random::seed(std::random_device{}()); // Each thread uses different seed.
 
-    size_t step = (size_t)floor((double)image.width / num_threads);
-    size_t start = thread * step;
-    size_t end = thread != (num_threads - 1) ? start + step : image.width;
-    
-    for (size_t x = start; x < end; x++)
+    Bucket bucket;
+    while (buckets.getWork(bucket))
     {
-        for (size_t y = 0; y < image.height; y++)
+        for (size_t x = bucket.min.x; x < bucket.max.x; x++)
         {
-            samplePixel(x, y);
-            num_sampled_pixels++;
+            for (size_t y = bucket.min.y; y < bucket.max.y; y++)
+            {
+                samplePixel(x, y);
+                num_sampled_pixels++;
+            }
         }
     }
 }

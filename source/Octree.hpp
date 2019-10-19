@@ -7,6 +7,8 @@
 #include <glm/glm.hpp>
 #include <glm/vec3.hpp>
 
+#include "Constants.hpp"
+
 struct OctreeData
 {
     virtual glm::vec3 pos() const = 0;
@@ -43,7 +45,7 @@ public:
                     {
                         new_origin[c] += half_size[c] * (i & (0b100 >> c) ? 0.5f : -0.5f);
                     }
-                    octants[i] = std::make_unique<Octree>(new_origin, half_size * 0.5f, max_node_data);
+                    octants[i] = std::make_shared<Octree>(new_origin, half_size * 0.5f, max_node_data);
                 }
 
                 for (const auto &d : temp_data)
@@ -68,9 +70,46 @@ public:
         std::vector<Data> result;
         boxRecursiveSearch(point - glm::vec3(radius), point + glm::vec3(radius), result);
 
+        float radius2 = pow2(radius);
         for (auto i = result.begin(); i != result.end(); )
         {
-            if (glm::distance(i->pos(), point) > radius)
+            if (glm::distance2(i->pos(), point) > radius2)
+                i = result.erase(i);
+            else
+                ++i;
+        }
+        return result;
+    }
+
+    std::vector<Data> pseudoKnnSearch(const glm::vec3& point, float start_radius, float step_radius, float stop_radius, size_t k, float& radius)
+    {
+        k /= (0.25 * C::PI);
+        std::vector<Data> result;
+        radius = stop_radius;
+        while (radius >= start_radius)
+        {
+            boxRecursiveSearch(point - glm::vec3(radius), point + glm::vec3(radius), result);
+            result = radiusSearch(point, radius);
+            if (result.size() <= k)
+            {
+                float radius2 = pow2(radius);
+                for (auto i = result.begin(); i != result.end(); )
+                {
+                    if (glm::distance2(i->pos(), point) > radius2)
+                        i = result.erase(i);
+                    else
+                        ++i;
+                }
+                return result;
+            }
+            radius -= step_radius;
+        }
+        radius += step_radius;
+
+        float radius2 = pow2(radius);
+        for (auto i = result.begin(); i != result.end(); )
+        {
+            if (glm::distance2(i->pos(), point) > radius2)
                 i = result.erase(i);
             else
                 ++i;
@@ -79,6 +118,13 @@ public:
     }
 
 private:
+
+    /**********************
+    octant: 0 1 2 3 4 5 6 7
+         x: 0 0 0 0 1 1 1 1
+         y: 0 0 1 1 0 0 1 1
+         z: 0 1 0 1 0 1 0 1
+    ***********************/
     void insertInOctant(const Data& data)
     {
         uint8_t octant = 0;
@@ -130,5 +176,5 @@ private:
     uint16_t max_node_data;
 
     std::vector<Data> data_vec;
-    std::vector<std::unique_ptr<Octree>> octants;
+    std::vector<std::shared_ptr<Octree>> octants;
 };

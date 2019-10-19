@@ -14,6 +14,8 @@ struct Random
 
     static void seed(unsigned seed);
 
+    static std::mt19937_64 getEngine();
+
     static double range(double v1, double v2);
 
     static size_t uirange(size_t v1, size_t v2);
