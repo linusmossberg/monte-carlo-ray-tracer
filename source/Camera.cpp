@@ -5,7 +5,7 @@ glm::dvec3 Camera::sampleRay(Ray ray, size_t ray_depth)
 {
     if (ray_depth == max_ray_depth)
     {
-        Log("Max ray depth reached.");
+        Log("Max ray depth reached in Camera::sampleRay()");
         return glm::dvec3(0.0);
     }
 
@@ -89,11 +89,11 @@ void Camera::samplePixel(size_t x, size_t y)
     image(x, y) /= pow2(static_cast<double>(scene->sqrtspp));
 }
 
-void Camera::sampleImage(const Scene& s, std::unique_ptr<PhotonMap> pm)
+void Camera::sampleImage(std::shared_ptr<Scene> s, std::shared_ptr<PhotonMap> pm)
 {
-    scene = std::make_shared<Scene>(s);
+    scene = s;
 
-    if (pm) photon_map = std::move(pm);
+    if (pm) photon_map = pm;
 
     std::vector<Bucket> buckets_vec;
     for (size_t x = 0; x < image.width; x += bucket_size)
@@ -114,7 +114,7 @@ void Camera::sampleImage(const Scene& s, std::unique_ptr<PhotonMap> pm)
 
     std::function<void(Camera*, WorkQueue<Bucket>&)> f = &Camera::sampleImageThread;
 
-    std::vector<std::unique_ptr<std::thread>> threads(std::thread::hardware_concurrency() - 2);
+    std::vector<std::unique_ptr<std::thread>> threads(scene->num_threads);
     for (auto& thread : threads)
     {
         thread = std::make_unique<std::thread>(f, this, std::ref(buckets));

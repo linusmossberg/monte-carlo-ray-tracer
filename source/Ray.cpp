@@ -16,7 +16,7 @@ void Ray::reflectSpecular(const glm::dvec3 &in, const glm::dvec3 &normal, double
     medium_ior = n1;
 }
 
-bool Ray::refractSpecular(const glm::dvec3 &in, const glm::dvec3 &normal, double n1, double n2)
+void Ray::refractSpecular(const glm::dvec3 &in, const glm::dvec3 &normal, double n1, double n2)
 {
     specular = true;
 
@@ -29,7 +29,6 @@ bool Ray::refractSpecular(const glm::dvec3 &in, const glm::dvec3 &normal, double
         direction = ior_quotient * in - (ior_quotient * cos_theta + std::sqrt(k)) * normal;
         start -= normal * offset;
         medium_ior = n2;
-        return false;
     }
     else
     {
@@ -37,6 +36,5 @@ bool Ray::refractSpecular(const glm::dvec3 &in, const glm::dvec3 &normal, double
         direction = in - normal * cos_theta * 2.0;
         start += normal * offset;
         medium_ior = n1;
-        return true;
     }
 }

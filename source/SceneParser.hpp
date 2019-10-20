@@ -9,6 +9,7 @@
 
 #include "Scene.hpp"
 #include "Camera.hpp"
+#include "PhotonMap.hpp"
 #include "Material.hpp"
 
 inline glm::dvec3 j2v(const nlohmann::json &j)
@@ -37,12 +38,24 @@ inline glm::dvec3 getOptional(const nlohmann::json &j, std::string value, const 
     return ret;
 }
 
-struct CameraScenePair
+struct SceneRenderer
 {
-    CameraScenePair(std::unique_ptr<Camera> c, Scene &s) : camera(std::move(c)), scene(s) { }
+    SceneRenderer(std::shared_ptr<Camera> c, std::shared_ptr<Scene> s, std::shared_ptr<PhotonMap> p)
+        : camera(c), scene(s), photon_map(p) { }
 
-    std::unique_ptr<Camera> camera;
-    Scene scene;
+    void render()
+    {
+        auto before = std::chrono::system_clock::now();
+        camera->sampleImage(scene, photon_map);
+        camera->saveImage(scene->savename);
+        auto now = std::chrono::system_clock::now();
+        std::cout << std::endl << std::endl << "Render Completed: " << formatDate(now);
+        std::cout << ", Elapsed Time: " << formatTimeDuration(std::chrono::duration_cast<std::chrono::milliseconds>(now - before).count()) << std::endl;
+    }
+
+    std::shared_ptr<Camera> camera;
+    std::shared_ptr<PhotonMap> photon_map;
+    std::shared_ptr<Scene> scene;
 };
 
 class SceneParser
@@ -70,7 +83,7 @@ public:
         return options;
     }
 
-    static CameraScenePair parseScene(const std::filesystem::path path, int camera_idx)
+    static SceneRenderer parseScene(const std::filesystem::path path, int camera_idx)
     {
         std::ifstream scene_file(path);
         nlohmann::json j;
@@ -78,10 +91,10 @@ public:
 
         const auto& c = j.at("cameras").at(camera_idx);
 
-        std::unique_ptr<Camera> camera;
+        std::shared_ptr<Camera> camera;
         if (c.find("look_at") != c.end())
         {
-            camera = std::make_unique<Camera>(
+            camera = std::make_shared<Camera>(
                 j2v(c.at("eye")), j2v(c.at("look_at")), 
                 c.at("focal_length"), c.at("sensor_width"), 
                 c.at("width"), c.at("height")
@@ -89,7 +102,7 @@ public:
         }
         else
         {
-            camera = std::make_unique<Camera>(
+            camera = std::make_shared<Camera>(
                 j2v(c.at("eye")), j2v(c.at("forward")), j2v(c.at("up")), 
                 c.at("focal_length"), c.at("sensor_width"), 
                 c.at("width"), c.at("height")
@@ -169,8 +182,23 @@ public:
         }
         scene_file.close();
 
-        Scene scene(surfaces, j.at("sqrtspp"), j.at("savename"), scene_ior);
+        int threads = getOptional(j, "num_render_threads", -1);
+        std::shared_ptr<Scene> scene = std::make_shared<Scene>(surfaces, j.at("sqrtspp"), j.at("savename"), threads, scene_ior);
 
-        return CameraScenePair(std::move(camera), scene);
+        std::shared_ptr<PhotonMap> photon_map;
+        if (j.find("photon_map") != j.end())
+        {
+            const auto& pm = j.at("photon_map");
+            bool use = pm.at("use");
+            if (use)
+            {
+                photon_map = std::make_shared<PhotonMap>(
+                    scene, pm.at("emissions"), pm.at("max_photons_per_octree_leaf"),
+                    pm.at("caustic_factor"), pm.at("radius"), pm.at("caustic_radius")
+                );
+            }
+        }
+
+        return SceneRenderer(camera, scene, photon_map);
     }
 };

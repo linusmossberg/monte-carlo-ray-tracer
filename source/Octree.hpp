@@ -7,6 +7,7 @@
 #include <glm/glm.hpp>
 #include <glm/vec3.hpp>
 
+#include "Util.hpp"
 #include "Constants.hpp"
 
 struct OctreeData
@@ -21,6 +22,13 @@ static_assert(std::is_base_of<OctreeData, Data>::value, "Octree Data type must d
 public:
     Octree(const glm::dvec3& origin, const glm::dvec3& half_size, uint16_t max_node_data)
         : origin(origin), half_size(half_size), octants(0), max_node_data(max_node_data) { }
+
+    Octree(const BoundingBox& bb, uint16_t max_node_data)
+        : octants(0), max_node_data(max_node_data) 
+    {
+        origin = bb.min + bb.max / 2.0;
+        half_size = (bb.max - origin) + glm::dvec3(C::EPSILON);
+    }
 
     void insert(const Data& data)
     {

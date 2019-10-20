@@ -54,7 +54,7 @@ public:
         lookAt(look_at);
     }
 
-    void sampleImage(const Scene& s, std::unique_ptr<PhotonMap> pm = nullptr);
+    void sampleImage(std::shared_ptr<Scene> s, std::shared_ptr<PhotonMap> pm);
 
     void saveImage(const std::string& filename) const
     {
@@ -98,7 +98,7 @@ private:
     const size_t bucket_size = 32;
 
     std::shared_ptr<Scene> scene;
-    std::unique_ptr<PhotonMap> photon_map;
+    std::shared_ptr<PhotonMap> photon_map;
 
     std::atomic_size_t num_sampled_pixels = 0;
     size_t last_num_sampled_pixels = 0;

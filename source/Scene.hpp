@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <thread>
 #include <memory>
 
 #include "Surface.hpp"
@@ -10,9 +11,12 @@
 class Scene
 {
 public:
-    Scene(std::vector<std::shared_ptr<Surface::Base>> surfaces, size_t sqrtspp, const std::string &savename, double ior)
+    Scene(std::vector<std::shared_ptr<Surface::Base>> surfaces, size_t sqrtspp, const std::string &savename, int threads, double ior)
         : surfaces(surfaces), sqrtspp(sqrtspp), savename(savename), ior(ior)
     {
+        size_t max_threads = std::thread::hardware_concurrency();
+        num_threads = (threads < 1 || threads > max_threads) ? max_threads : threads;
+        std::cout << "Render threads: " << num_threads << std::endl << std::endl;
         generateEmissives();
     }
 
@@ -85,6 +89,27 @@ public:
         }
     }
 
+    BoundingBox boundingBox()
+    {
+        if (surfaces.empty()) return BoundingBox();
+
+        if (!bounding_box)
+        {
+            BoundingBox bb = surfaces.back()->boundingBox();
+            for (const auto& surface : surfaces)
+            {
+                auto s_bb = surface->boundingBox();
+                for (uint8_t c = 0; c < 3; c++)
+                {
+                    bb.min[c] = std::min(bb.min[c], s_bb.min[c]);
+                    bb.max[c] = std::max(bb.max[c], s_bb.max[c]);
+                }
+            }
+            bounding_box = std::make_unique<BoundingBox>(bb);
+        }
+        return *bounding_box;
+    }
+
     glm::dvec3 skyColor(const Ray& ray) const
     {
         double f = (glm::dot(glm::dvec3(0.0, 1.0, 0.0), ray.direction) * 0.7 + 1.0) / 2.0;
@@ -98,6 +123,9 @@ public:
     std::vector<std::shared_ptr<Surface::Base>> surfaces;
     std::vector<std::shared_ptr<Surface::Base>> emissives; // subset of surfaces
     size_t sqrtspp;
+    size_t num_threads;
     std::string savename;
     double ior;
+
+    std::unique_ptr<BoundingBox> bounding_box;
 };

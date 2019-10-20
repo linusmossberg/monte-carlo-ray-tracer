@@ -2,10 +2,11 @@
 
 #include <glm/glm.hpp>
 #include <glm/vec3.hpp>
-#include <glm/gtx/rotate_vector.hpp>
 
 #include "Ray.hpp"
 #include "Material.hpp"
+#include "Constants.hpp"
+#include "Util.hpp"
 
 namespace Surface
 {
@@ -25,6 +26,8 @@ namespace Surface
         virtual glm::dvec3 operator()(double u, double v) const = 0; // point on surface
 
         virtual glm::dvec3 normal(const glm::dvec3& pos) const = 0;
+
+        virtual BoundingBox boundingBox() const = 0;
 
         double area() const
         {
@@ -55,7 +58,7 @@ namespace Surface
         {
             double z = 1.0 - 2.0 * u;
             double r = std::sqrt(1.0 - pow2(z));
-            double phi = 2 * M_PI * v;
+            double phi = C::TWO_PI * v;
 
             return origin + radius * glm::dvec3(r * cos(phi), r * sin(phi), z);
         }
@@ -65,10 +68,18 @@ namespace Surface
             return (pos - origin) / radius;
         }
 
+        virtual BoundingBox boundingBox() const
+        {
+            return BoundingBox(
+                glm::dvec3(origin - glm::dvec3(radius)), 
+                glm::dvec3(origin + glm::dvec3(radius))
+            );
+        }
+
     protected:
         virtual void computeArea()
         {
-            area_ = 4.0 * M_PI * pow2(radius);
+            area_ = 2.0 * C::TWO_PI * pow2(radius);
         }
 
     private:
@@ -98,6 +109,17 @@ namespace Surface
         virtual glm::dvec3 normal(const glm::dvec3& pos) const
         {
             return normal_;
+        }
+
+        virtual BoundingBox boundingBox() const
+        {
+            BoundingBox bb;
+            for (uint8_t c = 0; c < 3; c++)
+            {
+                bb.min[c] = std::min(v0[c], std::min(v1[c], v2[c]));
+                bb.max[c] = std::max(v0[c], std::max(v1[c], v2[c]));
+            }
+            return bb;
         }
 
     protected:
