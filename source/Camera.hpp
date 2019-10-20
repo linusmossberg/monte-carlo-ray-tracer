@@ -84,7 +84,7 @@ private:
     void samplePixel(size_t x, size_t y);
     void sampleImageThread(WorkQueue<Bucket>& buckets);
 
-    void printInfoThread();
+    void printInfoThread(WorkQueue<Bucket>& buckets);
 
     glm::dvec3 eye;
     glm::dvec3 forward, left, up;

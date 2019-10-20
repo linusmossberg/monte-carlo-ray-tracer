@@ -55,7 +55,14 @@ int main()
     std::unique_ptr<CameraScenePair> csp;
     try
     {
+        // TODO: Move parts of this out when not debugging
         csp = std::make_unique<CameraScenePair>(SceneParser::parseScene(options[scene_option].first, options[scene_option].second));
+        auto before = std::chrono::system_clock::now();
+        csp->camera->sampleImage(csp->scene, std::make_unique<PhotonMap>(csp->scene, size_t(1e8), 160));
+        csp->camera->saveImage(csp->scene.savename);
+        auto now = std::chrono::system_clock::now();
+        std::cout << std::endl << std::endl << "Render Completed: " << formatDate(now);
+        std::cout << ", Elapsed Time: " << formatTimeDuration(std::chrono::duration_cast<std::chrono::milliseconds>(now - before).count()) << std::endl;
     }
     catch (const std::exception& ex)
     {
@@ -69,14 +76,6 @@ int main()
     //    testPhotonMap(csp->scene, (size_t)1e6, (size_t)1e5, 1, 250, 1, "photon_map_test_" + std::to_string(i) + ".csv");
     //}
 
-    auto before = std::chrono::system_clock::now();
-    //csp->camera->sampleImage(csp->scene);
-    csp->camera->sampleImage(csp->scene, std::make_unique<PhotonMap>(csp->scene, size_t(2e8), 160));
-    csp->camera->saveImage(csp->scene.savename);
-    auto now = std::chrono::system_clock::now();
-
-    std::cout << std::endl << std::endl << "Render Completed: " << formatDate(now);
-    std::cout << ", Elapsed Time: " << formatTimeDuration(std::chrono::duration_cast<std::chrono::milliseconds>(now - before).count()) << std::endl;
     }
     waitForInput();
     

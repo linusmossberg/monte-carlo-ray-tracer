@@ -32,6 +32,14 @@ public:
         return !empty;
     }
 
+    bool empty()
+    {
+        std::unique_lock<std::mutex> lock(m);
+        bool empty = queue.empty();
+        lock.unlock();
+        return empty;
+    }
+
     double progress()
     {
         std::unique_lock<std::mutex> lock(m);

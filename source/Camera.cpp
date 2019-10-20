@@ -96,7 +96,6 @@ void Camera::sampleImage(const Scene& s, std::unique_ptr<PhotonMap> pm)
     if (pm) photon_map = std::move(pm);
 
     std::vector<Bucket> buckets_vec;
-
     for (size_t x = 0; x < image.width; x += bucket_size)
     {
         size_t x_end = x + bucket_size;
@@ -115,15 +114,16 @@ void Camera::sampleImage(const Scene& s, std::unique_ptr<PhotonMap> pm)
 
     std::function<void(Camera*, WorkQueue<Bucket>&)> f = &Camera::sampleImageThread;
 
-    std::vector<std::unique_ptr<std::thread>> threads(std::thread::hardware_concurrency() - 1);
+    std::vector<std::unique_ptr<std::thread>> threads(std::thread::hardware_concurrency() - 2);
     for (auto& thread : threads)
     {
         thread = std::make_unique<std::thread>(f, this, std::ref(buckets));
     }
 
-    std::function<void(Camera*)> p = &Camera::printInfoThread;
-    std::thread print_thread(p, this);
-    print_thread.detach();
+    std::function<void(Camera*, WorkQueue<Bucket>&)> p = &Camera::printInfoThread;
+    std::thread print_thread(p, this, std::ref(buckets));
+
+    print_thread.join();
 
     for (auto& thread : threads)
     {
@@ -154,15 +154,10 @@ void Camera::sampleImageThread(WorkQueue<Bucket>& buckets)
     }
 }
 
-void Camera::printInfoThread()
+void Camera::printInfoThread(WorkQueue<Bucket>& buckets)
 {
-    while (true)
+    while (!buckets.empty())
     {
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-
-        if (num_sampled_pixels == image.num_pixels)
-            break;
-
         if (num_sampled_pixels != last_num_sampled_pixels)
         {
             size_t delta_pixels = num_sampled_pixels - last_num_sampled_pixels;
@@ -187,5 +182,6 @@ void Camera::printInfoThread()
             last_update = now;
             last_num_sampled_pixels = num_sampled_pixels;
         }
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }
 }
