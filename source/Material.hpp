@@ -10,8 +10,6 @@
 class Material
 {
 public:
-    Material() : reflectance(0.8), specular_reflectance(0.0), emittance(0.0) { }
-
     Material(
         const glm::dvec3& reflectance, 
         const glm::dvec3& specular_reflectance, 
@@ -27,8 +25,7 @@ public:
         perfect_mirror(perfect_mirror)
     {
         can_diffusely_reflect = !perfect_mirror && std::abs(transparency - 1.0) > C::EPSILON;
-        can_specularly_reflect = perfect_mirror || std::abs(ior - scene_ior) > C::EPSILON;
-        reflect_probability = calculateReflectProbability();
+        reflect_probability = calculateReflectProbability(scene_ior);
     }
 
     glm::dvec3 DiffuseBRDF(const glm::dvec3 &i, const glm::dvec3 &o);
@@ -36,23 +33,17 @@ public:
     glm::dvec3 LambertianBRDF();
     glm::dvec3 OrenNayarBRDF(const glm::dvec3 &i, const glm::dvec3 &o);
 
-    // Schlick's approximation of fresnel factor
-    static double Fresnel(double n1, double n2, const glm::dvec3& normal, const glm::dvec3& dir)
-    {
-        if (abs(n1 - n2) < C::EPSILON)
-            return 0;
-
-        double R0 = pow2((n1 - n2) / (n1 + n2));
-        return R0 + (1.0 - R0) * pow(1.0 - glm::dot(normal, dir), 5);
-    }
+    static double Fresnel(double n1, double n2, const glm::dvec3& normal, const glm::dvec3& dir);
 
     glm::dvec3 reflectance, specular_reflectance, emittance;
     double roughness, ior, transparency, reflect_probability;
 
+    bool can_diffusely_reflect;
+
     // Represents ior = infinity -> fresnel factor = 1.0 -> all rays specularly reflected
     bool perfect_mirror;
-    bool can_diffusely_reflect, can_specularly_reflect;
+
 private:
     // Used for russian roulette path termination
-    double calculateReflectProbability();
+    double calculateReflectProbability(double scene_ior);
 };

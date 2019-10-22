@@ -123,7 +123,8 @@ public:
             glm::dvec3 specular_reflectance = getOptional(m, "specular_reflectance", glm::dvec3(0.0));
             glm::dvec3 emittance            = getOptional(m, "emittance", glm::dvec3(0.0));
 
-            materials[m.at("name")] = Material(reflectance, specular_reflectance, emittance, roughness, ior, transparency, perfect_mirror, scene_ior);
+            Material mat = Material(reflectance, specular_reflectance, emittance, roughness, ior, transparency, perfect_mirror, scene_ior);
+            materials.insert({ m.at("name"), mat });
         }
 
         int i = 0;
@@ -154,15 +155,15 @@ public:
                 double total_area = 0.0;
                 for (const auto& t : s.at("triangles"))
                 {
-                    total_area += Surface::Triangle(v.at(t.at(0)), v.at(t.at(1)), v.at(t.at(2))).area();
+                    total_area += Surface::Triangle(v.at(t.at(0)), v.at(t.at(1)), v.at(t.at(2)), materials.at(material)).area();
                 }
                 
                 for (const auto& t : s.at("triangles"))
                 {
                     // Entire object emits the flux of assigned material emittance in scene file.
                     // The flux of the material therefore needs to be distributed amongst all object triangles.
+                    double area = Surface::Triangle(v.at(t.at(0)), v.at(t.at(1)), v.at(t.at(2)), materials.at(material)).area();
                     Material mat = materials.at(material);
-                    double area = Surface::Triangle(v.at(t.at(0)), v.at(t.at(1)), v.at(t.at(2))).area();
                     mat.emittance *= area / total_area;
                     surfaces.push_back(std::make_shared<Surface::Triangle>(v.at(t.at(0)), v.at(t.at(1)), v.at(t.at(2)), mat));
                 }

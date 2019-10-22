@@ -22,62 +22,51 @@
 int main()
 {
     {
-    Random::seed(std::random_device{}());
+        Random::seed(std::random_device{}());
     
-    std::filesystem::path path(std::filesystem::current_path().string() + "\\scenes");
-    std::cout << "Scene directory:" << std::endl << path.string() << std::endl << std::endl;
+        std::filesystem::path path(std::filesystem::current_path().string() + "\\scenes");
+        std::cout << "Scene directory:" << std::endl << path.string() << std::endl << std::endl;
 
-    std::vector<std::pair<std::filesystem::path, int>> options;
-    try
-    {
-        options = SceneParser::availible(path);
+        std::vector<std::pair<std::filesystem::path, int>> options;
+        try
+        {
+            options = SceneParser::availible(path);
+        }
+        catch (const std::exception& ex)
+        {
+            std::cout << ex.what() << std::endl;
+            waitForInput();
+            return -1;
+        }
+
+        if (options.size() == 0)
+        {
+            std::cout << "No scenes found." << std::endl;
+            waitForInput();
+            return -1;
+        }
+
+        size_t scene_option = getSceneOption(options);
+
+        std::string file = options[scene_option].first.filename().string();
+        file.erase(file.find("."), file.length());
+        std::cout << "Scene file " << file << " with camera " << options[scene_option].second << " selected." << std::endl << std::endl;
+
+        std::unique_ptr<SceneRenderer> scene_renderer;
+        try
+        {
+            scene_renderer = std::make_unique<SceneRenderer>(SceneParser::parseScene(options[scene_option].first, options[scene_option].second));
+        }
+        catch (const std::exception& ex)
+        {
+            std::cout << ex.what() << std::endl;
+            waitForInput();
+            return -1;
+        }
+
+        scene_renderer->render();
     }
-    catch (const std::exception& ex)
-    {
-        std::cout << ex.what() << std::endl;
-        waitForInput();
-        return -1;
-    }
 
-    if (options.size() == 0)
-    {
-        std::cout << "No scenes found." << std::endl;
-        waitForInput();
-        return -1;
-    }
-
-    size_t scene_option = getSceneOption(options);
-
-    std::string file = options[scene_option].first.filename().string();
-    file.erase(file.find("."), file.length());
-    std::cout << "Scene file " << file << " with camera " << options[scene_option].second << " selected." << std::endl << std::endl;
-
-    auto before = std::chrono::system_clock::now();
-
-    std::unique_ptr<SceneRenderer> scene_renderer;
-    try
-    {
-        scene_renderer = std::make_unique<SceneRenderer>(SceneParser::parseScene(options[scene_option].first, options[scene_option].second));
-    }
-    catch (const std::exception& ex)
-    {
-        std::cout << ex.what() << std::endl;
-        waitForInput();
-        return -1;
-    }
-
-    scene_renderer->render();
-
-    auto now = std::chrono::system_clock::now();
-    std::cout << std::endl << std::endl << "Render Completed: " << formatDate(now);
-    std::cout << ", Elapsed Time: " << formatTimeDuration(std::chrono::duration_cast<std::chrono::milliseconds>(now - before).count()) << std::endl;
-
-    //for (int i = 0; i < 1; i++)
-    //{
-    //    testPhotonMap(csp->scene, (size_t)1e6, (size_t)1e5, 1, 250, 1, "photon_map_test_" + std::to_string(i) + ".csv");
-    //}
-
-    }
     waitForInput();
     
     return 0;

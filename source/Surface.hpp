@@ -13,9 +13,6 @@ namespace Surface
     class Base
     {
     public:
-        Base() 
-            : material(std::make_shared<Material>()), area_(0) { };
-
         Base(const Material& material)
             : material(std::make_shared<Material>(material)), area_(0) { };
 
@@ -44,9 +41,6 @@ namespace Surface
     class Sphere : public Base
     {
     public:
-        Sphere(const glm::dvec3& origin, double radius)
-            : origin(origin), radius(radius) { computeArea(); }
-
         Sphere(const glm::dvec3& origin, double radius, const Material& material)
             : Base(material), origin(origin), radius(radius) { computeArea(); }
 
@@ -90,9 +84,6 @@ namespace Surface
     class Triangle : public Base
     {
     public:
-        Triangle(const glm::dvec3& v0, const glm::dvec3& v1, const glm::dvec3& v2)
-            : v0(v0), v1(v1), v2(v2), E1(v1 - v0), E2(v2 - v0), normal_(glm::normalize(glm::cross(E1, E2))) { computeArea(); }
-
         Triangle(const glm::dvec3& v0, const glm::dvec3& v1, const glm::dvec3& v2, const Material& material)
             : Base(material), v0(v0), v1(v1), v2(v2), E1(v1 - v0), E2(v2 - v0), normal_(glm::normalize(glm::cross(E1, E2))) { computeArea(); }
 

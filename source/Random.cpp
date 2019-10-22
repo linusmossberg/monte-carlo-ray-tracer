@@ -48,11 +48,7 @@ glm::dvec3 Random::UniformHemiSample()
 {
     double u = range(0, 1);
     double r = std::sqrt(1.0f - u * u);
-
-    //double inclination = range(0, M_PI / 2);
     double azimuth = range(0, C::TWO_PI);
 
     return glm::dvec3(r * cos(azimuth), r * sin(azimuth), u);
-
-    //return glm::dvec3(sin(inclination) * cos(azimuth), sin(inclination) * sin(azimuth), cos(inclination));
 }

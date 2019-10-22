@@ -1,3 +1,9 @@
+
+/***************************************************
+A thread safe queue that can be used to store work 
+that different threads can un-queue concurrently.
+***************************************************/
+
 #pragma once
 
 #include <queue>

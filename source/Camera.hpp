@@ -21,7 +21,8 @@
 #include "PhotonMap.hpp"
 #include "Surface.hpp"
 #include "Image.hpp"
-#include "MultiThreading.hpp"
+#include "Random.hpp"
+#include "WorkQueue.hpp"
 #include "Util.hpp"
 
 struct Bucket

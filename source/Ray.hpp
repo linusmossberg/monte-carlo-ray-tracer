@@ -7,6 +7,7 @@
 
 #include "Material.hpp"
 #include "Random.hpp"
+#include "Common.hpp"
 
 class Ray
 {
@@ -34,17 +35,4 @@ public:
     double medium_ior;
     const double offset = C::EPSILON;
     bool specular = false;
-};
-
-struct Intersection
-{
-    glm::dvec3 position;
-    glm::dvec3 normal;
-    double t = std::numeric_limits<double>::max();
-    std::shared_ptr<Material> material;
-
-    explicit operator bool() const
-    {
-        return t != std::numeric_limits<double>::max();
-    }
 };

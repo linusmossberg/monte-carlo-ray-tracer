@@ -1,5 +1,4 @@
 #include "Camera.hpp"
-#include "Random.hpp"
 
 glm::dvec3 Camera::sampleRay(Ray ray, size_t ray_depth)
 {
@@ -93,7 +92,7 @@ void Camera::sampleImage(std::shared_ptr<Scene> s, std::shared_ptr<PhotonMap> pm
 {
     scene = s;
 
-    if (pm) photon_map = pm;
+    photon_map = pm;
 
     std::vector<Bucket> buckets_vec;
     for (size_t x = 0; x < image.width; x += bucket_size)

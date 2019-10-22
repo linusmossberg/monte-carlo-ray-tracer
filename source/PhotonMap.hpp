@@ -10,7 +10,7 @@
 #include "Util.hpp"
 #include "Scene.hpp"
 #include "Octree.hpp"
-#include "MultiThreading.hpp"
+#include "WorkQueue.hpp"
 #include "Constants.hpp"
 
 struct Photon : public OctreeData
@@ -372,7 +372,7 @@ public:
         }
 
         // Terminate the path once the global contribution has been evaluated to estimate all incoming radiance at this point. This happens
-        // once a diffusely reflected ray hits a point that evaluates as diffuse, provided that there are no shadow photons at this point.
+        // once a diffusely reflected ray hits a point that evaluates to diffuse, provided that there are no shadow photons at this point.
         if (!global_contribution_evaluated)
         {
             indirect = sampleRay(new_ray, ray_depth + 1);
@@ -429,6 +429,8 @@ public:
         }
         return scene->sampleDirect(intersect);
     }
+
+private:
 
     Octree<Photon> indirect_map;
     Octree<Photon> direct_map;
