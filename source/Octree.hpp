@@ -69,7 +69,6 @@ public:
     {
         std::vector<Data> result;
         boxRecursiveSearch(min, max, result);
-
         return result;
     }
 
@@ -166,6 +165,7 @@ private:
                         d[c] = pow2(p[c] - max[c]);
                 }
 
+                // Keep searching in octants that intersect or is contained in the search sphere
                 if(d.x + d.y + d.z <= radius2)
                 {
                     octant->radiusRecursiveSearch(p, radius2, result);

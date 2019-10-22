@@ -5,7 +5,7 @@ glm::dvec3 Camera::sampleRay(Ray ray, size_t ray_depth)
 {
     if (ray_depth == max_ray_depth)
     {
-        Log("Max ray depth reached in Camera::sampleRay()");
+        Log("Bias introduced: Max ray depth reached in Camera::sampleRay()");
         return glm::dvec3(0.0);
     }
 
@@ -33,7 +33,7 @@ glm::dvec3 Camera::sampleRay(Ray ray, size_t ray_depth)
     glm::dvec3 BRDF;
 
     double n1 = ray.medium_ior;
-    double n2 = abs(ray.medium_ior - scene->ior) < 1e-7 ? intersect.material->ior : scene->ior;
+    double n2 = abs(ray.medium_ior - scene->ior) < C::EPSILON ? intersect.material->ior : scene->ior;
 
     if (intersect.material->perfect_mirror || Material::Fresnel(n1, n2, intersect.normal, -ray.direction) > Random::range(0,1))
     {
@@ -55,9 +55,9 @@ glm::dvec3 Camera::sampleRay(Ray ray, size_t ray_depth)
             CoordinateSystem cs(intersect.normal);
 
             new_ray.reflectDiffuse(cs, n1);
-            BRDF = intersect.material->DiffuseBRDF(cs.globalToLocal(new_ray.direction), cs.globalToLocal(-ray.direction)) * M_PI;
+            BRDF = intersect.material->DiffuseBRDF(cs.globalToLocal(new_ray.direction), cs.globalToLocal(-ray.direction)) * C::PI;
 
-            if (!naive) direct = scene->sampleLights(intersect);
+            if (!naive) direct = scene->sampleDirect(intersect);
         }
     }
 

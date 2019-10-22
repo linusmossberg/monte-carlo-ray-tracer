@@ -123,7 +123,7 @@ public:
             glm::dvec3 specular_reflectance = getOptional(m, "specular_reflectance", glm::dvec3(0.0));
             glm::dvec3 emittance            = getOptional(m, "emittance", glm::dvec3(0.0));
 
-            materials[m.at("name")] = Material(reflectance, specular_reflectance, emittance, roughness, ior, transparency, perfect_mirror);
+            materials[m.at("name")] = Material(reflectance, specular_reflectance, emittance, roughness, ior, transparency, perfect_mirror, scene_ior);
         }
 
         int i = 0;

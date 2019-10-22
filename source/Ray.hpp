@@ -32,7 +32,7 @@ public:
     // Normalized direction -> t corresponds to euclidian distance in metric units
     glm::dvec3 start, direction;
     double medium_ior;
-    const double offset = 1e-7;
+    const double offset = C::EPSILON;
     bool specular = false;
 };
 

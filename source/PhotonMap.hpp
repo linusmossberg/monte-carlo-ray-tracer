@@ -27,7 +27,7 @@ public:
     glm::dvec3 flux, position, direction;
 };
 
-// Separate shadow photon type to reduce memory usage and improve shadow photon search performance.
+// Separate shadow photon type to reduce memory usage
 struct ShadowPhoton : public OctreeData
 {
 public:
@@ -47,12 +47,14 @@ class PhotonMap
 public:
     PhotonMap(std::shared_ptr<Scene> s, size_t photon_emissions, uint16_t max_node_data, double caustic_factor, double radius, double caustic_radius)
         : scene(s), non_caustic_reject(1.0 / caustic_factor), radius(radius), caustic_radius(caustic_radius),
-            direct_map(s->boundingBox(), max_node_data),
-          indirect_map(s->boundingBox(), max_node_data),
-           caustic_map(s->boundingBox(), max_node_data),
-            shadow_map(s->boundingBox(), max_node_data)
+          indirect_map(s->boundingBox(1), max_node_data),
+            direct_map(s->boundingBox(0), max_node_data),
+           caustic_map(s->boundingBox(0), max_node_data),
+            shadow_map(s->boundingBox(0), max_node_data)
           
     {
+        auto begin = std::chrono::high_resolution_clock::now();
+
         struct EmissionWork
         {
             EmissionWork() : light(), num_emissions(0), photon_flux(0.0) { }
@@ -64,6 +66,8 @@ public:
             size_t num_emissions;
             glm::dvec3 photon_flux;
         };
+
+        photon_emissions = static_cast<size_t>(photon_emissions * caustic_factor);
 
         const size_t EPW = 100000;
         std::vector<EmissionWork> work_vec;
@@ -115,7 +119,7 @@ public:
                         {
                             glm::dvec3 pos = (*work.light)(Random::range(0, 1), Random::range(0, 1));
                             glm::dvec3 normal = work.light->normal(pos);
-                            glm::dvec3 dir = CoordinateSystem::localToGlobalUnitVector(Random::UniformHemiSample(), normal);
+                            glm::dvec3 dir = CoordinateSystem::localToGlobalUnitVector(Random::CosWeightedHemiSample(), normal);
 
                             pos += normal * C::EPSILON;
 
@@ -126,12 +130,14 @@ public:
             );
         }
 
+        std::cout << "Total number of photon emissions from light sources: " << formatLargeNumber(photon_emissions) << std::endl << std::endl;
+
         std::thread print_thread([&work_queue]()
         {
             while (!work_queue.empty())
             {
                 double progress = work_queue.progress();
-                std::cout << std::string("\rPhoton map " + formatProgress(progress) + " constructed.");
+                std::cout << std::string("\rPhotons emitted: " + formatProgress(progress));
                 std::this_thread::sleep_for(std::chrono::milliseconds(1000));
             }
         });
@@ -141,6 +147,28 @@ public:
         {
             thread->join();
         }
+
+        auto end = std::chrono::high_resolution_clock::now();
+        std::string duration = formatTimeDuration(std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count());
+        std::string info = "\rPhotons emitted in " + duration + ". Constructing octrees";
+        std::cout << info;
+        begin = std::chrono::high_resolution_clock::now();
+
+        std::atomic_bool done_constructing_octrees = false;
+        print_thread = std::thread([&done_constructing_octrees, info]()
+        {
+            std::string dots("");
+            int i = 0;
+            while (!done_constructing_octrees)
+            {
+                std::cout << "\r" + std::string(60, ' ') + info + dots;
+                dots += ".";
+                if (i != 0 && i % 3 == 0) dots = ".";
+                i++;
+                std::this_thread::sleep_for(std::chrono::milliseconds(800));
+            }
+        });
+        print_thread.detach();
         
         size_t num_direct_photons = 0;
         size_t num_indirect_photons = 0;
@@ -165,19 +193,25 @@ public:
             num_shadow_photons += shadow_vecs[thread].size();
             shadow_vecs[thread].clear();
         }
+        done_constructing_octrees = true;
 
-        std::cout << '\r' << std::string(30, ' ') << '\r';
-        std::cout << std::setw(18) << "Direct photons: "   << formatLargeNumber(num_direct_photons)   << std::endl
-                  << std::setw(18) << "Indirect photons: " << formatLargeNumber(num_indirect_photons) << std::endl
-                  << std::setw(18) << "Caustic photons: "  << formatLargeNumber(num_caustic_photons)  << std::endl
-                  << std::setw(18) << "Shadow photons: "   << formatLargeNumber(num_shadow_photons)   << std::endl << std::endl;
+        end = std::chrono::high_resolution_clock::now();
+        std::string duration2 = formatTimeDuration(std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count());
+        std::cout << "\rPhotons emitted in " + duration + ". Octrees constructed in " + duration2 + "." << std::endl << std::endl
+                  << "Photon maps and numbers of stored photons: " << std::endl << std::endl;
+
+        std::cout << std::right
+                  << std::setw(22) << "Direct photons: "   << formatLargeNumber(num_direct_photons)   << std::endl
+                  << std::setw(22) << "Indirect photons: " << formatLargeNumber(num_indirect_photons) << std::endl
+                  << std::setw(22) << "Caustic photons: "  << formatLargeNumber(num_caustic_photons)  << std::endl
+                  << std::setw(22) << "Shadow photons: "   << formatLargeNumber(num_shadow_photons)   << std::endl << std::endl;
     }
 
     void emitPhoton(const Ray& ray, const glm::dvec3& flux, size_t thread, size_t ray_depth = 0)
     {
         if (ray_depth == max_ray_depth)
         {
-            Log("Max ray depth reached in PhotonMap::emitPhoton()");
+            Log("Bias introduced: Max ray depth reached in PhotonMap::emitPhoton()");
             return;
         }
 
@@ -185,8 +219,7 @@ public:
 
         if (!intersect) return;
 
-        // Use russian roulette regardless of material. Otherwise call stack 
-        // overflow (or bias if prevented) is guaranteed with some scenes.
+        // Delay path termination until any new photons have been stored.
         double terminate = ray_depth > 0 ? 1.0 - intersect.material->reflect_probability : 0.0;
         bool should_terminate = terminate > Random::range(0, 1);
 
@@ -201,7 +234,9 @@ public:
         {
             /* SPECULAR REFLECTION */
             if (ray_depth == 0 && Random::range(0, 1) < non_caustic_reject)
+            {
                 createShadowPhotons(Ray(intersect.position - intersect.normal * C::EPSILON, intersect.position + ray.direction), thread);
+            }
 
             if (should_terminate) return;
 
@@ -216,19 +251,13 @@ public:
                 if (should_terminate) return;
 
                 BRDF = intersect.material->SpecularBRDF();
-
                 new_ray.refractSpecular(ray.direction, intersect.normal, n1, n2);
-               
-                if (ray_depth == 0 && Random::range(0, 1) < non_caustic_reject)
-                {
-                    createShadowPhotons(Ray(intersect.position - intersect.normal * C::EPSILON, intersect.position + ray.direction), thread);
-                }
             }
             else
             {
                 /* DIFFUSE REFLECTION */
                 if (ray_depth == 0)
-                {
+                { 
                     if (Random::range(0, 1) < non_caustic_reject)
                     {
                         direct_vecs[thread].emplace_back(flux / non_caustic_reject, intersect.position, ray.direction);
@@ -241,12 +270,9 @@ public:
                     {
                         caustic_vecs[thread].emplace_back(flux, intersect.position, ray.direction);
                     }
-                    else
+                    else if(Random::range(0, 1) < non_caustic_reject)
                     {
-                        if (Random::range(0, 1) < non_caustic_reject)
-                        {
-                            indirect_vecs[thread].emplace_back(flux / non_caustic_reject, intersect.position, ray.direction);
-                        }
+                        indirect_vecs[thread].emplace_back(flux / non_caustic_reject, intersect.position, ray.direction);
                     }
                 }
 
@@ -254,7 +280,7 @@ public:
 
                 CoordinateSystem cs(intersect.normal);
                 new_ray.reflectDiffuse(cs, n1);
-                BRDF = intersect.material->DiffuseBRDF(cs.globalToLocal(new_ray.direction), cs.globalToLocal(-ray.direction));
+                BRDF = C::PI * intersect.material->DiffuseBRDF(cs.globalToLocal(new_ray.direction), cs.globalToLocal(-ray.direction));
             }
         }
         emitPhoton(new_ray, flux * BRDF / (1.0 - terminate), thread, ray_depth + 1);
@@ -266,9 +292,7 @@ public:
 
         if (!intersect) return;
 
-        // This will create some unnecessary shadow photons, but evaluating transparency and IOR 
-        // to see if there's a chance that this point could diffusely reflect might be more costly.
-        if (!intersect.material->perfect_mirror)
+        if (intersect.material->can_diffusely_reflect)
         {
             shadow_vecs[thread].emplace_back(intersect.position);
         }
@@ -281,7 +305,7 @@ public:
     {
         if (ray_depth == max_ray_depth)
         {
-            Log("Max ray depth reached in PhotonMap::sampleRay()");
+            Log("Bias introduced: Max ray depth reached in PhotonMap::sampleRay()");
             return glm::dvec3(0.0);
         }
 
@@ -289,110 +313,133 @@ public:
 
         if (!intersect) return scene->skyColor(ray);
 
+        double terminate = 0.0;
+        if (ray_depth > 3)
+        {
+            terminate = 1.0 - intersect.material->reflect_probability;
+            if (terminate > Random::range(0, 1))
+            {
+                return glm::dvec3(0.0);
+            }
+        }
+
         Ray new_ray(intersect.position);
 
         double n1 = ray.medium_ior;
         double n2 = abs(ray.medium_ior - scene->ior) < C::EPSILON ? intersect.material->ior : scene->ior;
 
-        glm::dvec3 emittance = (ray_depth == 0 || ray.specular) ? intersect.material->emittance : glm::dvec3(0.0);
         bool diffuse = ray_depth != 0 && !ray.specular;
+        bool global_contribution_evaluated = false;
+
+        glm::dvec3 emittance = (ray_depth == 0 || ray.specular) ? intersect.material->emittance : glm::dvec3(0.0);
+        glm::dvec3 photon_map_contrib(0.0), direct(0.0), indirect(0.0), BRDF(0.0);
 
         if (!diffuse && (intersect.material->perfect_mirror || Material::Fresnel(n1, n2, intersect.normal, -ray.direction) > Random::range(0, 1)))
         {
             /* SPECULAR REFLECTION */
-            glm::dvec3 BRDF = intersect.material->SpecularBRDF();
+            BRDF = intersect.material->SpecularBRDF();
             new_ray.reflectSpecular(ray.direction, intersect.normal, n1);
-
-            glm::dvec3 indirect = sampleRay(new_ray, ray_depth + 1);
-            return emittance + BRDF * indirect;
         }
         else
         {
             if (!diffuse && intersect.material->transparency > Random::range(0, 1))
             {
                 /* SPECULAR REFRACTION */
-                glm::dvec3 BRDF = intersect.material->SpecularBRDF();
+                BRDF = intersect.material->SpecularBRDF();
                 new_ray.refractSpecular(ray.direction, intersect.normal, n1, n2);
-
-                glm::dvec3 indirect = sampleRay(new_ray, ray_depth + 1);
-                return emittance + BRDF * indirect;
             }
             else
             {
+                /* DIFFUSE REFLECTION */
                 CoordinateSystem cs(intersect.normal);
-                glm::dvec3 caustics = estimateCausticRadiance(intersect, -ray.direction, cs);
-                if (ray_depth == 0 || ray.specular)
+
+                photon_map_contrib = estimateCausticRadiance(intersect, -ray.direction, cs);
+                bool has_shadow_photons = hasShadowPhoton(intersect);
+                if (ray_depth == 0 || ray.specular || has_shadow_photons)
                 {
                     double n1 = ray.medium_ior;
-                    Ray new_ray(intersect.position);
                     new_ray.reflectDiffuse(cs, n1);
-                    glm::dvec3 BRDF = intersect.material->DiffuseBRDF(cs.globalToLocal(new_ray.direction), cs.globalToLocal(-ray.direction)) * C::PI;
-
-                    glm::dvec3 indirect = sampleRay(new_ray, ray_depth + 1);
-
-                    glm::dvec3 direct = scene->sampleLights(intersect);
-
-                    return emittance + caustics + BRDF * (direct + indirect);
+                    BRDF = intersect.material->DiffuseBRDF(cs.globalToLocal(new_ray.direction), cs.globalToLocal(-ray.direction)) * C::PI;
+                    direct = sampleDirect(intersect, has_shadow_photons, false);
                 }
                 else
                 {
-                    glm::dvec3 direct(0.0);
-                    bool has_shadow_photon = !shadow_map.radiusSearch(intersect.position, radius).empty();
-                    auto direct_photons = direct_map.radiusSearch(intersect.position, radius);
-
-                    if (has_shadow_photon && direct_photons.empty())
-                        direct = glm::dvec3(0.0);
-                    else
-                        direct = estimateRadiance(direct_photons, intersect, -ray.direction, cs);
-
-                    glm::dvec3 indirect = estimateRadiance(indirect_map.radiusSearch(intersect.position, radius), intersect, -ray.direction, cs);
-                    return emittance + caustics + direct + indirect;
+                    photon_map_contrib += estimateRadiance(direct_map.radiusSearch(intersect.position, radius), intersect, -ray.direction, cs);
+                    photon_map_contrib += estimateRadiance(indirect_map.radiusSearch(intersect.position, radius), intersect, -ray.direction, cs);
+                    global_contribution_evaluated = true;
                 }
             }
         }
+
+        // Terminate the path once the global contribution has been evaluated to estimate all incoming radiance at this point. This happens
+        // once a diffusely reflected ray hits a point that evaluates as diffuse, provided that there are no shadow photons at this point.
+        if (!global_contribution_evaluated)
+        {
+            indirect = sampleRay(new_ray, ray_depth + 1);
+        }
+        return (emittance + photon_map_contrib + (indirect + direct) * BRDF) / (1.0 - terminate);
     }
 
     glm::dvec3 estimateRadiance(
         const std::vector<Photon>& photons, 
         const Intersection& intersect, 
         const glm::dvec3& direction, 
-        const CoordinateSystem& cs)
+        const CoordinateSystem& cs) const
     {
         glm::dvec3 radiance(0.0);
         for (const auto& p : photons)
         {
+            if (-glm::dot(p.direction, cs.normal) <= 0.0) continue;
             glm::dvec3 BRDF = intersect.material->DiffuseBRDF(cs.globalToLocal(p.direction), cs.globalToLocal(direction));
             radiance += p.flux * BRDF;
-
         }
-        return radiance * (2.0 / pow2(radius)); // 2pi / ( pi * r^2 )
+        return radiance * (1.0 / pow2(radius));
     }
 
-    glm::dvec3 estimateCausticRadiance(const Intersection& intersect, const glm::dvec3& direction, const CoordinateSystem& cs)
+    glm::dvec3 estimateCausticRadiance(const Intersection& intersect, const glm::dvec3& direction, const CoordinateSystem& cs) const
     {
         auto photons = caustic_map.radiusSearch(intersect.position, caustic_radius);
         const double k = 1.0;
         glm::dvec3 ret(0.0);
         for (const auto& p : photons)
         {
+            if (-glm::dot(p.direction, cs.normal) <= 0.0) continue;
             double wp = std::max(0.0, 1.0 - glm::distance(intersect.position, p.position) / (k * caustic_radius));
-
             glm::dvec3 BRDF = intersect.material->DiffuseBRDF(cs.globalToLocal(p.direction), cs.globalToLocal(direction));
             ret += p.flux * BRDF * wp;
         }
-        return ret * (2 / (pow2(caustic_radius) * (1.0 - 2.0 / (3.0 * k)))); // 2pi / ( pi * r^2 * (1 - 2/3k) )
+        return ret * (1 / (pow2(caustic_radius) * (1.0 - 2.0 / (3.0 * k))));
     }
 
-    Octree<Photon> direct_map;
+    bool hasShadowPhoton(const Intersection& intersect) const
+    {
+        return !shadow_map.radiusSearch(intersect.position, radius).empty();
+    }
+
+    glm::dvec3 sampleDirect(const Intersection& intersect, bool has_shadow_photons, bool use_direct_map) const
+    {
+        /**************************************************************************************************************************
+        If enabled, this reduces the number of shadow rays used at points that most likely aren't under direct illumination without
+        introducing much artifacts. Doing a radius search in the octree is about as fast as sampling a shadow ray in my testing 
+        however, but this might not be the case when using several light sources or with a faster radius empty query method.
+        **************************************************************************************************************************/
+        if(use_direct_map && has_shadow_photons && direct_map.radiusSearch(intersect.position, radius).empty())
+        {
+            return glm::dvec3(0.0);
+        }
+        return scene->sampleDirect(intersect);
+    }
+
     Octree<Photon> indirect_map;
+    Octree<Photon> direct_map;
     Octree<Photon> caustic_map;
     Octree<ShadowPhoton> shadow_map;
 
     // Temporary photon maps which are filled by each thread in the first pass. The Octree can't handle
     // concurrent inserts, so this has to be done if multi-threading is to be used in the first pass.
+    std::vector<std::vector<Photon>> caustic_vecs;
     std::vector<std::vector<Photon>> direct_vecs;
     std::vector<std::vector<Photon>> indirect_vecs;
-    std::vector<std::vector<Photon>> caustic_vecs;
     std::vector<std::vector<ShadowPhoton>> shadow_vecs;
 
     std::shared_ptr<Scene> scene;

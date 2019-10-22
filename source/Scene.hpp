@@ -44,7 +44,7 @@ public:
         return intersect;
     }
 
-    glm::dvec3 sampleLights(const Intersection &intersection)
+    glm::dvec3 sampleDirect(const Intersection &intersection)
     {
         // Pick one light source and scale with 1/probability of picking light source
         if (emissives.size())
@@ -52,14 +52,14 @@ public:
             const auto &light = emissives[Random::uirange(0, emissives.size() - 1)];
 
             glm::dvec3 light_pos = light->operator()(Random::range(0,1), Random::range(0,1));
-            Ray shadow_ray(intersection.position + intersection.normal * 1e-7, light_pos);
+            Ray shadow_ray(intersection.position + intersection.normal * C::EPSILON, light_pos);
 
             double cos_theta = glm::dot(shadow_ray.direction, intersection.normal);
 
             if (cos_theta <= 0)
                 return glm::dvec3(0.0);
 
-            double min_distance = glm::distance(light_pos, intersection.position) - 1e-7;
+            double min_distance = glm::distance(light_pos, intersection.position) - C::EPSILON;
             
             Intersection shadow_intersection = intersect(shadow_ray, false, min_distance);
 
@@ -67,11 +67,11 @@ public:
             {
                 double cos_light_theta = glm::dot(shadow_intersection.normal, -shadow_ray.direction);
 
-                if (cos_light_theta <= 0 || glm::distance(shadow_intersection.position, light_pos) > 1e-7)
+                if (cos_light_theta <= 0 || glm::distance(shadow_intersection.position, light_pos) > C::EPSILON)
                     return glm::dvec3(0.0);
 
                 double t = light->area() * cos_light_theta / pow2(shadow_intersection.t);
-                return (light->material->emittance * t * cos_theta * static_cast<double>(emissives.size())) / M_PI; // * pi to make the BRDF*pi applicable later
+                return (light->material->emittance * t * cos_theta * static_cast<double>(emissives.size())) / C::PI; // * pi to make the BRDF*pi applicable later
             }
         }
         return glm::dvec3(0.0);
@@ -81,7 +81,7 @@ public:
     {
         for (const auto &surface : surfaces)
         {
-            if (glm::length(surface->material->emittance) >= 1e-7)
+            if (glm::length(surface->material->emittance) >= C::EPSILON)
             {
                 surface->material->emittance /= surface->area(); // flux to radiosity
                 emissives.push_back(surface);
@@ -89,13 +89,13 @@ public:
         }
     }
 
-    BoundingBox boundingBox()
+    BoundingBox boundingBox(bool recompute)
     {
         if (surfaces.empty()) return BoundingBox();
 
-        if (!bounding_box)
+        if (recompute || !bounding_box)
         {
-            BoundingBox bb = surfaces.back()->boundingBox();
+            BoundingBox bb = surfaces.front()->boundingBox();
             for (const auto& surface : surfaces)
             {
                 auto s_bb = surface->boundingBox();
@@ -107,6 +107,7 @@ public:
             }
             bounding_box = std::make_unique<BoundingBox>(bb);
         }
+
         return *bounding_box;
     }
 
@@ -127,5 +128,6 @@ public:
     std::string savename;
     double ior;
 
+private:
     std::unique_ptr<BoundingBox> bounding_box;
 };

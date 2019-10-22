@@ -2,7 +2,7 @@
 
 glm::dvec3 Material::DiffuseBRDF(const glm::dvec3 &i, const glm::dvec3 &o)
 {
-    return roughness > 1e-7 ? OrenNayarBRDF(i, o) : LambertianBRDF();
+    return roughness > C::EPSILON ? OrenNayarBRDF(i, o) : LambertianBRDF();
 }
 
 glm::dvec3 Material::SpecularBRDF()
@@ -12,7 +12,7 @@ glm::dvec3 Material::SpecularBRDF()
 
 glm::dvec3 Material::LambertianBRDF()
 {
-    return reflectance / M_PI;
+    return reflectance / C::PI;
 }
 
 glm::dvec3 Material::OrenNayarBRDF(const glm::dvec3 &i, const glm::dvec3 &o)
@@ -26,13 +26,14 @@ glm::dvec3 Material::OrenNayarBRDF(const glm::dvec3 &i, const glm::dvec3 &o)
     // i.e. remove z-component (normal) and get the cos angle between vectors with dot
     double cos_delta_phi = glm::clamp((i.x*o.x + i.y*o.y) / sqrt((pow2(i.x) + pow2(i.y)) * (pow2(o.x) + pow2(o.y))), 0.0, 1.0);
 
-    // C = sin(alpha) * tan(beta), i.z = dot(i, (0,0,1))
-    double C = sqrt((1.0 - pow2(i.z)) * (1.0 - pow2(o.z))) / std::max(i.z, o.z);
+    // D = sin(alpha) * tan(beta), i.z = dot(i, (0,0,1))
+    double D = sqrt((1.0 - pow2(i.z)) * (1.0 - pow2(o.z))) / std::max(i.z, o.z);
 
-    return (reflectance / M_PI) * (A + B * cos_delta_phi * C);
+    return (reflectance / C::PI) * (A + B * cos_delta_phi * D);
 }
 
 double Material::calculateReflectProbability()
 {
+    if (can_specularly_reflect) return 0.9;
     return (glm::compAdd(reflectance) + glm::compAdd(specular_reflectance)) / (20.0 / 3.0); // at most .9
 }

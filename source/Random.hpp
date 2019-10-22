@@ -1,10 +1,10 @@
 #pragma once
 
 #include <random>
-#define _USE_MATH_DEFINES
-#include <math.h>
 
 #include <glm/vec3.hpp>
+
+#include "Constants.hpp"
 
 struct Random
 {

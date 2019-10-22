@@ -36,7 +36,7 @@ glm::dvec3 Random::CosWeightedHemiSample()
     // Generate uniform sample on unit circle at radius r and angle azimuth
     double u = range(0, 1);
     double r = sqrt(u);
-    double azimuth = range(0, 2 * M_PI);
+    double azimuth = range(0, C::TWO_PI);
 
     // Project up to hemisphere.
     // The result is a cosine-weighted hemispherical sample.
@@ -50,7 +50,7 @@ glm::dvec3 Random::UniformHemiSample()
     double r = std::sqrt(1.0f - u * u);
 
     //double inclination = range(0, M_PI / 2);
-    double azimuth = range(0, 2 * M_PI);
+    double azimuth = range(0, C::TWO_PI);
 
     return glm::dvec3(r * cos(azimuth), r * sin(azimuth), u);
 

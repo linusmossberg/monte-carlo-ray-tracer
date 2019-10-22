@@ -52,10 +52,11 @@ int main()
     file.erase(file.find("."), file.length());
     std::cout << "Scene file " << file << " with camera " << options[scene_option].second << " selected." << std::endl << std::endl;
 
+    auto before = std::chrono::system_clock::now();
+
     std::unique_ptr<SceneRenderer> scene_renderer;
     try
     {
-        // TODO: Move parts of this out when not debugging
         scene_renderer = std::make_unique<SceneRenderer>(SceneParser::parseScene(options[scene_option].first, options[scene_option].second));
     }
     catch (const std::exception& ex)
@@ -66,6 +67,10 @@ int main()
     }
 
     scene_renderer->render();
+
+    auto now = std::chrono::system_clock::now();
+    std::cout << std::endl << std::endl << "Render Completed: " << formatDate(now);
+    std::cout << ", Elapsed Time: " << formatTimeDuration(std::chrono::duration_cast<std::chrono::milliseconds>(now - before).count()) << std::endl;
 
     //for (int i = 0; i < 1; i++)
     //{

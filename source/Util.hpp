@@ -1,9 +1,6 @@
 #pragma once
 
 #include <random>
-#include <cstdlib>
-#define _USE_MATH_DEFINES
-#include <math.h>
 #include <iostream>
 #include <filesystem>
 #include <iomanip>
