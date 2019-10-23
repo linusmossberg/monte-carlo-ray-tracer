@@ -6,6 +6,7 @@
 
 #include <glm/glm.hpp>
 #include <glm/vec3.hpp>
+#include <glm/gtx/norm.hpp>
 
 #include "Util.hpp"
 #include "Constants.hpp"

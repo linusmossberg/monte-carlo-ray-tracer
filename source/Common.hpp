@@ -23,20 +23,19 @@ struct CoordinateSystem
 
     glm::dvec3 localToGlobal(const glm::dvec3& v) const
     {
-        return glm::normalize(T * v);
+        return T * v;
     }
 
     glm::dvec3 globalToLocal(const glm::dvec3& v) const
     {
-        return glm::normalize(glm::inverse(T) * v);
+        return glm::transpose(T) * v;
     }
 
-    static glm::dvec3 localToGlobalUnitVector(const glm::dvec3& v, const glm::dvec3& N)
+    static glm::dvec3 localToGlobal(const glm::dvec3& v, const glm::dvec3& N)
     {
         glm::dvec3 tX = orthogonalUnitVector(N);
         glm::dvec3 tY = glm::cross(N, tX);
-
-        return glm::normalize(tX * v.x + tY * v.y + N * v.z);
+        return tX * v.x + tY * v.y + N * v.z;
     }
 
     glm::dvec3 normal;

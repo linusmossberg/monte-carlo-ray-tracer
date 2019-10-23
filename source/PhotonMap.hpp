@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <atomic>
 
 #include <glm/glm.hpp>
 #include <glm/vec3.hpp>
@@ -45,16 +46,14 @@ public:
 class PhotonMap
 {
 public:
-    PhotonMap(std::shared_ptr<Scene> s, size_t photon_emissions, uint16_t max_node_data, double caustic_factor, double radius, double caustic_radius)
-        : scene(s), non_caustic_reject(1.0 / caustic_factor), radius(radius), caustic_radius(caustic_radius),
+    PhotonMap(std::shared_ptr<Scene> s, size_t photon_emissions, uint16_t max_node_data, double caustic_factor, double radius, double caustic_radius, bool print = true)
+        : scene(s), non_caustic_reject(1.0 / caustic_factor), radius(radius), caustic_radius(caustic_radius), max_node_data(max_node_data),
           indirect_map(s->boundingBox(1), max_node_data),
             direct_map(s->boundingBox(0), max_node_data),
            caustic_map(s->boundingBox(0), max_node_data),
             shadow_map(s->boundingBox(0), max_node_data)
           
     {
-        auto begin = std::chrono::high_resolution_clock::now();
-
         struct EmissionWork
         {
             EmissionWork() : light(), num_emissions(0), photon_flux(0.0) { }
@@ -119,7 +118,7 @@ public:
                         {
                             glm::dvec3 pos = (*work.light)(Random::range(0, 1), Random::range(0, 1));
                             glm::dvec3 normal = work.light->normal(pos);
-                            glm::dvec3 dir = CoordinateSystem::localToGlobalUnitVector(Random::CosWeightedHemiSample(), normal);
+                            glm::dvec3 dir = CoordinateSystem::localToGlobal(Random::CosWeightedHemiSample(), normal);
 
                             pos += normal * C::EPSILON;
 
@@ -130,45 +129,52 @@ public:
             );
         }
 
-        std::cout << "Total number of photon emissions from light sources: " << formatLargeNumber(photon_emissions) << std::endl << std::endl;
-
-        std::thread print_thread([&work_queue]()
+        auto begin = std::chrono::high_resolution_clock::now();
+        std::unique_ptr<std::thread> print_thread;
+        if (print)
         {
-            while (!work_queue.empty())
+            std::cout << std::string(28, '-') << "| PHOTON MAPPING PASS |" << std::string(28, '-') << std::endl << std::endl;
+            std::cout << "Total number of photon emissions from light sources: " << formatLargeNumber(photon_emissions) << std::endl << std::endl;
+            print_thread = std::make_unique<std::thread>([&work_queue]()
             {
-                double progress = work_queue.progress();
-                std::cout << std::string("\rPhotons emitted: " + formatProgress(progress));
-                std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            }
-        });
-        print_thread.join();
+                while (!work_queue.empty())
+                {
+                    double progress = work_queue.progress();
+                    std::cout << std::string("\rPhotons emitted: " + formatProgress(progress));
+                    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+                }
+            });
+            print_thread->join();
+        }
 
         for (auto& thread : threads)
         {
             thread->join();
         }
 
+        std::atomic<bool> done_constructing_octrees = false;
         auto end = std::chrono::high_resolution_clock::now();
         std::string duration = formatTimeDuration(std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count());
-        std::string info = "\rPhotons emitted in " + duration + ". Constructing octrees";
-        std::cout << info;
-        begin = std::chrono::high_resolution_clock::now();
-
-        std::atomic_bool done_constructing_octrees = false;
-        print_thread = std::thread([&done_constructing_octrees, info]()
+        if (print)
         {
-            std::string dots("");
-            int i = 0;
-            while (!done_constructing_octrees)
+            std::string info = "\rPhotons emitted in " + duration + ". Constructing octrees";
+            std::cout << info;
+            begin = std::chrono::high_resolution_clock::now();
+            
+            print_thread = std::make_unique<std::thread>([&done_constructing_octrees, info]()
             {
-                std::cout << "\r" + std::string(60, ' ') + info + dots;
-                dots += ".";
-                if (i != 0 && i % 3 == 0) dots = ".";
-                i++;
-                std::this_thread::sleep_for(std::chrono::milliseconds(800));
-            }
-        });
-        print_thread.detach();
+                std::string dots("");
+                int i = 0;
+                while (!done_constructing_octrees)
+                {
+                    std::cout << "\r" + std::string(60, ' ') + info + dots;
+                    dots += ".";
+                    if (i != 0 && i % 3 == 0) dots = ".";
+                    i++;
+                    std::this_thread::sleep_for(std::chrono::milliseconds(800));
+                }
+            });
+        }
         
         size_t num_direct_photons = 0;
         size_t num_indirect_photons = 0;
@@ -193,18 +199,23 @@ public:
             num_shadow_photons += shadow_vecs[thread].size();
             shadow_vecs[thread].clear();
         }
+
         done_constructing_octrees = true;
+        if(print) print_thread->join();
 
-        end = std::chrono::high_resolution_clock::now();
-        std::string duration2 = formatTimeDuration(std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count());
-        std::cout << "\rPhotons emitted in " + duration + ". Octrees constructed in " + duration2 + "." << std::endl << std::endl
-                  << "Photon maps and numbers of stored photons: " << std::endl << std::endl;
+        if (print)
+        {
+            end = std::chrono::high_resolution_clock::now();
+            std::string duration2 = formatTimeDuration(std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count());
+            std::cout << "\rPhotons emitted in " + duration + ". Octrees constructed in " + duration2 + "." << std::endl << std::endl
+                      << "Photon maps and numbers of stored photons: " << std::endl << std::endl;
 
-        std::cout << std::right
-                  << std::setw(22) << "Direct photons: "   << formatLargeNumber(num_direct_photons)   << std::endl
-                  << std::setw(22) << "Indirect photons: " << formatLargeNumber(num_indirect_photons) << std::endl
-                  << std::setw(22) << "Caustic photons: "  << formatLargeNumber(num_caustic_photons)  << std::endl
-                  << std::setw(22) << "Shadow photons: "   << formatLargeNumber(num_shadow_photons)   << std::endl << std::endl;
+            std::cout << std::right
+                      << std::setw(19) << "Direct photons: "   << formatLargeNumber(num_direct_photons)   << std::endl
+                      << std::setw(19) << "Indirect photons: " << formatLargeNumber(num_indirect_photons) << std::endl
+                      << std::setw(19) << "Caustic photons: "  << formatLargeNumber(num_caustic_photons)  << std::endl
+                      << std::setw(19) << "Shadow photons: "   << formatLargeNumber(num_shadow_photons)   << std::endl << std::endl;
+        }
     }
 
     void emitPhoton(const Ray& ray, const glm::dvec3& flux, size_t thread, size_t ray_depth = 0)
@@ -353,7 +364,9 @@ public:
                 /* DIFFUSE REFLECTION */
                 CoordinateSystem cs(intersect.normal);
 
-                photon_map_contrib = estimateCausticRadiance(intersect, -ray.direction, cs);
+                //photon_map_contrib = estimateCausticRadiance(intersect, -ray.direction, cs);
+                photon_map_contrib += estimateRadiance(caustic_map.radiusSearch(intersect.position, caustic_radius), intersect, -ray.direction, cs);
+
                 bool has_shadow_photons = hasShadowPhoton(intersect);
                 if (ray_depth == 0 || ray.specular || has_shadow_photons)
                 {
@@ -393,22 +406,28 @@ public:
             glm::dvec3 BRDF = intersect.material->DiffuseBRDF(cs.globalToLocal(p.direction), cs.globalToLocal(direction));
             radiance += p.flux * BRDF;
         }
-        return radiance * (1.0 / pow2(radius));
+        return radiance / pow2(radius);
     }
 
+    /*******************************************************************************
+    Currently unused cone filtering method that can be used for sharper caustics. 
+    This seems to produce hot spots in places with sparse caustic photons however, 
+    which appears as bright blobs the size of the caustic_radius in places where 
+    you wouldn't expect to see high intensity caustics.
+    *******************************************************************************/
     glm::dvec3 estimateCausticRadiance(const Intersection& intersect, const glm::dvec3& direction, const CoordinateSystem& cs) const
     {
         auto photons = caustic_map.radiusSearch(intersect.position, caustic_radius);
         const double k = 1.0;
-        glm::dvec3 ret(0.0);
+        glm::dvec3 radiance(0.0);
         for (const auto& p : photons)
         {
             if (-glm::dot(p.direction, cs.normal) <= 0.0) continue;
             double wp = std::max(0.0, 1.0 - glm::distance(intersect.position, p.position) / (k * caustic_radius));
             glm::dvec3 BRDF = intersect.material->DiffuseBRDF(cs.globalToLocal(p.direction), cs.globalToLocal(direction));
-            ret += p.flux * BRDF * wp;
+            radiance += p.flux * BRDF * wp;
         }
-        return ret * (1 / (pow2(caustic_radius) * (1.0 - 2.0 / (3.0 * k))));
+        return radiance / (pow2(caustic_radius) * (1.0 - 2.0 / (3.0 * k)));
     }
 
     bool hasShadowPhoton(const Intersection& intersect) const
@@ -430,12 +449,15 @@ public:
         return scene->sampleDirect(intersect);
     }
 
+    // Implemented in Tests.cpp
+    void test(std::ostream& log, size_t num_iterations) const;
+
 private:
 
-    Octree<Photon> indirect_map;
-    Octree<Photon> direct_map;
     Octree<Photon> caustic_map;
-    Octree<ShadowPhoton> shadow_map;
+    Octree<Photon> direct_map;       // 
+    Octree<Photon> indirect_map;     // These three are commonly combined into a global photon map
+    Octree<ShadowPhoton> shadow_map; // 
 
     // Temporary photon maps which are filled by each thread in the first pass. The Octree can't handle
     // concurrent inserts, so this has to be done if multi-threading is to be used in the first pass.
@@ -449,6 +471,8 @@ private:
     double radius;
     double caustic_radius;
     double non_caustic_reject;
+
+    uint16_t max_node_data;
 
     const size_t max_ray_depth = 64; // Prevent call stack overflow, unlikely to ever happen.
 };

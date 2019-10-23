@@ -47,7 +47,7 @@ public:
     glm::dvec3 sampleDirect(const Intersection &intersection)
     {
         // Pick one light source and scale with 1/probability of picking light source
-        if (emissives.size())
+        if (!emissives.empty())
         {
             const auto &light = emissives[Random::uirange(0, emissives.size() - 1)];
 

@@ -64,7 +64,8 @@ int main()
             return -1;
         }
 
-        scene_renderer->render();
+        testPhotonMap(scene_renderer->scene);
+        //scene_renderer->render();
     }
 
     waitForInput();

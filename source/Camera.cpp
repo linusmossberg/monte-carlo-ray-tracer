@@ -80,9 +80,13 @@ void Camera::samplePixel(size_t x, size_t y)
             glm::dvec3 sensor_pos = eye + forward * focal_length + left * center_offset.x + up * center_offset.y;
 
             if (photon_map)
+            {
                 image(x, y) += photon_map->sampleRay(Ray(eye, sensor_pos, scene->ior));
+            } 
             else
+            {
                 image(x, y) += sampleRay(Ray(eye, sensor_pos, scene->ior));
+            } 
         }
     }
     image(x, y) /= pow2(static_cast<double>(scene->sqrtspp));
@@ -91,7 +95,6 @@ void Camera::samplePixel(size_t x, size_t y)
 void Camera::sampleImage(std::shared_ptr<Scene> s, std::shared_ptr<PhotonMap> pm)
 {
     scene = s;
-
     photon_map = pm;
 
     std::vector<Bucket> buckets_vec;
