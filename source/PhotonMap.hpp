@@ -365,7 +365,7 @@ public:
                 CoordinateSystem cs(intersect.normal);
 
                 //photon_map_contrib = estimateCausticRadiance(intersect, -ray.direction, cs);
-                photon_map_contrib += estimateRadiance(caustic_map.radiusSearch(intersect.position, caustic_radius), intersect, -ray.direction, cs);
+                photon_map_contrib += estimateRadiance(caustic_map.radiusSearch(intersect.position, caustic_radius), intersect, -ray.direction, cs, caustic_radius);
 
                 bool has_shadow_photons = hasShadowPhoton(intersect);
                 if (ray_depth == 0 || ray.specular || has_shadow_photons)
@@ -377,8 +377,8 @@ public:
                 }
                 else
                 {
-                    photon_map_contrib += estimateRadiance(direct_map.radiusSearch(intersect.position, radius), intersect, -ray.direction, cs);
-                    photon_map_contrib += estimateRadiance(indirect_map.radiusSearch(intersect.position, radius), intersect, -ray.direction, cs);
+                    photon_map_contrib += estimateRadiance(direct_map.radiusSearch(intersect.position, radius), intersect, -ray.direction, cs, radius);
+                    photon_map_contrib += estimateRadiance(indirect_map.radiusSearch(intersect.position, radius), intersect, -ray.direction, cs, radius);
                     global_contribution_evaluated = true;
                 }
             }
@@ -397,7 +397,8 @@ public:
         const std::vector<Photon>& photons, 
         const Intersection& intersect, 
         const glm::dvec3& direction, 
-        const CoordinateSystem& cs) const
+        const CoordinateSystem& cs,
+        double r) const
     {
         glm::dvec3 radiance(0.0);
         for (const auto& p : photons)
@@ -406,7 +407,7 @@ public:
             glm::dvec3 BRDF = intersect.material->DiffuseBRDF(cs.globalToLocal(p.direction), cs.globalToLocal(direction));
             radiance += p.flux * BRDF;
         }
-        return radiance / pow2(radius);
+        return radiance / pow2(r);
     }
 
     /*******************************************************************************
@@ -455,9 +456,9 @@ public:
 private:
 
     Octree<Photon> caustic_map;
-    Octree<Photon> direct_map;       // 
-    Octree<Photon> indirect_map;     // These three are commonly combined into a global photon map
-    Octree<ShadowPhoton> shadow_map; // 
+    Octree<Photon> direct_map;       // <-
+    Octree<Photon> indirect_map;     // <- These are commonly combined into a global photon map
+    Octree<ShadowPhoton> shadow_map; // <-
 
     // Temporary photon maps which are filled by each thread in the first pass. The Octree can't handle
     // concurrent inserts, so this has to be done if multi-threading is to be used in the first pass.

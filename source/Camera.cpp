@@ -10,10 +10,7 @@ glm::dvec3 Camera::sampleRay(Ray ray, size_t ray_depth)
 
     Intersection intersect = scene->intersect(ray, true);
 
-    if (!intersect)
-    {
-        return scene->skyColor(ray);
-    }
+    if (!intersect) return scene->skyColor(ray);
 
     double terminate = 0.0;
     if (ray_depth > min_ray_depth)
@@ -131,11 +128,6 @@ void Camera::sampleImage(std::shared_ptr<Scene> s, std::shared_ptr<PhotonMap> pm
     {
         thread->join();
     }
-
-    std::stringstream ss;
-    ss << image(462, 83);
-    Log(ss.str());
-    std::cout << image(462, 83) << std::endl;
 }
 
 void Camera::sampleImageThread(WorkQueue<Bucket>& buckets)

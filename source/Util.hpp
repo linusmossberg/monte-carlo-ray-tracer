@@ -113,18 +113,32 @@ inline void Log(const std::string& message)
     log << "[" << formatDate(std::chrono::system_clock::now()) << "]: " << temp << std::endl;
 }
 
-inline size_t getSceneOption(const std::vector<std::pair<std::filesystem::path, int>> &options)
+struct SceneOption
 {
-    size_t max_opt = 13, max_fil = 0, max_cam = 7;
+    SceneOption(const std::filesystem::path& path, const std::string& camera, int camera_idx)
+        : path(path), camera(camera), camera_idx(camera_idx) { }
+
+    std::filesystem::path path;
+    std::string camera;
+    int camera_idx;
+};
+
+inline size_t getSceneOption(const std::vector<SceneOption> &options)
+{
+    size_t max_opt = 13, max_fil = 0, max_cam = 0;
     for (const auto& o : options)
     {
-        std::string file = o.first.filename().string();
+        std::string file = o.path.filename().string();
         file.erase(file.find("."), file.length());
 
         if (file.size() > max_fil)
             max_fil = file.size();
+
+        if (o.camera.size() > max_cam)
+            max_cam = o.camera.size();
     }
     max_fil++;
+    max_cam++;
 
     std::cout << " " << std::string(max_opt + max_fil + max_cam + 5, '_') << std::endl;
 
@@ -145,10 +159,10 @@ inline size_t getSceneOption(const std::vector<std::pair<std::filesystem::path, 
 
     for (int i = 0; i < options.size(); i++)
     {
-        std::string file = options[i].first.filename().string();
+        std::string file = options[i].path.filename().string();
         file.erase(file.find("."), file.length());
 
-        printLine({ {std::to_string(i), max_opt},{file, max_fil},{std::to_string(options[i].second), max_cam} });
+        printLine({ {std::to_string(i), max_opt},{file, max_fil},{options[i].camera, max_cam} });
         std::cout << sep << std::endl;
     }
 
@@ -161,7 +175,7 @@ inline size_t getSceneOption(const std::vector<std::pair<std::filesystem::path, 
         else
             break;
     }
-    std::cout << std::endl;
+    //std::cout << std::endl;
 
     return scene_option;
 }

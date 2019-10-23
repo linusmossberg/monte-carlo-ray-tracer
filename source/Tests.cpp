@@ -7,10 +7,10 @@ void testPhotonMap(std::shared_ptr<Scene> scene)
     std::ofstream log("photon_map_test_6M.csv");
     log << "max_node_data, mem_usage_GB, find_msec" << std::endl;
 
-    size_t end_node_data = 30;
+    size_t end_node_data = 2000;
     size_t num_iterations = 10000;
 
-    size_t photon_emissions = size_t(1e6);
+    size_t photon_emissions = size_t(1e5);
     double caustic_factor = 1.0;
     double radius = 0.1;
     double caustic_radius = 0.1;
@@ -35,7 +35,7 @@ void PhotonMap::test(std::ostream& log, size_t num_iterations) const
     log << mem_used / 1e9 << ", ";
     std::cout << mem_used / 1e9 << ", ";
 
-    auto begin = std::chrono::system_clock::now();
+    auto begin = std::chrono::high_resolution_clock::now();
     if (!scene->surfaces.empty())
     {
         for (int i = 0; i < num_iterations; i++)
@@ -49,7 +49,7 @@ void PhotonMap::test(std::ostream& log, size_t num_iterations) const
             auto shadow_photons = shadow_map.radiusSearch(point, radius);
         }
     }
-    auto end = std::chrono::system_clock::now();
+    auto end = std::chrono::high_resolution_clock::now();
 
     log << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() / 1000.0 << std::endl;
     std::cout << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() / 1000.0 << std::endl;

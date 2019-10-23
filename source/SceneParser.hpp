@@ -11,6 +11,7 @@
 #include "Camera.hpp"
 #include "PhotonMap.hpp"
 #include "Material.hpp"
+#include "Tests.hpp"
 
 inline glm::dvec3 j2v(const nlohmann::json &j)
 {
@@ -51,8 +52,14 @@ struct SceneRenderer
         camera->sampleImage(scene, photon_map);
         camera->saveImage(scene->savename);
         auto now = std::chrono::system_clock::now();
-        std::cout << std::endl << std::endl << "Render Completed: " << formatDate(now);
+        std::cout << "\r" + std::string(100, ' ') + "\r";
+        std::cout << "Render Completed: " << formatDate(now);
         std::cout << ", Elapsed Time: " << formatTimeDuration(std::chrono::duration_cast<std::chrono::milliseconds>(now - before).count()) << std::endl;
+    }
+
+    void test()
+    {
+        testPhotonMap(scene);
     }
 
     std::shared_ptr<Camera> camera;
@@ -63,9 +70,9 @@ struct SceneRenderer
 class SceneParser
 {
 public:
-    static std::vector<std::pair<std::filesystem::path, int>> availible(std::filesystem::path path)
+    static std::vector<SceneOption> availible(std::filesystem::path path)
     {
-        std::vector<std::pair<std::filesystem::path, int>> options; // <scene, camera>
+        std::vector<SceneOption> options;
         for (const auto& file : std::filesystem::directory_iterator(path))
         {
             if (!file.path().has_extension() || file.path().extension() != ".json")
@@ -75,9 +82,15 @@ public:
             nlohmann::json j;
             scene_file >> j;
             int i = 0;
-            for (const auto& cameras : j.at("cameras"))
+            for (const auto& camera : j.at("cameras"))
             {
-                options.push_back(std::make_pair(file.path(), i));
+                glm::dvec3 eye = j2v(camera.at("eye"));
+                double f = camera.at("focal_length");
+                double s = camera.at("sensor_width");
+                std::stringstream ss;
+                ss << "Eye: " << std::fixed << std::setprecision(0) << "(" << eye.x << " " << eye.y << " " << eye.z << "), ";
+                ss << "Focal length: " << int(f) << "mm (" << int(s) << "mm)";
+                options.emplace_back(file.path(), ss.str(), i);
                 i++;
             }
             scene_file.close();
@@ -191,10 +204,17 @@ public:
         std::shared_ptr<PhotonMap> photon_map;
         if (j.find("photon_map") != j.end())
         {
-            const auto& pm = j.at("photon_map");
-            bool use = pm.at("use");
-            if (use)
+            char a;
+            std::cout << "Use photon mapping? (y/n) ";
+            while (std::cin >> a)
             {
+                if (a == 'y' || a == 'Y' || a == 'n' || a == 'N') break;
+                std::cout << "Answer with the letters y or n: ";
+            }
+            std::cout << std::endl;
+            if(a == 'y' || a == 'Y')
+            { 
+                const auto& pm = j.at("photon_map");
                 photon_map = std::make_shared<PhotonMap>(
                     scene, pm.at("emissions"), pm.at("max_photons_per_octree_leaf"),
                     pm.at("caustic_factor"), pm.at("radius"), pm.at("caustic_radius")

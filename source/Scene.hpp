@@ -16,7 +16,7 @@ public:
     {
         size_t max_threads = std::thread::hardware_concurrency();
         num_threads = (threads < 1 || threads > max_threads) ? max_threads : threads;
-        std::cout << "Render threads: " << num_threads << std::endl << std::endl;
+        std::cout << std::endl << "Threads used for rendering: " << num_threads << std::endl << std::endl;
         generateEmissives();
     }
 

@@ -17,7 +17,6 @@
 #include "Scene.hpp"
 #include "Camera.hpp"
 #include "PhotonMap.hpp"
-#include "Tests.hpp"
 
 int main()
 {
@@ -27,7 +26,7 @@ int main()
         std::filesystem::path path(std::filesystem::current_path().string() + "\\scenes");
         std::cout << "Scene directory:" << std::endl << path.string() << std::endl << std::endl;
 
-        std::vector<std::pair<std::filesystem::path, int>> options;
+        std::vector<SceneOption> options;
         try
         {
             options = SceneParser::availible(path);
@@ -48,14 +47,10 @@ int main()
 
         size_t scene_option = getSceneOption(options);
 
-        std::string file = options[scene_option].first.filename().string();
-        file.erase(file.find("."), file.length());
-        std::cout << "Scene file " << file << " with camera " << options[scene_option].second << " selected." << std::endl << std::endl;
-
         std::unique_ptr<SceneRenderer> scene_renderer;
         try
         {
-            scene_renderer = std::make_unique<SceneRenderer>(SceneParser::parseScene(options[scene_option].first, options[scene_option].second));
+            scene_renderer = std::make_unique<SceneRenderer>(SceneParser::parseScene(options[scene_option].path, options[scene_option].camera_idx));
         }
         catch (const std::exception& ex)
         {
@@ -64,8 +59,7 @@ int main()
             return -1;
         }
 
-        testPhotonMap(scene_renderer->scene);
-        //scene_renderer->render();
+        scene_renderer->render();
     }
 
     waitForInput();
