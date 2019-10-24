@@ -8,9 +8,9 @@
 #include <glm/vec3.hpp>
 #include <glm/gtx/norm.hpp>
 
-#include "../common/BoundingBox.hpp"
-#include "../common/Util.hpp"
-#include "../common/Constants.hpp"
+#include "../common/bounding-box.hpp"
+#include "../common/util.hpp"
+#include "../common/constants.hpp"
 
 struct OctreeData
 {

@@ -1,4 +1,4 @@
-#include "Material.hpp"
+#include "material.hpp"
 
 glm::dvec3 Material::DiffuseBRDF(const glm::dvec3 &i, const glm::dvec3 &o)
 {

@@ -1,4 +1,4 @@
-#include "Random.hpp"
+#include "random.hpp"
 
 thread_local std::mt19937_64 Random::engine;
 thread_local unsigned Random::engine_seed;

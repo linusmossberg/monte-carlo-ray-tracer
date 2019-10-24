@@ -8,7 +8,7 @@
 #include <glm/vec3.hpp>
 #include <glm/gtx/component_wise.hpp>
 
-#include "PixelOperators.hpp"
+#include "pixel-operators.hpp"
 
 /**************************************************************************
 Hard coded (except for dimensions) uncompressed 24bpp true-color TGA header.

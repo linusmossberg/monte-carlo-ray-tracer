@@ -1,4 +1,4 @@
-#include "Surface.hpp"
+#include "surface.hpp"
 
 bool Surface::Sphere::intersect(const Ray& ray, Intersection& intersection) const
 {

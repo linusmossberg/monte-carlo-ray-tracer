@@ -5,7 +5,7 @@
 #include <glm/glm.hpp>
 #include <glm/vec3.hpp>
 
-#include "../material/Material.hpp"
+#include "../material/material.hpp"
 
 struct Intersection
 {

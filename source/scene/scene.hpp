@@ -4,11 +4,11 @@
 #include <thread>
 #include <memory>
 
-#include "../surface/Surface.hpp"
-#include "../ray/Ray.hpp"
-#include "../random/Random.hpp"
-#include "../common/Intersection.hpp"
-#include "../common/BoundingBox.hpp"
+#include "../surface/surface.hpp"
+#include "../ray/ray.hpp"
+#include "../random/random.hpp"
+#include "../common/intersection.hpp"
+#include "../common/bounding-box.hpp"
 
 class Scene
 {

@@ -1,4 +1,4 @@
-#include "Ray.hpp"
+#include "ray.hpp"
 
 Ray::Ray() : start(), direction(), medium_ior(1) { }
 

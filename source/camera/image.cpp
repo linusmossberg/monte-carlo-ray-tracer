@@ -1,4 +1,4 @@
-#include "Image.hpp"
+#include "image.hpp"
 
 Image::Image(size_t width, size_t height)
     : blob(std::vector<glm::dvec3>((uint64_t)width* height, glm::dvec3())), 

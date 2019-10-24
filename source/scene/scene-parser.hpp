@@ -7,7 +7,7 @@
 #include <nlohmann/json.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "SceneRenderer.hpp"
+#include "scene-renderer.hpp"
 
 inline glm::dvec3 j2v(const nlohmann::json &j)
 {

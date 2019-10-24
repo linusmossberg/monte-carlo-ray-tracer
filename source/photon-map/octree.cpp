@@ -1,4 +1,4 @@
-#include "Octree.hpp"
+#include "octree.hpp"
 
 /**************
 Octant:  x y z

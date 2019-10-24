@@ -1,7 +1,7 @@
 #include "main.hpp"
 
-#include "scene/SceneParser.hpp"
-#include "random/Random.hpp"
+#include "scene/scene-parser.hpp"
+#include "random/random.hpp"
 
 int main()
 {

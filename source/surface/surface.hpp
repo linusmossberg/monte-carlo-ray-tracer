@@ -3,12 +3,12 @@
 #include <glm/glm.hpp>
 #include <glm/vec3.hpp>
 
-#include "../ray/Ray.hpp"
-#include "../material/Material.hpp"
-#include "../common/Constants.hpp"
-#include "../common/Intersection.hpp"
-#include "../common/BoundingBox.hpp"
-#include "../common/Util.hpp"
+#include "../ray/ray.hpp"
+#include "../material/material.hpp"
+#include "../common/constants.hpp"
+#include "../common/intersection.hpp"
+#include "../common/bounding-box.hpp"
+#include "../common/util.hpp"
 
 namespace Surface
 {

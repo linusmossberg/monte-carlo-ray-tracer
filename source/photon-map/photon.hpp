@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Octree.hpp"
+#include "octree.hpp"
 
 struct Photon : public OctreeData
 {

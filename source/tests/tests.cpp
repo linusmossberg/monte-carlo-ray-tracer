@@ -9,7 +9,7 @@
     #include "psapi.h"
 #endif
 
-#include "../photon-map/PhotonMap.hpp"
+#include "../photon-map/photon-map.hpp"
 
 void PhotonMap::test(std::ostream& log, size_t num_iterations) const
 {

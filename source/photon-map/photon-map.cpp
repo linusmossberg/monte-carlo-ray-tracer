@@ -1,4 +1,4 @@
-#include "PhotonMap.hpp"
+#include "photon-map.hpp"
 
 PhotonMap::PhotonMap(std::shared_ptr<Scene> s, size_t photon_emissions, uint16_t max_node_data, 
                      double caustic_factor, double radius, double caustic_radius, bool print)

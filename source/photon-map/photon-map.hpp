@@ -12,11 +12,11 @@
 #include "Octree.cpp" // Has to be included when methods are defined outside of templated class
 #include "Photon.hpp"
 
-#include "../common/Util.hpp"
-#include "../scene/Scene.hpp"
-#include "../common/WorkQueue.hpp"
-#include "../common/Constants.hpp"
-#include "../common/Format.hpp"
+#include "../common/util.hpp"
+#include "../scene/scene.hpp"
+#include "../common/work-queue.hpp"
+#include "../common/constants.hpp"
+#include "../common/format.hpp"
 
 class PhotonMap
 {

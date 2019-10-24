@@ -1,4 +1,4 @@
-#include "Camera.hpp"
+#include "camera.hpp"
 
 glm::dvec3 Camera::sampleRay(Ray ray, size_t ray_depth)
 {

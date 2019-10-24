@@ -19,15 +19,15 @@
 
 #include "Image.hpp"
 
-#include "../ray/Ray.hpp"
-#include "../scene/Scene.hpp"
-#include "../photon-map/PhotonMap.hpp"
-#include "../surface/Surface.hpp"
-#include "../random/Random.hpp"
-#include "../common/WorkQueue.hpp"
-#include "../common/Util.hpp"
-#include "../common/Intersection.hpp"
-#include "../common/CoordinateSystem.hpp"
+#include "../ray/ray.hpp"
+#include "../scene/scene.hpp"
+#include "../photon-map/photon-map.hpp"
+#include "../surface/surface.hpp"
+#include "../random/random.hpp"
+#include "../common/work-queue.hpp"
+#include "../common/util.hpp"
+#include "../common/intersection.hpp"
+#include "../common/coordinate-system.hpp"
 
 struct Bucket
 {

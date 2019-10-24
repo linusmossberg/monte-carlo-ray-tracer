@@ -4,7 +4,7 @@
 #include <glm/vec3.hpp>
 #include <glm/mat3x3.hpp>
 
-#include "Util.hpp"
+#include "util.hpp"
 
 inline glm::dvec3 orthogonalUnitVector(const glm::dvec3& v)
 {

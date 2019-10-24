@@ -1,4 +1,4 @@
-#include "Scene.hpp"
+#include "scene.hpp"
 
 Scene::Scene(std::vector<std::shared_ptr<Surface::Base>> surfaces, size_t sqrtspp, const std::string& savename, int threads, double ior)
     : surfaces(surfaces), sqrtspp(sqrtspp), savename(savename), ior(ior)
