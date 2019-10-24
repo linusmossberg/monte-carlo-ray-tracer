@@ -12,19 +12,11 @@
 class Ray
 {
 public:
-    Ray()
-        : start(0), direction(0, 0, 1), medium_ior(1.0) { }
+    Ray();
+    Ray(const glm::dvec3& start);
+    Ray(const glm::dvec3& start, const glm::dvec3& end, double medium_ior = 1.0);
 
-    Ray(const glm::dvec3& start, const glm::dvec3& end, double medium_ior = 1.0)
-        : start(start), direction(glm::normalize(end - start)), medium_ior(medium_ior) { }
-
-    Ray(const glm::dvec3& start)
-        : start(start), direction(0,0,1), medium_ior(1.0) { }
-
-    glm::dvec3 operator()(double t) const
-    {
-        return start + direction * t;
-    }
+    glm::dvec3 operator()(double t) const;
 
     void reflectDiffuse(const CoordinateSystem& cs, double n1);
     void reflectSpecular(const glm::dvec3 &in, const glm::dvec3 &normal, double n1);

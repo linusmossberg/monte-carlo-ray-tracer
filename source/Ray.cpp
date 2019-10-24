@@ -1,5 +1,17 @@
 #include "Ray.hpp"
 
+Ray::Ray() : start(), direction(), medium_ior(1) { }
+
+Ray::Ray(const glm::dvec3& start) : start(start), direction(), medium_ior(1) { }
+
+Ray::Ray(const glm::dvec3& start, const glm::dvec3& end, double medium_ior)
+    : start(start), direction(glm::normalize(end - start)), medium_ior(medium_ior) { }
+
+glm::dvec3 Ray:: operator()(double t) const
+{
+    return start + direction * t;
+}
+
 void Ray::reflectDiffuse(const CoordinateSystem& cs, double n1)
 {
     direction = cs.localToGlobal(Random::CosWeightedHemiSample());
