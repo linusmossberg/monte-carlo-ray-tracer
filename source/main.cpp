@@ -1,52 +1,36 @@
-#include <iostream>
-#include <string>
-#include <algorithm>
-#include <chrono>
-#include <ctime>
-#include <iomanip>
-#include <filesystem>
+#include "main.hpp"
 
-#include <fstream>
-#include <sstream>
-
-#include <glm/vec3.hpp>
-
-#include "SceneParser.hpp"
 #include "Random.hpp"
-#include "Util.hpp"
-#include "Scene.hpp"
-#include "Camera.hpp"
-#include "PhotonMap.hpp"
+#include "SceneParser.hpp"
 
 int main()
 {
-    {
-        Random::seed(std::random_device{}());
+    Random::seed(std::random_device{}());
     
-        std::filesystem::path path(std::filesystem::current_path().string() + "\\scenes");
-        std::cout << "Scene directory:" << std::endl << path.string() << std::endl << std::endl;
+    std::filesystem::path path(std::filesystem::current_path().string() + "\\scenes");
+    std::cout << "Scene directory:" << std::endl << path.string() << std::endl << std::endl;
 
-        std::vector<SceneOption> options;
-        try
-        {
-            options = SceneParser::availible(path);
-        }
-        catch (const std::exception& ex)
-        {
-            std::cout << ex.what() << std::endl;
-            waitForInput();
-            return -1;
-        }
+    std::vector<SceneOption> options;
+    try
+    {
+        options = SceneParser::availible(path);
+    }
+    catch (const std::exception& ex)
+    {
+        std::cout << ex.what() << std::endl;
+        waitForInput();
+        return -1;
+    }
 
-        if (options.size() == 0)
-        {
-            std::cout << "No scenes found." << std::endl;
-            waitForInput();
-            return -1;
-        }
+    if (options.size() == 0)
+    {
+        std::cout << "No scenes found." << std::endl;
+        waitForInput();
+        return -1;
+    }
 
-        size_t scene_option = getSceneOption(options);
-
+    size_t scene_option = getSceneOption(options);
+    {
         std::unique_ptr<SceneRenderer> scene_renderer;
         try
         {

@@ -150,6 +150,20 @@ void Camera::sampleImageThread(WorkQueue<Bucket>& buckets)
 
 void Camera::printInfoThread(WorkQueue<Bucket>& buckets)
 {
+    auto printProgressInfo = [](double progress, size_t msec_duration, size_t sps, std::ostream& out)
+    {
+        auto ETA = std::chrono::system_clock::now() + std::chrono::milliseconds(msec_duration);
+
+        // Create string first to avoid jumbled output if multiple threads write simultaneously
+        std::stringstream ss;
+        ss << "\rTime remaining: " << Format::timeDuration(msec_duration)
+           << " || " << Format::progress(progress)
+           << " || ETA: " << Format::date(ETA)
+           << " || Samples/s: " << Format::largeNumber(sps) + "    ";
+
+        out << ss.str();
+    };
+
     while (!buckets.empty())
     {
         if (num_sampled_pixels != last_num_sampled_pixels)

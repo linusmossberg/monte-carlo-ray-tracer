@@ -7,7 +7,7 @@
 
 #include "Material.hpp"
 #include "Random.hpp"
-#include "Common.hpp"
+#include "CoordinateSystem.hpp"
 
 class Ray
 {

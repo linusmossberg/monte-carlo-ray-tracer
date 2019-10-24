@@ -7,6 +7,8 @@
 #include "Surface.hpp"
 #include "Ray.hpp"
 #include "Random.hpp"
+#include "Intersection.hpp"
+#include "BoundingBox.hpp"
 
 class Scene
 {

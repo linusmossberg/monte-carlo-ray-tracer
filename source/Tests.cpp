@@ -1,27 +1,15 @@
 #pragma once
 
-#include "Tests.hpp"
+#include <iostream>
+#include <fstream>
+#include <string>
 
-void testPhotonMap(std::shared_ptr<Scene> scene)
-{
-    std::ofstream log("photon_map_test_6M.csv");
-    log << "max_node_data, mem_usage_GB, find_msec" << std::endl;
+#ifdef _WIN32
+    #include "windows.h"
+    #include "psapi.h"
+#endif
 
-    size_t end_node_data = 2000;
-    size_t num_iterations = 10000;
-
-    size_t photon_emissions = size_t(1e5);
-    double caustic_factor = 1.0;
-    double radius = 0.1;
-    double caustic_radius = 0.1;
-
-    for (uint16_t max_node_data = 1; max_node_data < end_node_data; max_node_data++)
-    {
-        PhotonMap photon_map_test(scene, photon_emissions, max_node_data, caustic_factor, radius, caustic_radius, false);
-        photon_map_test.test(log, num_iterations);
-    }
-    log.close();
-}
+#include "PhotonMap.hpp"
 
 void PhotonMap::test(std::ostream& log, size_t num_iterations) const
 {

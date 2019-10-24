@@ -1,38 +1,5 @@
 #include "Surface.hpp"
 
-#include <iostream>
-
-bool Surface::Sphere::intersect(const Ray& ray, Intersection& intersection) const 
-{
-    glm::dvec3 so = ray.start - origin;
-    double b = glm::dot(ray.direction, so);
-    double c = glm::dot(so, so) - pow2(radius);
-
-    double discriminant = pow2(b) - c;
-    if (discriminant < 0)
-    {
-        return false;
-    }
-
-    double v = std::sqrt(discriminant);
-    double t = -b - v;
-    if (t < 0)
-    {
-        t = v - b;
-        if (t < 0)
-        {
-            return false;
-        }
-    }
-    
-    intersection.t = t;
-    intersection.position = ray(t);
-    intersection.normal = (intersection.position - origin) / radius;
-    intersection.material = material;
-
-    return true;
-}
-
 bool Surface::Triangle::intersect(const Ray& ray, Intersection& intersection) const
 {
     glm::dvec3 P = glm::cross(ray.direction, E2);
@@ -68,4 +35,31 @@ bool Surface::Triangle::intersect(const Ray& ray, Intersection& intersection) co
     intersection.material = material;
 
     return true;
+}
+
+glm::dvec3 Surface::Triangle::operator()(double u, double v) const
+{
+    double su = std::sqrt(u);
+    return (1 - su) * v0 + (1 - v) * su * v1 + v * su * v2;
+}
+
+glm::dvec3 Surface::Triangle::normal(const glm::dvec3& pos) const
+{
+    return normal_;
+}
+
+BoundingBox Surface::Triangle::boundingBox() const
+{
+    BoundingBox bb;
+    for (uint8_t c = 0; c < 3; c++)
+    {
+        bb.min[c] = std::min(v0[c], std::min(v1[c], v2[c]));
+        bb.max[c] = std::max(v0[c], std::max(v1[c], v2[c]));
+    }
+    return bb;
+}
+
+void Surface::Triangle::computeArea()
+{
+    area_ = glm::length(glm::cross(E1, E2)) / 2.0;
 }

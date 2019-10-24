@@ -24,6 +24,8 @@
 #include "Random.hpp"
 #include "WorkQueue.hpp"
 #include "Util.hpp"
+#include "Intersection.hpp"
+#include "CoordinateSystem.hpp"
 
 struct Bucket
 {

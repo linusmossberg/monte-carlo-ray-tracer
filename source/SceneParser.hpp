@@ -11,7 +11,6 @@
 #include "Camera.hpp"
 #include "PhotonMap.hpp"
 #include "Material.hpp"
-#include "Tests.hpp"
 
 inline glm::dvec3 j2v(const nlohmann::json &j)
 {
@@ -53,13 +52,29 @@ struct SceneRenderer
         camera->saveImage(scene->savename);
         auto now = std::chrono::system_clock::now();
         std::cout << "\r" + std::string(100, ' ') + "\r";
-        std::cout << "Render Completed: " << formatDate(now);
-        std::cout << ", Elapsed Time: " << formatTimeDuration(std::chrono::duration_cast<std::chrono::milliseconds>(now - before).count()) << std::endl;
+        std::cout << "Render Completed: " << Format::date(now);
+        std::cout << ", Elapsed Time: " << Format::timeDuration(std::chrono::duration_cast<std::chrono::milliseconds>(now - before).count()) << std::endl;
     }
 
-    void test()
+    void testPhotonMap()
     {
-        testPhotonMap(scene);
+        std::ofstream log("photon_map_test_6M.csv");
+        log << "max_node_data, mem_usage_GB, find_msec" << std::endl;
+
+        size_t end_node_data = 2000;
+        size_t num_iterations = 10000;
+
+        size_t photon_emissions = size_t(1e5);
+        double caustic_factor = 1.0;
+        double radius = 0.1;
+        double caustic_radius = 0.1;
+
+        for (uint16_t max_node_data = 1; max_node_data < end_node_data; max_node_data++)
+        {
+            PhotonMap photon_map_test(scene, photon_emissions, max_node_data, caustic_factor, radius, caustic_radius, false);
+            photon_map_test.test(log, num_iterations);
+        }
+        log.close();
     }
 
     std::shared_ptr<Camera> camera;
@@ -221,7 +236,6 @@ public:
                 );
             }
         }
-
         return SceneRenderer(camera, scene, photon_map);
     }
 };

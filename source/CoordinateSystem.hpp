@@ -1,17 +1,18 @@
-
-/**********************************************************
-Common types and structures that are used in several places 
-but are too small to warrant having their own files.
-***********************************************************/
-
 #pragma once
 
 #include <glm/glm.hpp>
 #include <glm/vec3.hpp>
 #include <glm/mat3x3.hpp>
 
-#include "Material.hpp"
 #include "Util.hpp"
+
+inline glm::dvec3 orthogonalUnitVector(const glm::dvec3& v)
+{
+    if (abs(v.x) > abs(v.y))
+        return glm::dvec3(-v.z, 0, v.x) / sqrt(pow2(v.x) + pow2(v.z));
+    else
+        return glm::dvec3(0, v.z, -v.y) / sqrt(pow2(v.y) + pow2(v.z));
+}
 
 struct CoordinateSystem
 {
@@ -42,25 +43,4 @@ struct CoordinateSystem
 
 private:
     glm::dmat3 T;
-};
-
-struct Intersection
-{
-    glm::dvec3 position;
-    glm::dvec3 normal;
-    double t = std::numeric_limits<double>::max();
-    std::shared_ptr<Material> material;
-
-    explicit operator bool() const
-    {
-        return t != std::numeric_limits<double>::max();
-    }
-};
-
-struct BoundingBox
-{
-    BoundingBox() : min(0.0), max(0.0) { }
-    BoundingBox(const glm::dvec3 min, const glm::dvec3 max) : min(min), max(max) { }
-
-    glm::dvec3 min, max;
 };
