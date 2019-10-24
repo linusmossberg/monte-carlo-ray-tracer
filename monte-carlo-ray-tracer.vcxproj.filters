@@ -1,0 +1,154 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="scenes">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="source\common">
+      <UniqueIdentifier>{1a4653b9-b7b2-4a86-a42b-e624eecfcd1c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\camera">
+      <UniqueIdentifier>{4ff08ca6-7667-4756-bc6c-dd0f95e11991}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\material">
+      <UniqueIdentifier>{abad7430-0a2e-4a0f-9bd5-60a68b2524ca}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\random">
+      <UniqueIdentifier>{b95f969a-af64-442e-9a1f-7f50efc466f8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\ray">
+      <UniqueIdentifier>{36d59aa4-4490-4662-a5b0-11927d8ca79b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\photon-map">
+      <UniqueIdentifier>{bb73fb83-6f91-4f0c-8d6e-a85fc7c460d8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\scene">
+      <UniqueIdentifier>{66799858-f62b-4798-be91-fb70eec683ba}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\surface">
+      <UniqueIdentifier>{502cadec-16e3-4bc0-a28f-9f0443353197}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\tests">
+      <UniqueIdentifier>{e0ab9ecc-1893-4b5e-85e6-61454aea32a3}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="source\main.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\camera\camera.cpp">
+      <Filter>source\camera</Filter>
+    </ClCompile>
+    <ClCompile Include="source\camera\image.cpp">
+      <Filter>source\camera</Filter>
+    </ClCompile>
+    <ClCompile Include="source\material\material.cpp">
+      <Filter>source\material</Filter>
+    </ClCompile>
+    <ClCompile Include="source\photon-map\octree.cpp">
+      <Filter>source\photon-map</Filter>
+    </ClCompile>
+    <ClCompile Include="source\photon-map\photon-map.cpp">
+      <Filter>source\photon-map</Filter>
+    </ClCompile>
+    <ClCompile Include="source\random\random.cpp">
+      <Filter>source\random</Filter>
+    </ClCompile>
+    <ClCompile Include="source\ray\ray.cpp">
+      <Filter>source\ray</Filter>
+    </ClCompile>
+    <ClCompile Include="source\scene\scene.cpp">
+      <Filter>source\scene</Filter>
+    </ClCompile>
+    <ClCompile Include="source\surface\sphere.cpp">
+      <Filter>source\surface</Filter>
+    </ClCompile>
+    <ClCompile Include="source\surface\triangle.cpp">
+      <Filter>source\surface</Filter>
+    </ClCompile>
+    <ClCompile Include="source\tests\tests.cpp">
+      <Filter>source\tests</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="source\main.hpp">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\camera\camera.hpp">
+      <Filter>source\camera</Filter>
+    </ClInclude>
+    <ClInclude Include="source\camera\image.hpp">
+      <Filter>source\camera</Filter>
+    </ClInclude>
+    <ClInclude Include="source\camera\pixel-operators.hpp">
+      <Filter>source\camera</Filter>
+    </ClInclude>
+    <ClInclude Include="source\common\bounding-box.hpp">
+      <Filter>source\common</Filter>
+    </ClInclude>
+    <ClInclude Include="source\common\constants.hpp">
+      <Filter>source\common</Filter>
+    </ClInclude>
+    <ClInclude Include="source\common\coordinate-system.hpp">
+      <Filter>source\common</Filter>
+    </ClInclude>
+    <ClInclude Include="source\common\format.hpp">
+      <Filter>source\common</Filter>
+    </ClInclude>
+    <ClInclude Include="source\common\intersection.hpp">
+      <Filter>source\common</Filter>
+    </ClInclude>
+    <ClInclude Include="source\common\util.hpp">
+      <Filter>source\common</Filter>
+    </ClInclude>
+    <ClInclude Include="source\common\work-queue.hpp">
+      <Filter>source\common</Filter>
+    </ClInclude>
+    <ClInclude Include="source\material\material.hpp">
+      <Filter>source\material</Filter>
+    </ClInclude>
+    <ClInclude Include="source\photon-map\octree.hpp">
+      <Filter>source\photon-map</Filter>
+    </ClInclude>
+    <ClInclude Include="source\photon-map\photon.hpp">
+      <Filter>source\photon-map</Filter>
+    </ClInclude>
+    <ClInclude Include="source\photon-map\photon-map.hpp">
+      <Filter>source\photon-map</Filter>
+    </ClInclude>
+    <ClInclude Include="source\random\random.hpp">
+      <Filter>source\random</Filter>
+    </ClInclude>
+    <ClInclude Include="source\ray\ray.hpp">
+      <Filter>source\ray</Filter>
+    </ClInclude>
+    <ClInclude Include="source\scene\scene.hpp">
+      <Filter>source\scene</Filter>
+    </ClInclude>
+    <ClInclude Include="source\scene\scene-parser.hpp">
+      <Filter>source\scene</Filter>
+    </ClInclude>
+    <ClInclude Include="source\scene\scene-renderer.hpp">
+      <Filter>source\scene</Filter>
+    </ClInclude>
+    <ClInclude Include="source\surface\surface.hpp">
+      <Filter>source\surface</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="scenes\hexagon_room.json">
+      <Filter>scenes</Filter>
+    </None>
+    <None Include="scenes\hexagon_room_diffuse.json">
+      <Filter>scenes</Filter>
+    </None>
+    <None Include="scenes\oren_nayar_test.json">
+      <Filter>scenes</Filter>
+    </None>
+  </ItemGroup>
+</Project>
