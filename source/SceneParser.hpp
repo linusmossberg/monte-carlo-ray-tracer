@@ -142,7 +142,7 @@ public:
 
         double scene_ior = j.at("ior");
 
-        std::unordered_map<std::string, Material> materials;
+        std::unordered_map<std::string, std::shared_ptr<Material>> materials;
         for (const auto& m : j.at("materials"))
         {
             double roughness                = getOptional(m, "roughness", 0.0);
@@ -153,7 +153,7 @@ public:
             glm::dvec3 specular_reflectance = getOptional(m, "specular_reflectance", glm::dvec3(0.0));
             glm::dvec3 emittance            = getOptional(m, "emittance", glm::dvec3(0.0));
 
-            Material mat = Material(reflectance, specular_reflectance, emittance, roughness, ior, transparency, perfect_mirror, scene_ior);
+            auto mat = std::make_shared<Material>(reflectance, specular_reflectance, emittance, roughness, ior, transparency, perfect_mirror, scene_ior);
             materials.insert({ m.at("name"), mat });
         }
 
@@ -172,43 +172,56 @@ public:
         std::vector<std::shared_ptr<Surface::Base>> surfaces;
         for (const auto& s : j.at("surfaces"))
         {
-            std::string material = "default";
+            std::string material_str = "default";
             if (s.find("material") != s.end())
             {
-                material = s.at("material");
+                material_str = s.at("material");
             }
+            auto& material = materials.at(material_str);
 
             std::string type = s.at("type");
             if (type == "object")
             {
                 const auto& v = vertices.at(s.at("set"));
+
+                bool is_emissive = material->emittance.r > C::EPSILON || material->emittance.g > C::EPSILON || material->emittance.b > C::EPSILON;
                 double total_area = 0.0;
-                for (const auto& t : s.at("triangles"))
+                if (is_emissive)
                 {
-                    total_area += Surface::Triangle(v.at(t.at(0)), v.at(t.at(1)), v.at(t.at(2)), materials.at(material)).area();
+                    for (const auto& t : s.at("triangles"))
+                    {
+                        total_area += Surface::Triangle(v.at(t.at(0)), v.at(t.at(1)), v.at(t.at(2)), material).area();
+                    }
                 }
                 
                 for (const auto& t : s.at("triangles"))
                 {
                     // Entire object emits the flux of assigned material emittance in scene file.
                     // The flux of the material therefore needs to be distributed amongst all object triangles.
-                    double area = Surface::Triangle(v.at(t.at(0)), v.at(t.at(1)), v.at(t.at(2)), materials.at(material)).area();
-                    Material mat = materials.at(material);
-                    mat.emittance *= area / total_area;
-                    surfaces.push_back(std::make_shared<Surface::Triangle>(v.at(t.at(0)), v.at(t.at(1)), v.at(t.at(2)), mat));
+                    if (is_emissive && total_area > C::EPSILON)
+                    {
+                        double area = Surface::Triangle(v.at(t.at(0)), v.at(t.at(1)), v.at(t.at(2)), material).area();
+                        auto new_mat = std::make_shared<Material>(*material);
+                        new_mat->emittance *= area / total_area;
+                        surfaces.push_back(std::make_shared<Surface::Triangle>(v.at(t.at(0)), v.at(t.at(1)), v.at(t.at(2)), new_mat));
+                    }
+                    else
+                    {
+                        surfaces.push_back(std::make_shared<Surface::Triangle>(v.at(t.at(0)), v.at(t.at(1)), v.at(t.at(2)), material));
+                    }
                 }
             }
             else if (type == "triangle")
             {
                 const auto& v = s.at("vertices");
-                surfaces.push_back(std::make_shared<Surface::Triangle>(j2v(v.at(0)), j2v(v.at(1)), j2v(v.at(2)), materials.at(material)));
+                surfaces.push_back(std::make_shared<Surface::Triangle>(j2v(v.at(0)), j2v(v.at(1)), j2v(v.at(2)), material));
             }
             else if (type == "sphere")
             {	
                 // TODO: Remove radius scale and change radii of spheres in scene file
                 double radius = s.at("radius");
                 radius *= 0.99;
-                surfaces.push_back(std::make_shared<Surface::Sphere>(j2v(s.at("origin")), radius, materials.at(material)));
+                surfaces.push_back(std::make_shared<Surface::Sphere>(j2v(s.at("origin")), radius, material));
             }
         }
         scene_file.close();

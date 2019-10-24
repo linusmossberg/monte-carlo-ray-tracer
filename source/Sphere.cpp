@@ -23,10 +23,8 @@ bool Surface::Sphere::intersect(const Ray& ray, Intersection& intersection) cons
         }
     }
 
-    intersection.t = t;
-    intersection.position = ray(t);
-    intersection.normal = (intersection.position - origin) / radius;
-    intersection.material = material;
+    glm::dvec3 pos = ray(t);
+    intersection = Intersection(pos, normal(pos), t, material);
 
     return true;
 }

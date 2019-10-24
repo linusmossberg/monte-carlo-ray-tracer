@@ -29,10 +29,7 @@ bool Surface::Triangle::intersect(const Ray& ray, Intersection& intersection) co
         return false;
     }
 
-    intersection.t = t;
-    intersection.position = ray(t);
-    intersection.normal = normal_;
-    intersection.material = material;
+    intersection = Intersection(ray(t), normal_, t, material);
 
     return true;
 }

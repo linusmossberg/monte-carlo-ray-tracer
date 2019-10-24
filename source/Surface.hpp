@@ -15,8 +15,8 @@ namespace Surface
     class Base
     {
     public:
-        Base(const Material& material)
-            : material(std::make_shared<Material>(material)), area_(0) { };
+        Base(std::shared_ptr<Material> material)
+            : material(material), area_(0) { };
 
         virtual bool intersect(const Ray& ray, Intersection& intersection) const = 0;
         virtual glm::dvec3 operator()(double u, double v) const = 0; // point on surface
@@ -38,7 +38,7 @@ namespace Surface
     class Sphere : public Base
     {
     public:
-        Sphere(const glm::dvec3& origin, double radius, const Material& material)
+        Sphere(const glm::dvec3& origin, double radius, std::shared_ptr<Material> material)
             : Base(material), origin(origin), radius(radius) { computeArea(); }
 
         virtual bool intersect(const Ray& ray, Intersection& intersection) const;
@@ -57,7 +57,7 @@ namespace Surface
     class Triangle : public Base
     {
     public:
-        Triangle(const glm::dvec3& v0, const glm::dvec3& v1, const glm::dvec3& v2, const Material& material)
+        Triangle(const glm::dvec3& v0, const glm::dvec3& v1, const glm::dvec3& v2, std::shared_ptr<Material> material)
             : Base(material), v0(v0), v1(v1), v2(v2), E1(v1 - v0), E2(v2 - v0), normal_(glm::normalize(glm::cross(E1, E2))) { computeArea(); }
 
         virtual bool intersect(const Ray& ray, Intersection& intersection) const;
