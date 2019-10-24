@@ -171,10 +171,7 @@ public:
             }
             else if (type == "sphere")
             {	
-                // TODO: Remove radius scale and change radii of spheres in scene file
-                double radius = s.at("radius");
-                radius *= 0.99;
-                surfaces.push_back(std::make_shared<Surface::Sphere>(j2v(s.at("origin")), radius, material));
+                surfaces.push_back(std::make_shared<Surface::Sphere>(j2v(s.at("origin")), s.at("radius"), material));
             }
         }
         scene_file.close();
