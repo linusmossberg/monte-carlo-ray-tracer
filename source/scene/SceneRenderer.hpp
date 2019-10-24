@@ -5,8 +5,8 @@ Simple class to abstract away some stuff from main.
 #pragma once
 
 #include "Scene.hpp"
-#include "Camera.hpp"
-#include "PhotonMap.hpp"
+#include "../camera/Camera.hpp"
+#include "../photon-map/PhotonMap.hpp"
 
 struct SceneRenderer
 {

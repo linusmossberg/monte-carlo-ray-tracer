@@ -17,15 +17,17 @@
 #include <glm/gtx/rotate_vector.hpp>
 #include <glm/gtx/vector_angle.hpp>
 
-#include "Scene.hpp"
-#include "PhotonMap.hpp"
-#include "Surface.hpp"
 #include "Image.hpp"
-#include "Random.hpp"
-#include "WorkQueue.hpp"
-#include "Util.hpp"
-#include "Intersection.hpp"
-#include "CoordinateSystem.hpp"
+
+#include "../ray/Ray.hpp"
+#include "../scene/Scene.hpp"
+#include "../photon-map/PhotonMap.hpp"
+#include "../surface/Surface.hpp"
+#include "../random/Random.hpp"
+#include "../common/WorkQueue.hpp"
+#include "../common/Util.hpp"
+#include "../common/Intersection.hpp"
+#include "../common/CoordinateSystem.hpp"
 
 struct Bucket
 {

@@ -8,7 +8,7 @@
 #include <glm/glm.hpp>
 #include <glm/vec3.hpp>
 
-#include "Format.hpp"
+#include "../common/Format.hpp"
 
 inline std::ostream& operator<<(std::ostream& out, const glm::dvec3& v)
 {

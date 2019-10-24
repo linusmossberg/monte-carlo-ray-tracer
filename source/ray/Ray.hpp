@@ -5,9 +5,9 @@
 #include <glm/glm.hpp>
 #include <glm/vec3.hpp>
 
-#include "Material.hpp"
-#include "Random.hpp"
-#include "CoordinateSystem.hpp"
+#include "../material/Material.hpp"
+#include "../random/Random.hpp"
+#include "../common/CoordinateSystem.hpp"
 
 class Ray
 {

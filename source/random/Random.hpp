@@ -4,7 +4,7 @@
 
 #include <glm/vec3.hpp>
 
-#include "Constants.hpp"
+#include "../common/Constants.hpp"
 
 struct Random
 {

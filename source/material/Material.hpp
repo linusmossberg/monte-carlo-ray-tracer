@@ -4,8 +4,8 @@
 #include <glm/vec3.hpp>
 #include <glm/gtx/component_wise.hpp>
 
-#include "Util.hpp"
-#include "Constants.hpp"
+#include "../common/Util.hpp"
+#include "../common/Constants.hpp"
 
 class Material
 {
