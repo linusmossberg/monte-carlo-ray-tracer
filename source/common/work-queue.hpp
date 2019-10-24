@@ -16,7 +16,7 @@ class WorkQueue
 public:
     WorkQueue(const std::vector<T> items) : m()
     {
-        original_size_ = items.size();
+        original_size = items.size();
         for (const auto& item : items)
         {
             queue.push(item);
@@ -49,13 +49,13 @@ public:
     double progress()
     {
         std::unique_lock<std::mutex> lock(m);
-        double p = static_cast<double>(original_size_ - queue.size()) * 100.0 / original_size_;
+        double p = static_cast<double>(original_size - queue.size()) * 100.0 / original_size;
         lock.unlock();
         return p;
     }
 
 private:
-    size_t original_size_;
+    size_t original_size;
     std::queue<T> queue;
     mutable std::mutex m;
 };

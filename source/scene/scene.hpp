@@ -13,7 +13,16 @@
 class Scene
 {
 public:
-    Scene(std::vector<std::shared_ptr<Surface::Base>> surfaces, size_t sqrtspp, const std::string& savename, int threads, double ior);
+    Scene(std::vector<std::shared_ptr<Surface::Base>> surfaces, int threads, double ior, bool naive)
+        : surfaces(surfaces), ior(ior), naive(naive)
+    {
+        size_t max_threads = std::thread::hardware_concurrency();
+        num_threads = (threads < 1 || threads > max_threads) ? max_threads : threads;
+        std::cout << std::endl << "Threads used for rendering: " << num_threads << std::endl << std::endl;
+        generateEmissives();
+    }
+
+    glm::dvec3 sampleRay(Ray ray, size_t ray_depth = 0);
 
     Intersection intersect(const Ray& ray, bool align_normal = false, double min_distance = -1);
 
@@ -28,11 +37,14 @@ public:
     std::vector<std::shared_ptr<Surface::Base>> surfaces;
     std::vector<std::shared_ptr<Surface::Base>> emissives; // subset of surfaces
 
-    size_t sqrtspp;
     size_t num_threads;
-    std::string savename;
     double ior;
 
 private:
+    const size_t min_ray_depth = 3;
+    const size_t max_ray_depth = 64; // prevent call stack overflow
+
+    bool naive;
+
     std::unique_ptr<BoundingBox> bounding_box;
 };

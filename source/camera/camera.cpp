@@ -1,75 +1,13 @@
 #include "camera.hpp"
 
-glm::dvec3 Camera::sampleRay(Ray ray, size_t ray_depth)
-{
-    if (ray_depth == max_ray_depth)
-    {
-        Log("Bias introduced: Max ray depth reached in Camera::sampleRay()");
-        return glm::dvec3(0.0);
-    }
-
-    Intersection intersect = scene->intersect(ray, true);
-
-    if (!intersect) return scene->skyColor(ray);
-
-    double terminate = 0.0;
-    if (ray_depth > min_ray_depth)
-    {
-        terminate = 1.0 - intersect.material->reflect_probability;
-        if (terminate > Random::range(0, 1))
-        {
-            return glm::dvec3(0.0);
-        }
-    }
-
-    Ray new_ray(intersect.position);
-
-    glm::dvec3 emittance = (ray_depth == 0 || ray.specular || naive) ? intersect.material->emittance : glm::dvec3(0);
-    glm::dvec3 direct(0), indirect(0);
-    glm::dvec3 BRDF;
-
-    double n1 = ray.medium_ior;
-    double n2 = abs(ray.medium_ior - scene->ior) < C::EPSILON ? intersect.material->ior : scene->ior;
-
-    if (intersect.material->perfect_mirror || Material::Fresnel(n1, n2, intersect.normal, -ray.direction) > Random::range(0,1))
-    {
-        /* SPECULAR REFLECTION */
-        BRDF = intersect.material->SpecularBRDF();
-        new_ray.reflectSpecular(ray.direction, intersect.normal, n1);
-    }
-    else
-    {
-        if (intersect.material->transparency > Random::range(0,1))
-        {
-            /* SPECULAR REFRACTION */
-            BRDF = intersect.material->SpecularBRDF();
-            new_ray.refractSpecular(ray.direction, intersect.normal, n1, n2);
-        }
-        else
-        {
-            /* DIFFUSE REFLECTION */
-            CoordinateSystem cs(intersect.normal);
-
-            new_ray.reflectDiffuse(cs, n1);
-            BRDF = intersect.material->DiffuseBRDF(cs.globalToLocal(new_ray.direction), cs.globalToLocal(-ray.direction)) * C::PI;
-
-            if (!naive) direct = scene->sampleDirect(intersect);
-        }
-    }
-
-    indirect = sampleRay(new_ray, ray_depth + 1);
-
-    return (emittance + BRDF * (direct + indirect)) / (1.0 - terminate);
-}
-
 void Camera::samplePixel(size_t x, size_t y)
 {
     double pixel_size = sensor_width / image.width;
-    double sub_step = 1.0 / scene->sqrtspp;
+    double sub_step = 1.0 / sqrtspp;
 
-    for (int s_x = 0; s_x < scene->sqrtspp; s_x++)
+    for (int s_x = 0; s_x < sqrtspp; s_x++)
     {
-        for (int s_y = 0; s_y < scene->sqrtspp; s_y++)
+        for (int s_y = 0; s_y < sqrtspp; s_y++)
         {
             glm::dvec2 pixel_space_pos(x + s_x * sub_step + Random::range(0.0, sub_step), y + s_y * sub_step + Random::range(0.0, sub_step));
             glm::dvec2 center_offset = pixel_size * (glm::dvec2(image.width, image.height) / 2.0 - pixel_space_pos);
@@ -82,11 +20,11 @@ void Camera::samplePixel(size_t x, size_t y)
             } 
             else
             {
-                image(x, y) += sampleRay(Ray(eye, sensor_pos, scene->ior));
+                image(x, y) += scene->sampleRay(Ray(eye, sensor_pos, scene->ior));
             } 
         }
     }
-    image(x, y) /= pow2(static_cast<double>(scene->sqrtspp));
+    image(x, y) /= pow2(static_cast<double>(sqrtspp));
 }
 
 void Camera::sampleImage(std::shared_ptr<Scene> s, std::shared_ptr<PhotonMap> pm)
@@ -154,7 +92,6 @@ void Camera::printInfoThread(WorkQueue<Bucket>& buckets)
     {
         auto ETA = std::chrono::system_clock::now() + std::chrono::milliseconds(msec_duration);
 
-        // Create string first to avoid jumbled output if multiple threads write simultaneously
         std::stringstream ss;
         ss << "\rTime remaining: " << Format::timeDuration(msec_duration)
            << " || " << Format::progress(progress)
@@ -183,7 +120,7 @@ void Camera::printInfoThread(WorkQueue<Bucket>& buckets)
 
             double progress = 100.0 * static_cast<double>(num_sampled_pixels) / image.num_pixels;
             size_t msec_left = static_cast<size_t>(pixels_left / pixels_per_msec);
-            size_t sps = static_cast<size_t>(pixels_per_msec * 1000.0 * pow2(static_cast<double>(scene->sqrtspp)));
+            size_t sps = static_cast<size_t>(pixels_per_msec * 1000.0 * pow2(static_cast<double>(sqrtspp)));
 
             printProgressInfo(progress, msec_left, sps, std::cout);
 

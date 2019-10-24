@@ -80,7 +80,8 @@ public:
             camera = std::make_shared<Camera>(
                 j2v(c.at("eye")), j2v(c.at("look_at")), 
                 c.at("focal_length"), c.at("sensor_width"), 
-                c.at("width"), c.at("height")
+                c.at("width"), c.at("height"),
+                c.at("sqrtspp"), c.at("savename")
             );
         }
         else
@@ -88,10 +89,10 @@ public:
             camera = std::make_shared<Camera>(
                 j2v(c.at("eye")), j2v(c.at("forward")), j2v(c.at("up")), 
                 c.at("focal_length"), c.at("sensor_width"), 
-                c.at("width"), c.at("height")
+                c.at("width"), c.at("height"),
+                c.at("sqrtspp"), c.at("savename")
             );
         }
-        camera->setNaive(getOptional(j, "naive", false));
 
         double scene_ior = j.at("ior");
 
@@ -177,7 +178,8 @@ public:
         scene_file.close();
 
         int threads = getOptional(j, "num_render_threads", -1);
-        std::shared_ptr<Scene> scene = std::make_shared<Scene>(surfaces, j.at("sqrtspp"), j.at("savename"), threads, scene_ior);
+        bool naive = getOptional(j, "naive", false);
+        std::shared_ptr<Scene> scene = std::make_shared<Scene>(surfaces, threads, scene_ior, naive);
 
         std::shared_ptr<PhotonMap> photon_map;
         if (j.find("photon_map") != j.end())

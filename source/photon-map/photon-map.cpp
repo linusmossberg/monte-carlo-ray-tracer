@@ -157,10 +157,10 @@ PhotonMap::PhotonMap(std::shared_ptr<Scene> s, size_t photon_emissions, uint16_t
     }
 
     done_constructing_octrees = true;
-    if(print) print_thread->join();
 
     if (print)
     {
+        print_thread->join();
         end = std::chrono::high_resolution_clock::now();
         std::string duration2 = Format::timeDuration(std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count());
         std::cout << "\rPhotons emitted in " + duration + ". Octrees constructed in " + duration2 + "." << std::endl << std::endl
@@ -339,12 +339,14 @@ glm::dvec3 PhotonMap::sampleRay(const Ray& ray, size_t ray_depth)
         }
     }
 
-    // Terminate the path once the global contribution has been evaluated from the photon maps to estimate all incoming radiance at this point. 
-    // This happens once a diffusely reflected ray hits a point that evaluates to diffuse, provided that there are no shadow photons at this point.
+    // Terminate the path once the global contribution has been evaluated to estimate all incoming radiance at this point. This happens 
+    // once a diffusely reflected ray hits a point that evaluates to diffuse, provided that there are no shadow photons at this point.
     if (!global_contribution_evaluated)
     {
         indirect = sampleRay(new_ray, ray_depth + 1);
     }
+
+    // BRDF is 1 if the indirect and direct radiance was estimated from the photon maps.
     return (emittance + caustics + (indirect + direct) * BRDF) / (1.0 - terminate);
 }
 

@@ -33,7 +33,7 @@ size_t Random::uirange(size_t min, size_t max)
 
 glm::dvec3 Random::CosWeightedHemiSample()
 {
-    // Generate uniform sample on unit circle at radius r and angle azimuth
+    // Generate uniform sample on unit disk at radius r and angle azimuth
     double u = range(0, 1);
     double r = sqrt(u);
     double azimuth = range(0, C::TWO_PI);

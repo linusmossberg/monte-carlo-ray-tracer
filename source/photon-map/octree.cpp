@@ -38,7 +38,7 @@ void Octree<Data>::insert(const Data& data)
         {
             std::vector<Data> temp_data = std::move(data_vec);
 
-            // allocating octant pointers here reduces memory usage drastically.  
+            // Allocating octant pointers here reduces memory usage drastically.  
             // Otherwise each leaf would have 8 unused pointers (8*64 bit = 64 bytes) in the final tree.
             octants.resize(8);
             for (uint8_t i = 0; i < octants.size(); i++)
@@ -118,7 +118,7 @@ void Octree<Data>::recursiveBoxSearch(const glm::dvec3& min, const glm::dvec3& m
     }
 }
 
-// Squared distances/radius to avoid sqrt()
+// Squared distances/radius to avoid sqrt
 template <class Data>
 void Octree<Data>::recursiveRadiusSearch(const glm::dvec3& p, double radius2, std::vector<Data>& result) const
 {

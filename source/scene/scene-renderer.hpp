@@ -16,10 +16,10 @@ struct SceneRenderer
     void render()
     {
         std::cout << std::string(28, '-') << "| MAIN RENDERING PASS |" << std::string(28, '-') << std::endl << std::endl;
-        std::cout << "Samples per pixel: " << pow2(static_cast<double>(scene->sqrtspp)) << std::endl << std::endl;
+        std::cout << "Samples per pixel: " << pow2(static_cast<double>(camera->sqrtspp)) << std::endl << std::endl;
         auto before = std::chrono::system_clock::now();
         camera->sampleImage(scene, photon_map);
-        camera->saveImage(scene->savename);
+        camera->saveImage();
         auto now = std::chrono::system_clock::now();
         std::cout << "\r" + std::string(100, ' ') + "\r";
         std::cout << "Render Completed: " << Format::date(now);

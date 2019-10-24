@@ -1,12 +1,65 @@
 #include "scene.hpp"
 
-Scene::Scene(std::vector<std::shared_ptr<Surface::Base>> surfaces, size_t sqrtspp, const std::string& savename, int threads, double ior)
-    : surfaces(surfaces), sqrtspp(sqrtspp), savename(savename), ior(ior)
+glm::dvec3 Scene::sampleRay(Ray ray, size_t ray_depth)
 {
-    size_t max_threads = std::thread::hardware_concurrency();
-    num_threads = (threads < 1 || threads > max_threads) ? max_threads : threads;
-    std::cout << std::endl << "Threads used for rendering: " << num_threads << std::endl << std::endl;
-    generateEmissives();
+    if (ray_depth == max_ray_depth)
+    {
+        Log("Bias introduced: Max ray depth reached in Scene::sampleRay()");
+        return glm::dvec3(0.0);
+    }
+
+    Intersection intersection = intersect(ray, true);
+
+    if (!intersection) return skyColor(ray);
+
+    double terminate = 0.0;
+    if (ray_depth > min_ray_depth)
+    {
+        terminate = 1.0 - intersection.material->reflect_probability;
+        if (terminate > Random::range(0, 1))
+        {
+            return glm::dvec3(0.0);
+        }
+    }
+
+    Ray new_ray(intersection.position);
+
+    glm::dvec3 emittance = (ray_depth == 0 || ray.specular || naive) ? intersection.material->emittance : glm::dvec3(0);
+    glm::dvec3 direct(0), indirect(0);
+    glm::dvec3 BRDF;
+
+    double n1 = ray.medium_ior;
+    double n2 = abs(ray.medium_ior - ior) < C::EPSILON ? intersection.material->ior : ior;
+
+    if (intersection.material->perfect_mirror || Material::Fresnel(n1, n2, intersection.normal, -ray.direction) > Random::range(0, 1))
+    {
+        /* SPECULAR REFLECTION */
+        BRDF = intersection.material->SpecularBRDF();
+        new_ray.reflectSpecular(ray.direction, intersection.normal, n1);
+    }
+    else
+    {
+        if (intersection.material->transparency > Random::range(0, 1))
+        {
+            /* SPECULAR REFRACTION */
+            BRDF = intersection.material->SpecularBRDF();
+            new_ray.refractSpecular(ray.direction, intersection.normal, n1, n2);
+        }
+        else
+        {
+            /* DIFFUSE REFLECTION */
+            CoordinateSystem cs(intersection.normal);
+
+            new_ray.reflectDiffuse(cs, n1);
+            BRDF = intersection.material->DiffuseBRDF(cs.globalToLocal(new_ray.direction), cs.globalToLocal(-ray.direction)) * C::PI;
+
+            if (!naive) direct = sampleDirect(intersection);
+        }
+    }
+
+    indirect = sampleRay(new_ray, ray_depth + 1);
+
+    return (emittance + BRDF * (direct + indirect)) / (1.0 - terminate);
 }
 
 Intersection Scene::intersect(const Ray& ray, bool align_normal, double min_distance)

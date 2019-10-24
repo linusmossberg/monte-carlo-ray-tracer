@@ -41,39 +41,42 @@ struct Bucket
 class Camera
 {
 public:
-    Camera(glm::dvec3 eye, glm::dvec3 forward, glm::dvec3 up, double focal_length, double sensor_width, size_t width, size_t height) 
-        : eye(eye),
+    Camera(glm::dvec3 eye, glm::dvec3 forward, glm::dvec3 up, double focal_length, double sensor_width, 
+           size_t width, size_t height, size_t sqrtspp, const std::string& savename) 
+        : 
+        eye(eye),
         forward(glm::normalize(forward)),
         left(glm::cross(glm::normalize(up), glm::normalize(forward))),
         up(glm::normalize(up)),
         focal_length(focal_length/1000.0),
         sensor_width(sensor_width/1000.0),
-        image(width, height) { }
+        image(width, height),
+        sqrtspp(sqrtspp),
+        savename(savename) { }
 
-    Camera(glm::dvec3 eye, glm::dvec3 look_at, double focal_length, double sensor_width, size_t width, size_t height)
-        : eye(eye),
+    Camera(glm::dvec3 eye, glm::dvec3 look_at, double focal_length, double sensor_width, 
+           size_t width, size_t height, size_t sqrtspp, const std::string& savename)
+        : 
+        eye(eye),
         focal_length(focal_length/1000.0),
         sensor_width(sensor_width/1000.0),
-        image(width, height)
+        image(width, height),
+        sqrtspp(sqrtspp),
+        savename(savename)
     {
         lookAt(look_at);
     }
 
     void sampleImage(std::shared_ptr<Scene> s, std::shared_ptr<PhotonMap> pm);
 
-    void saveImage(const std::string& filename) const
+    void saveImage() const
     {
-        image.save(filename);
+        image.save(savename);
     }
 
     void setPosition(const glm::dvec3& p)
     {
         eye = p;
-    }
-
-    void setNaive(bool n)
-    {
-        naive = n;
     }
 
     void lookAt(const glm::dvec3& p)
@@ -83,9 +86,9 @@ public:
         up = glm::normalize(glm::cross(forward, left));
     }
 
-private:
+    size_t sqrtspp;
 
-    glm::dvec3 sampleRay(Ray ray, size_t ray_depth = 0);
+private:
     void samplePixel(size_t x, size_t y);
     void sampleImageThread(WorkQueue<Bucket>& buckets);
 
@@ -97,8 +100,7 @@ private:
     double focal_length, sensor_width;
     Image image;
 
-    const size_t min_ray_depth = 3;
-    const size_t max_ray_depth = 64; // prevent call stack overflow
+    std::string savename;
 
     const size_t bucket_size = 32;
 
@@ -110,6 +112,4 @@ private:
     std::chrono::time_point<std::chrono::steady_clock> last_update = std::chrono::steady_clock::now();
     const size_t num_times = 32;
     std::deque<double> times;
-
-    bool naive = false;
 };
