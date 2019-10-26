@@ -1,9 +1,10 @@
 #include "photon-map.hpp"
 
 PhotonMap::PhotonMap(std::shared_ptr<Scene> s, size_t photon_emissions, uint16_t max_node_data, 
-                     double caustic_factor, double radius, double caustic_radius, bool print)
+                     double caustic_factor, double radius, double caustic_radius, bool direct_visualization, bool print)
 
-    : scene(s), non_caustic_reject(1.0 / caustic_factor), radius(radius), caustic_radius(caustic_radius), max_node_data(max_node_data),
+    : scene(s), non_caustic_reject(1.0 / caustic_factor), radius(radius), caustic_radius(caustic_radius), 
+      max_node_data(max_node_data), direct_visualization(direct_visualization),
       indirect_map(s->boundingBox(1), max_node_data), 
         direct_map(s->boundingBox(0), max_node_data),
        caustic_map(s->boundingBox(0), max_node_data), 
@@ -323,7 +324,7 @@ glm::dvec3 PhotonMap::sampleRay(const Ray& ray, size_t ray_depth)
             caustics = estimateRadiance(caustic_map, intersect, -ray.direction, cs, caustic_radius);
 
             bool has_shadow_photons = hasShadowPhoton(intersect);
-            if (ray_depth == 0 || ray.specular || has_shadow_photons)
+            if (!direct_visualization && (ray_depth == 0 || ray.specular || has_shadow_photons))
             {
                 double n1 = ray.medium_ior;
                 new_ray.reflectDiffuse(cs, n1);

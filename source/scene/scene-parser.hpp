@@ -195,9 +195,11 @@ public:
             if(a == 'y' || a == 'Y')
             { 
                 const auto& pm = j.at("photon_map");
+                bool direct_visualization = getOptional(pm, "direct_visualization", false);
                 photon_map = std::make_shared<PhotonMap>(
                     scene, pm.at("emissions"), pm.at("max_photons_per_octree_leaf"),
-                    pm.at("caustic_factor"), pm.at("radius"), pm.at("caustic_radius")
+                    pm.at("caustic_factor"), pm.at("radius"), pm.at("caustic_radius"), 
+                    direct_visualization
                 );
             }
         }

@@ -28,20 +28,20 @@ struct SceneRenderer
 
     void testPhotonMap()
     {
-        std::ofstream log("photon_map_test_6M.csv");
+        std::ofstream log("photon_map_test_5M.csv");
         log << "max_node_data, mem_usage_GB, find_msec" << std::endl;
 
         size_t end_node_data = 2000;
-        size_t num_iterations = 10000;
+        size_t num_iterations = 20000;
 
-        size_t photon_emissions = size_t(1e5);
+        size_t photon_emissions = size_t(5e6);
         double caustic_factor = 1.0;
         double radius = 0.1;
         double caustic_radius = 0.1;
 
         for (uint16_t max_node_data = 1; max_node_data < end_node_data; max_node_data++)
         {
-            PhotonMap photon_map_test(scene, photon_emissions, max_node_data, caustic_factor, radius, caustic_radius, false);
+            PhotonMap photon_map_test(scene, photon_emissions, max_node_data, caustic_factor, radius, caustic_radius, false, false);
             photon_map_test.test(log, num_iterations);
         }
         log.close();

@@ -22,7 +22,7 @@ class PhotonMap
 {
 public:
     PhotonMap(std::shared_ptr<Scene> s, size_t photon_emissions, uint16_t max_node_data, 
-              double caustic_factor, double radius, double caustic_radius, bool print = true);
+              double caustic_factor, double radius, double caustic_radius, bool direct_visualization, bool print = true);
 
     void emitPhoton(const Ray& ray, const glm::dvec3& flux, size_t thread, size_t ray_depth = 0);
 
@@ -64,6 +64,8 @@ private:
     double radius;
     double caustic_radius;
     double non_caustic_reject;
+
+    bool direct_visualization;
 
     uint16_t max_node_data;
 
