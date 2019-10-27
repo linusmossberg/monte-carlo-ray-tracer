@@ -10,23 +10,6 @@
 
 #include "pixel-operators.hpp"
 
-/**************************************************************************
-Hard coded (except for dimensions) uncompressed 24bpp true-color TGA header.
-After writing this to file, the RGB bytes can be dumped in sequence 
-(left to right, top to bottom) to create a TGA image.
-***************************************************************************/
-struct HeaderTGA
-{
-    HeaderTGA(uint16_t width, uint16_t height)
-        : width(width), height(height) {}
-
-private:
-    uint8_t begin[12] = { 0, 0, 2 };
-    uint16_t width;
-    uint16_t height;
-    uint8_t end[2] = { 24, 32 };
-};
-
 struct Image
 {
     Image(size_t width, size_t height);
@@ -44,4 +27,21 @@ private:
     double getExposureFactor() const;
 
     std::vector<glm::dvec3> blob;
+
+    /**************************************************************************
+    Hard coded (except for dimensions) uncompressed 24bpp true-color TGA header.
+    After writing this to file, the RGB bytes can be dumped in sequence
+    (left to right, top to bottom) to create a TGA image.
+    ***************************************************************************/
+    struct HeaderTGA
+    {
+        HeaderTGA(uint16_t width, uint16_t height)
+            : width(width), height(height) {}
+
+    private:
+        uint8_t begin[12] = { 0, 0, 2 };
+        uint16_t width;
+        uint16_t height;
+        uint8_t end[2] = { 24, 32 };
+    };
 };

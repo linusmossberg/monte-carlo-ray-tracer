@@ -138,23 +138,33 @@ PhotonMap::PhotonMap(std::shared_ptr<Scene> s, size_t photon_emissions, uint16_t
     size_t num_caustic_photons = 0;
     size_t num_shadow_photons = 0;
 
+    // Erase elements from the vectors as they are inserted to the octree, 
+    // otherwise we momentarily use more memory than we need.
+    auto insertAndPop = [](auto& pvec, auto& pmap)
+    {
+        auto i = pvec.end();
+        while (i > pvec.begin())
+        {
+            i--;
+            pmap.insert(*i);
+            i = pvec.erase(i);
+        }
+        pvec.clear();
+    };
+
     for (size_t thread = 0; thread < threads.size(); thread++)
     {
-        for (const auto& p : direct_vecs[thread]) direct_map.insert(p);
         num_direct_photons += direct_vecs[thread].size();
-        direct_vecs[thread].clear();
+        insertAndPop(direct_vecs[thread], direct_map);
 
-        for (const auto& p : indirect_vecs[thread]) indirect_map.insert(p);
         num_indirect_photons += indirect_vecs[thread].size();
-        indirect_vecs[thread].clear();
+        insertAndPop(indirect_vecs[thread], indirect_map);
 
-        for (const auto& p : caustic_vecs[thread]) caustic_map.insert(p);
         num_caustic_photons += caustic_vecs[thread].size();
-        caustic_vecs[thread].clear();
+        insertAndPop(caustic_vecs[thread], caustic_map);
 
-        for (const auto& p : shadow_vecs[thread]) shadow_map.insert(p);
         num_shadow_photons += shadow_vecs[thread].size();
-        shadow_vecs[thread].clear();
+        insertAndPop(shadow_vecs[thread], shadow_map);
     }
 
     done_constructing_octrees = true;

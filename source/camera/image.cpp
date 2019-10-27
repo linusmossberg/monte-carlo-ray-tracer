@@ -62,7 +62,7 @@ increased dynamic range.
 double Image::getExposureFactor() const
 {
     double max = getMax();
-    if (max <= 0.0) return 1.0;
+    if (max <= 0) return 1.0;
 
     std::vector<size_t> histogram(65536, 0);
     double bin_size = max / histogram.size();
@@ -70,6 +70,7 @@ double Image::getExposureFactor() const
     for (const auto& p : blob)
     {
         double t = glm::compAdd(p) / 3.0;
+        if (t < 0) return 1.0;
         histogram[static_cast<size_t>(std::floor(t / bin_size))]++;
     }
 
