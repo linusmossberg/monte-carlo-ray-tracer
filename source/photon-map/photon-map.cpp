@@ -198,8 +198,8 @@ void PhotonMap::emitPhoton(const Ray& ray, const glm::dvec3& flux, size_t thread
     if (!intersect) return;
 
     // Delay path termination until any new photons have been stored.
-    double terminate = ray_depth > 0 ? 1.0 - intersect.material->reflect_probability : 0.0;
-    bool should_terminate = terminate > Random::range(0, 1);
+    double absorb = ray_depth > 0 ? 1.0 - intersect.material->reflect_probability : 0.0;
+    bool should_absorb = absorb > Random::range(0, 1);
 
     Ray new_ray(intersect.position);
 
@@ -208,31 +208,30 @@ void PhotonMap::emitPhoton(const Ray& ray, const glm::dvec3& flux, size_t thread
     double n1 = ray.medium_ior;
     double n2 = abs(ray.medium_ior - scene->ior) < C::EPSILON ? intersect.material->ior : scene->ior;
 
-    if (intersect.material->perfect_mirror || Material::Fresnel(n1, n2, intersect.normal, -ray.direction) > Random::range(0, 1))
+    switch (intersect.material->selectPath(n1, n2, intersect.normal, -ray.direction))
     {
-        /* SPECULAR REFLECTION */
-        if (ray_depth == 0 && Random::range(0, 1) < non_caustic_reject)
+        case Path::REFLECT:
         {
-            createShadowPhotons(Ray(intersect.position - intersect.normal * C::EPSILON, intersect.position + ray.direction), thread);
+            if (ray_depth == 0 && Random::range(0, 1) < non_caustic_reject)
+            {
+                createShadowPhotons(Ray(intersect.position - intersect.normal * C::EPSILON, intersect.position + ray.direction), thread);
+            }
+
+            if (should_absorb) return;
+
+            BRDF = intersect.material->SpecularBRDF();
+            new_ray.reflectSpecular(ray.direction, intersect.normal, n1);
+            break;
         }
-
-        if (should_terminate) return;
-
-        BRDF = intersect.material->SpecularBRDF();
-        new_ray.reflectSpecular(ray.direction, intersect.normal, n1);
-    }
-    else
-    {
-        if (intersect.material->transparency > Random::range(0, 1))
+        case Path::REFRACT:
         {
-            /* SPECULAR REFRACTION */
-            if (should_terminate) return;
+            if (should_absorb) return;
             BRDF = intersect.material->SpecularBRDF();
             new_ray.refractSpecular(ray.direction, intersect.normal, n1, n2);
+            break;
         }
-        else
+        case Path::DIFFUSE:
         {
-            /* DIFFUSE REFLECTION */
             if (ray_depth == 0)
             { 
                 if (Random::range(0, 1) < non_caustic_reject)
@@ -253,14 +252,15 @@ void PhotonMap::emitPhoton(const Ray& ray, const glm::dvec3& flux, size_t thread
                 }
             }
 
-            if (should_terminate) return;
+            if (should_absorb) return;
 
             CoordinateSystem cs(intersect.normal);
             new_ray.reflectDiffuse(cs, n1);
             BRDF = C::PI * intersect.material->DiffuseBRDF(cs.globalToLocal(new_ray.direction), cs.globalToLocal(-ray.direction));
         }
     }
-    emitPhoton(new_ray, flux * BRDF / (1.0 - terminate), thread, ray_depth + 1);
+
+    emitPhoton(new_ray, flux * BRDF / (1.0 - should_absorb), thread, ray_depth + 1);
 }
 
 void PhotonMap::createShadowPhotons(const Ray& ray, size_t thread)
@@ -290,15 +290,9 @@ glm::dvec3 PhotonMap::sampleRay(const Ray& ray, size_t ray_depth)
 
     if (!intersect) return scene->skyColor(ray);
 
-    double terminate = 0.0;
-    if (ray_depth > 3)
-    {
-        terminate = 1.0 - intersect.material->reflect_probability;
-        if (terminate > Random::range(0, 1))
-        {
-            return glm::dvec3(0.0);
-        }
-    }
+    double absorb = ray_depth > min_ray_depth ? 1.0 - intersect.material->reflect_probability : 0.0;
+
+    if (absorb > Random::range(0, 1)) return glm::dvec3(0.0);
 
     Ray new_ray(intersect.position);
 
@@ -308,26 +302,24 @@ glm::dvec3 PhotonMap::sampleRay(const Ray& ray, size_t ray_depth)
     bool diffuse = ray_depth != 0 && !ray.specular;
     bool global_contribution_evaluated = false;
 
-    glm::dvec3 emittance = (ray_depth == 0 || ray.specular) ? intersect.material->emittance : glm::dvec3(0.0);
     glm::dvec3 caustics(0.0), direct(0.0), indirect(0.0), BRDF(1.0);
 
-    if (!diffuse && (intersect.material->perfect_mirror || Material::Fresnel(n1, n2, intersect.normal, -ray.direction) > Random::range(0, 1)))
+    switch (intersect.material->selectPath(n1, n2, intersect.normal, -ray.direction))
     {
-        /* SPECULAR REFLECTION */
-        BRDF = intersect.material->SpecularBRDF();
-        new_ray.reflectSpecular(ray.direction, intersect.normal, n1);
-    }
-    else
-    {
-        if (!diffuse && intersect.material->transparency > Random::range(0, 1))
+        case Path::REFLECT:
         {
-            /* SPECULAR REFRACTION */
+            BRDF = intersect.material->SpecularBRDF();
+            new_ray.reflectSpecular(ray.direction, intersect.normal, n1);
+            break;
+        }
+        case Path::REFRACT:
+        {
             BRDF = intersect.material->SpecularBRDF();
             new_ray.refractSpecular(ray.direction, intersect.normal, n1, n2);
+            break;
         }
-        else
+        case Path::DIFFUSE:
         {
-            /* DIFFUSE REFLECTION */
             CoordinateSystem cs(intersect.normal);
 
             caustics = estimateRadiance(caustic_map, intersect, -ray.direction, cs, caustic_radius);
@@ -346,6 +338,7 @@ glm::dvec3 PhotonMap::sampleRay(const Ray& ray, size_t ray_depth)
                 indirect = estimateRadiance(indirect_map, intersect, -ray.direction, cs, radius);
                 global_contribution_evaluated = true;
             }
+            break;
         }
     }
 
@@ -356,8 +349,10 @@ glm::dvec3 PhotonMap::sampleRay(const Ray& ray, size_t ray_depth)
         indirect = sampleRay(new_ray, ray_depth + 1);
     }
 
+    glm::dvec3 emittance = (ray_depth == 0 || ray.specular) ? intersect.material->emittance : glm::dvec3(0.0);
+
     // BRDF is 1 if the indirect and direct radiance was estimated from the photon maps.
-    return (emittance + caustics + (indirect + direct) * BRDF) / (1.0 - terminate);
+    return (emittance + caustics + (indirect + direct) * BRDF) / (1.0 - absorb);
 }
 
 glm::dvec3 PhotonMap::estimateRadiance(const Octree<Photon>& map, const Intersection& intersect,

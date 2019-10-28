@@ -5,6 +5,7 @@
 #include <glm/gtx/component_wise.hpp>
 
 #include "../common/util.hpp"
+#include "../random/random.hpp"
 #include "../common/constants.hpp"
 
 class Material
@@ -33,7 +34,9 @@ public:
     glm::dvec3 LambertianBRDF();
     glm::dvec3 OrenNayarBRDF(const glm::dvec3 &i, const glm::dvec3 &o);
 
-    static double Fresnel(double n1, double n2, const glm::dvec3& normal, const glm::dvec3& dir);
+    double Fresnel(double n1, double n2, const glm::dvec3& normal, const glm::dvec3& dir) const;
+
+    size_t selectPath(double n1, double n2, const glm::dvec3& normal, const glm::dvec3& dir) const;
 
     glm::dvec3 reflectance, specular_reflectance, emittance;
     double roughness, ior, transparency, reflect_probability;

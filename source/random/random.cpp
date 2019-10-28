@@ -44,24 +44,6 @@ size_t Random::weightedUIntSample(const std::vector<double>& weights)
     return i;
 }
 
-// Less general but faster version of above
-size_t Random::path(const double R, const double T)
-{
-    double p = range(0, 1);
-    if (R > p)
-    {
-        return 0;
-    }
-    else if (R + (1 - R) * T > p)
-    {
-        return 1;
-    }
-    else
-    {
-        return 2;
-    }
-}
-
 glm::dvec3 Random::CosWeightedHemiSample()
 {
     // Generate uniform sample on unit disk at radius r and angle azimuth

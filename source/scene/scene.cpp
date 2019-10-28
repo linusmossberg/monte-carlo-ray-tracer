@@ -1,5 +1,64 @@
 #include "scene.hpp"
 
+/*************************************************************************************************************
+A material can be any combination of reflective, transparent and diffuse, but instead of branching into several 
+paths only one is selected probabilistically based on the fresnel and transparency at the intersection point. 
+Energy is conserved automatically because the path probability is set to be the same as the path weight.
+*************************************************************************************************************/
+glm::dvec3 Scene::sampleRay(Ray ray, size_t ray_depth)
+{
+    if (ray_depth == max_ray_depth)
+    {
+        Log("Bias introduced: Max ray depth reached in Scene::sampleRay()");
+        return glm::dvec3(0.0);
+    }
+
+    Intersection intersection = intersect(ray, true);
+
+    if (!intersection) return skyColor(ray);
+
+    double absorb = ray_depth > min_ray_depth ? 1.0 - intersection.material->reflect_probability : 0.0;
+
+    if (absorb > Random::range(0, 1)) return glm::dvec3(0.0);
+
+    Ray new_ray(intersection.position);
+
+    glm::dvec3 direct(0);
+    glm::dvec3 BRDF;
+
+    double n1 = ray.medium_ior;
+    double n2 = abs(ray.medium_ior - ior) < C::EPSILON ? intersection.material->ior : ior;
+
+    switch (intersection.material->selectPath(n1, n2, intersection.normal, -ray.direction))
+    {
+        case Path::REFLECT:
+        {
+            BRDF = intersection.material->SpecularBRDF();
+            new_ray.reflectSpecular(ray.direction, intersection.normal, n1);
+            break;
+        }
+        case Path::REFRACT:
+        {
+            BRDF = intersection.material->SpecularBRDF();
+            new_ray.refractSpecular(ray.direction, intersection.normal, n1, n2);
+            break;
+        }
+        case Path::DIFFUSE:
+        {
+            CoordinateSystem cs(intersection.normal);
+            new_ray.reflectDiffuse(cs, n1);
+            BRDF = intersection.material->DiffuseBRDF(cs.globalToLocal(new_ray.direction), cs.globalToLocal(-ray.direction)) * C::PI;
+            if (!naive) direct = sampleDirect(intersection);
+            break;
+        }
+    }
+    glm::dvec3 indirect = sampleRay(new_ray, ray_depth + 1);
+    glm::dvec3 emittance = (ray_depth == 0 || ray.specular || naive) ? intersection.material->emittance : glm::dvec3(0);
+
+    return (emittance + BRDF * (direct + indirect)) / (1.0 - absorb);
+}
+
+// Functionally equivalent to new method but maybe not as expressive
 glm::dvec3 Scene::sampleRay_old(Ray ray, size_t ray_depth)
 {
     if (ray_depth == max_ray_depth)
@@ -12,26 +71,18 @@ glm::dvec3 Scene::sampleRay_old(Ray ray, size_t ray_depth)
 
     if (!intersection) return skyColor(ray);
 
-    double terminate = 0.0;
-    if (ray_depth > min_ray_depth)
-    {
-        terminate = 1.0 - intersection.material->reflect_probability;
-        if (terminate > Random::range(0, 1))
-        {
-            return glm::dvec3(0.0);
-        }
-    }
+    double absorb = ray_depth > min_ray_depth ? 1.0 - intersection.material->reflect_probability : 0.0;
+    if (absorb > Random::range(0, 1)) return glm::dvec3(0.0);
 
     Ray new_ray(intersection.position);
 
-    glm::dvec3 emittance = (ray_depth == 0 || ray.specular || naive) ? intersection.material->emittance : glm::dvec3(0);
-    glm::dvec3 direct(0), indirect(0);
+    glm::dvec3 direct(0);
     glm::dvec3 BRDF;
 
     double n1 = ray.medium_ior;
     double n2 = abs(ray.medium_ior - ior) < C::EPSILON ? intersection.material->ior : ior;
 
-    if (intersection.material->perfect_mirror || Material::Fresnel(n1, n2, intersection.normal, -ray.direction) > Random::range(0, 1))
+    if (intersection.material->Fresnel(n1, n2, intersection.normal, -ray.direction) > Random::range(0, 1))
     {
         /* SPECULAR REFLECTION */
         BRDF = intersection.material->SpecularBRDF();
@@ -57,66 +108,9 @@ glm::dvec3 Scene::sampleRay_old(Ray ray, size_t ray_depth)
         }
     }
 
-    indirect = sampleRay_old(new_ray, ray_depth + 1);
-
-    return (emittance + BRDF * (direct + indirect)) / (1.0 - terminate);
-}
-
-glm::dvec3 Scene::sampleRay(Ray ray, size_t ray_depth)
-{
-    if (ray_depth == max_ray_depth)
-    {
-        Log("Bias introduced: Max ray depth reached in Scene::sampleRay()");
-        return glm::dvec3(0.0);
-    }
-
-    Intersection intersection = intersect(ray, true);
-
-    if (!intersection) return skyColor(ray);
-
-    double absorb = ray_depth > min_ray_depth ? 1.0 - intersection.material->reflect_probability : 0.0;
-    if (absorb > Random::range(0, 1)) return glm::dvec3(0.0);
-
-    Ray new_ray(intersection.position);
+    glm::dvec3 indirect = sampleRay_old(new_ray, ray_depth + 1);
 
     glm::dvec3 emittance = (ray_depth == 0 || ray.specular || naive) ? intersection.material->emittance : glm::dvec3(0);
-    glm::dvec3 direct(0), indirect(0);
-    glm::dvec3 BRDF;
-
-    double n1 = ray.medium_ior;
-    double n2 = abs(ray.medium_ior - ior) < C::EPSILON ? intersection.material->ior : ior;
-
-    double R = intersection.material->perfect_mirror ? 1.0 : Material::Fresnel(n1, n2, intersection.normal, -ray.direction);
-    double T = intersection.material->transparency;
-
-    switch (Random::path(R, T)) // reflect, refract and diffuse probabilites
-    {
-        case 0:
-        {
-            BRDF = intersection.material->SpecularBRDF();
-            new_ray.reflectSpecular(ray.direction, intersection.normal, n1);
-            break;
-        }
-        case 1:
-        {
-            BRDF = intersection.material->SpecularBRDF();
-            new_ray.refractSpecular(ray.direction, intersection.normal, n1, n2);
-            break;
-        }
-        case 2:
-        {
-            CoordinateSystem cs(intersection.normal);
-            new_ray.reflectDiffuse(cs, n1);
-            BRDF = intersection.material->DiffuseBRDF(cs.globalToLocal(new_ray.direction), cs.globalToLocal(-ray.direction)) * C::PI;
-            if (!naive) direct = sampleDirect(intersection);
-            break;
-        }
-        default: 
-        {
-            return glm::dvec3(0.0);
-        }
-    }
-    indirect = sampleRay(new_ray, ray_depth + 1);
 
     return (emittance + BRDF * (direct + indirect)) / (1.0 - absorb);
 }

@@ -22,9 +22,9 @@ public:
         generateEmissives();
     }
 
-    glm::dvec3 sampleRay_old(Ray ray, size_t ray_depth = 0);
-
     glm::dvec3 sampleRay(Ray ray, size_t ray_depth = 0);
+
+    glm::dvec3 sampleRay_old(Ray ray, size_t ray_depth = 0);
 
     Intersection intersect(const Ray& ray, bool align_normal = false, double min_distance = -1);
 

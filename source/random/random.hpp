@@ -22,8 +22,6 @@ struct Random
 
     static size_t weightedUIntSample(const std::vector<double>& weights);
 
-    static size_t path(const double R,  const double T);
-
     static glm::dvec3 CosWeightedHemiSample();
     
     static glm::dvec3 UniformHemiSample();

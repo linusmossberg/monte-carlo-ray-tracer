@@ -33,19 +33,39 @@ glm::dvec3 Material::OrenNayarBRDF(const glm::dvec3 &i, const glm::dvec3 &o)
 }
 
 // Schlick's approximation of fresnel factor
-double Material::Fresnel(double n1, double n2, const glm::dvec3& normal, const glm::dvec3& dir)
+double Material::Fresnel(double n1, double n2, const glm::dvec3& normal, const glm::dvec3& dir) const
 {
-    if (abs(n1 - n2) < C::EPSILON)
-        return 0;
+    if (perfect_mirror) return 1;
+
+    if (abs(n1 - n2) < C::EPSILON) return 0;
 
     double R0 = pow2((n1 - n2) / (n1 + n2));
     return R0 + (1.0 - R0) * pow(1.0 - glm::dot(normal, dir), 5);
 }
 
+size_t Material::selectPath(double n1, double n2, const glm::dvec3& normal, const glm::dvec3& dir) const
+{
+    double R = Fresnel(n1, n2, normal, dir);
+    double T = transparency;
+
+    double p = Random::range(0, 1);
+
+    if (R > p)
+    {
+        return Path::REFLECT;
+    }
+    else if (R + (1 - R) * T > p)
+    {
+        return Path::REFRACT;
+    }
+    else
+    {
+        return Path::DIFFUSE;
+    }
+}
+
 double Material::calculateReflectProbability(double scene_ior)
 {
-    return 0.7;
-
     // Give max value to materials that can produce caustics
     if (perfect_mirror || std::abs(ior - scene_ior) > C::EPSILON) return 0.9;
 

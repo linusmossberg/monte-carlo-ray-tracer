@@ -69,5 +69,6 @@ private:
 
     uint16_t max_node_data;
 
+    const size_t min_ray_depth = 3;
     const size_t max_ray_depth = 64; // Prevent call stack overflow, unlikely to ever happen.
 };

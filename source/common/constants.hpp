@@ -7,3 +7,10 @@ namespace C
     inline const double TWO_PI = 6.283185307179586476925;
     inline const double EPSILON = 1e-7;
 }
+
+enum Path
+{
+    REFLECT,
+    REFRACT,
+    DIFFUSE
+};
