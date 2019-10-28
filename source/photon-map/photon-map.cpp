@@ -208,7 +208,7 @@ void PhotonMap::emitPhoton(const Ray& ray, const glm::dvec3& flux, size_t thread
     double n1 = ray.medium_ior;
     double n2 = abs(ray.medium_ior - scene->ior) < C::EPSILON ? intersect.material->ior : scene->ior;
 
-    switch (intersect.material->selectPath(n1, n2, intersect.normal, -ray.direction))
+    switch (intersect.selectNewPath(n1, n2, -ray.direction))
     {
         case Path::REFLECT:
         {
@@ -260,7 +260,7 @@ void PhotonMap::emitPhoton(const Ray& ray, const glm::dvec3& flux, size_t thread
         }
     }
 
-    emitPhoton(new_ray, flux * BRDF / (1.0 - should_absorb), thread, ray_depth + 1);
+    emitPhoton(new_ray, flux * BRDF / (1.0 - absorb), thread, ray_depth + 1);
 }
 
 void PhotonMap::createShadowPhotons(const Ray& ray, size_t thread)
@@ -296,24 +296,26 @@ glm::dvec3 PhotonMap::sampleRay(const Ray& ray, size_t ray_depth)
 
     Ray new_ray(intersect.position);
 
+    bool diffuse = ray_depth != 0 && !ray.specular;
+
+    bool global_contribution_evaluated = false;
+    glm::dvec3 caustics(0.0), direct(0.0), indirect(0.0), BRDF(1.0);
+
     double n1 = ray.medium_ior;
     double n2 = abs(ray.medium_ior - scene->ior) < C::EPSILON ? intersect.material->ior : scene->ior;
 
-    bool diffuse = ray_depth != 0 && !ray.specular;
-    bool global_contribution_evaluated = false;
-
-    glm::dvec3 caustics(0.0), direct(0.0), indirect(0.0), BRDF(1.0);
-
-    switch (intersect.material->selectPath(n1, n2, intersect.normal, -ray.direction))
+    switch (intersect.selectNewPath(n1, n2, -ray.direction))
     {
         case Path::REFLECT:
         {
+            if (diffuse) return glm::dvec3(0.0);
             BRDF = intersect.material->SpecularBRDF();
             new_ray.reflectSpecular(ray.direction, intersect.normal, n1);
             break;
         }
         case Path::REFRACT:
         {
+            if (diffuse) return glm::dvec3(0.0);
             BRDF = intersect.material->SpecularBRDF();
             new_ray.refractSpecular(ray.direction, intersect.normal, n1, n2);
             break;

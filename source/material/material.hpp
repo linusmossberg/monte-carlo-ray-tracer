@@ -36,8 +36,6 @@ public:
 
     double Fresnel(double n1, double n2, const glm::dvec3& normal, const glm::dvec3& dir) const;
 
-    size_t selectPath(double n1, double n2, const glm::dvec3& normal, const glm::dvec3& dir) const;
-
     glm::dvec3 reflectance, specular_reflectance, emittance;
     double roughness, ior, transparency, reflect_probability;
 

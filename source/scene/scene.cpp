@@ -3,7 +3,7 @@
 /*************************************************************************************************************
 A material can be any combination of reflective, transparent and diffuse, but instead of branching into several 
 paths only one is selected probabilistically based on the fresnel and transparency at the intersection point. 
-Energy is conserved automatically because the path probability is set to be the same as the path weight.
+Energy is conserved 'automatically' because the path probability is set to be the same as the path weight.
 *************************************************************************************************************/
 glm::dvec3 Scene::sampleRay(Ray ray, size_t ray_depth)
 {
@@ -29,7 +29,7 @@ glm::dvec3 Scene::sampleRay(Ray ray, size_t ray_depth)
     double n1 = ray.medium_ior;
     double n2 = abs(ray.medium_ior - ior) < C::EPSILON ? intersection.material->ior : ior;
 
-    switch (intersection.material->selectPath(n1, n2, intersection.normal, -ray.direction))
+    switch (intersection.selectNewPath(n1, n2, -ray.direction))
     {
         case Path::REFLECT:
         {
