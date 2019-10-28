@@ -31,6 +31,37 @@ size_t Random::uirange(size_t min, size_t max)
     return std::uniform_int_distribution<size_t>(min, max)(engine);
 }
 
+size_t Random::weightedUIntSample(const std::vector<double>& weights)
+{
+    double p = range(0, 1);
+    double prev = 0.0;
+    size_t i = 0;
+    for ( ; i < weights.size() - 1; i++)
+    {
+        prev += weights[i];
+        if (prev > p) return i;
+    }
+    return i;
+}
+
+// Less general but faster version of above
+size_t Random::path(const double R, const double T)
+{
+    double p = range(0, 1);
+    if (R > p)
+    {
+        return 0;
+    }
+    else if (R + (1 - R) * T > p)
+    {
+        return 1;
+    }
+    else
+    {
+        return 2;
+    }
+}
+
 glm::dvec3 Random::CosWeightedHemiSample()
 {
     // Generate uniform sample on unit disk at radius r and angle azimuth

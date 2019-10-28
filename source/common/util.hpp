@@ -25,5 +25,5 @@ inline void Log(const std::string& message)
     std::ofstream log("log.txt", std::ios::app);
     std::string temp = message;
     temp.erase(std::remove(temp.begin(), temp.end(), '\n'), temp.end());
-    log << "[" << Format::date(std::chrono::system_clock::now()) << "]: " << temp << std::endl;
+    log << "[" << Format::date(std::chrono::system_clock::now()) << "] " << temp << std::endl;
 }

@@ -44,6 +44,8 @@ double Material::Fresnel(double n1, double n2, const glm::dvec3& normal, const g
 
 double Material::calculateReflectProbability(double scene_ior)
 {
+    return 0.7;
+
     // Give max value to materials that can produce caustics
     if (perfect_mirror || std::abs(ior - scene_ior) > C::EPSILON) return 0.9;
 

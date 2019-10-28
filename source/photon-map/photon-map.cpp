@@ -138,8 +138,8 @@ PhotonMap::PhotonMap(std::shared_ptr<Scene> s, size_t photon_emissions, uint16_t
     size_t num_caustic_photons = 0;
     size_t num_shadow_photons = 0;
 
-    // Erase elements from the vectors as they are inserted to the octree, 
-    // otherwise we momentarily use more memory than we need.
+    // Erase elements from the vectors as they are inserted in the octree, 
+    // otherwise more memory than needed is used momentarily.
     auto insertAndPop = [](auto& pvec, auto& pmap)
     {
         auto i = pvec.end();
@@ -227,7 +227,6 @@ void PhotonMap::emitPhoton(const Ray& ray, const glm::dvec3& flux, size_t thread
         {
             /* SPECULAR REFRACTION */
             if (should_terminate) return;
-
             BRDF = intersect.material->SpecularBRDF();
             new_ray.refractSpecular(ray.direction, intersect.normal, n1, n2);
         }
