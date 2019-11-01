@@ -144,10 +144,10 @@
     <None Include="scenes\hexagon_room.json">
       <Filter>scenes</Filter>
     </None>
-    <None Include="scenes\hexagon_room_diffuse.json">
+    <None Include="scenes\oren_nayar_test.json">
       <Filter>scenes</Filter>
     </None>
-    <None Include="scenes\oren_nayar_test.json">
+    <None Include="scenes\hexagon_room_diffuse.json">
       <Filter>scenes</Filter>
     </None>
   </ItemGroup>

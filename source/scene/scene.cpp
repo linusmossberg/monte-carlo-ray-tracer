@@ -139,15 +139,15 @@ Intersection Scene::intersect(const Ray& ray, bool align_normal, double min_dist
     return intersect;
 }
 
-/*************************************************************************************
-Only applies cos(theta) from the rendering equation to the sampled point. This way  
-direct and indirect (which uses cosine weighted sampling with PDF = cos(theta) / PI) 
-can be treated the same way later, i.e. (direct + indirect) * (BRDF*PI). We also need 
-to divide by PI to make (BRDF*PI)  applicable to the direct contribution as well.
-**************************************************************************************/
+/**********************************************************************************************
+Only applies cos(theta) from the rendering equation to the diffuse point that samples this 
+direct contribution. This way direct and indirect (which uses cosine weighted sampling with 
+PDF = cos(theta) / PI) can be treated the same way later, i.e. (direct + indirect) * (BRDF*PI). 
+We also need to divide by PI to make (BRDF*PI)  applicable to the direct contribution as well.
+**********************************************************************************************/
 glm::dvec3 Scene::sampleDirect(const Intersection& intersection)
 {
-    // Pick one light source and scale with 1/probability of picking light source
+    // Pick one light source and divide with probability of picking light source
     if (!emissives.empty())
     {
         const auto& light = emissives[Random::uirange(0, emissives.size() - 1)];
@@ -171,7 +171,10 @@ glm::dvec3 Scene::sampleDirect(const Intersection& intersection)
             if (cos_light_theta <= 0 || glm::distance(shadow_intersection.position, light_pos) > C::EPSILON)
                 return glm::dvec3(0.0);
 
+            // Factor to transform the pdf of selecting the light surface point (1/area) to 
+            // the solid angle pdf at the diffuse point where this direct light falls
             double t = light->area() * cos_light_theta / pow2(shadow_intersection.t);
+
             return (light->material->emittance * t * cos_theta * static_cast<double>(emissives.size())) / C::PI;
         }
     }
