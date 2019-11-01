@@ -1,4 +1,5 @@
 # Monte Carlo Ray Tracer
+Monte Carlo ray tracer made for the course TNCG15 - Advanded Global Illumination and Rendering at Linköping University. The implemented Monte Carlo based methods are Path Tracing and Photon Mapping.
 ![](renders/c1_64sqrtspp_report_4k_downscaled.png "Path Traced, Scene IOR 1")
 ![](renders/c1_64sqrtspp_report_4k_flintglass_downscaled.png "Path Traced, Scene IOR 1.75")
 ![](renders/c1_photon-map_report_2e6_250_16sqrtspp.png "Photon Mapped")
