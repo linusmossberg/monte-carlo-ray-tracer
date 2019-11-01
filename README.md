@@ -1,7 +1,7 @@
 # Monte Carlo Ray Tracer
-![](c1_64sqrtspp_report_4k_downscaled.png "Path Traced, Scene IOR 1")
-![](c1_64sqrtspp_report_4k_flintglass_downscaled.png "Path Traced, Scene IOR 1.75")
-![](c1_photon-map_report_2e6_250_16sqrtspp.png "Photon Mapped")
+![](renders/c1_64sqrtspp_report_4k_downscaled.png "Path Traced, Scene IOR 1")
+![](renders/c1_64sqrtspp_report_4k_flintglass_downscaled.png "Path Traced, Scene IOR 1.75")
+![](renders/c1_photon-map_report_2e6_250_16sqrtspp.png "Photon Mapped")
 ![](renders/c1_64sqrtspp_4k.png)
 ![](renders/4k_64sqrtspp_to_720p_192sqrtspp_33h_squarelight.png)
 ![](renders/4k_54sqrtspp_to_720p_162sqrtspp_24h.png)
