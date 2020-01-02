@@ -15,16 +15,23 @@ glm::dvec3 Scene::sampleRay(Ray ray, size_t ray_depth)
 
     Intersection intersection = intersect(ray, true);
 
-    if (!intersection) return skyColor(ray);
+    if (!intersection)
+    {
+        return skyColor(ray);
+    }   
 
     double absorb = ray_depth > min_ray_depth ? 1.0 - intersection.material->reflect_probability : 0.0;
 
-    if (absorb > Random::range(0, 1)) return glm::dvec3(0.0);
+    if (Random::trial(absorb))
+    {
+        return glm::dvec3(0.0);
+    }
 
     Ray new_ray(intersection.position);
 
-    glm::dvec3 direct(0);
     glm::dvec3 BRDF;
+    glm::dvec3 direct(0);
+    glm::dvec3 emittance = (ray_depth == 0 || ray.specular || naive) ? intersection.material->emittance : glm::dvec3(0);
 
     double n1 = ray.medium_ior;
     double n2 = abs(ray.medium_ior - ior) < C::EPSILON ? intersection.material->ior : ior;
@@ -53,64 +60,6 @@ glm::dvec3 Scene::sampleRay(Ray ray, size_t ray_depth)
         }
     }
     glm::dvec3 indirect = sampleRay(new_ray, ray_depth + 1);
-    glm::dvec3 emittance = (ray_depth == 0 || ray.specular || naive) ? intersection.material->emittance : glm::dvec3(0);
-
-    return (emittance + BRDF * (direct + indirect)) / (1.0 - absorb);
-}
-
-// Functionally equivalent to new method but maybe not as expressive
-glm::dvec3 Scene::sampleRay_old(Ray ray, size_t ray_depth)
-{
-    if (ray_depth == max_ray_depth)
-    {
-        Log("Bias introduced: Max ray depth reached in Scene::sampleRay()");
-        return glm::dvec3(0.0);
-    }
-
-    Intersection intersection = intersect(ray, true);
-
-    if (!intersection) return skyColor(ray);
-
-    double absorb = ray_depth > min_ray_depth ? 1.0 - intersection.material->reflect_probability : 0.0;
-    if (absorb > Random::range(0, 1)) return glm::dvec3(0.0);
-
-    Ray new_ray(intersection.position);
-
-    glm::dvec3 direct(0);
-    glm::dvec3 BRDF;
-
-    double n1 = ray.medium_ior;
-    double n2 = abs(ray.medium_ior - ior) < C::EPSILON ? intersection.material->ior : ior;
-
-    if (intersection.material->Fresnel(n1, n2, intersection.normal, -ray.direction) > Random::range(0, 1))
-    {
-        /* SPECULAR REFLECTION */
-        BRDF = intersection.material->SpecularBRDF();
-        new_ray.reflectSpecular(ray.direction, intersection.normal, n1);
-    }
-    else
-    {
-        if (intersection.material->transparency > Random::range(0, 1))
-        {
-            /* SPECULAR REFRACTION */
-            BRDF = intersection.material->SpecularBRDF();
-            new_ray.refractSpecular(ray.direction, intersection.normal, n1, n2);
-        }
-        else
-        {
-            /* DIFFUSE REFLECTION */
-            CoordinateSystem cs(intersection.normal);
-
-            new_ray.reflectDiffuse(cs, n1);
-            BRDF = intersection.material->DiffuseBRDF(cs.globalToLocal(new_ray.direction), cs.globalToLocal(-ray.direction)) * C::PI;
-
-            if (!naive) direct = sampleDirect(intersection);
-        }
-    }
-
-    glm::dvec3 indirect = sampleRay_old(new_ray, ray_depth + 1);
-
-    glm::dvec3 emittance = (ray_depth == 0 || ray.specular || naive) ? intersection.material->emittance : glm::dvec3(0);
 
     return (emittance + BRDF * (direct + indirect)) / (1.0 - absorb);
 }
@@ -171,8 +120,8 @@ glm::dvec3 Scene::sampleDirect(const Intersection& intersection)
             if (cos_light_theta <= 0 || glm::distance(shadow_intersection.position, light_pos) > C::EPSILON)
                 return glm::dvec3(0.0);
 
-            // Factor to transform the pdf of selecting the light surface point (1/area) to 
-            // the solid angle pdf at the diffuse point where this direct light falls
+            // Factor to transform the PDF of sampling the point on the light (1/area) to 
+            // the solid angle PDF at the diffuse point that samples this direct contribution.
             double t = light->area() * cos_light_theta / pow2(shadow_intersection.t);
 
             return (light->material->emittance * t * cos_theta * static_cast<double>(emissives.size())) / C::PI;

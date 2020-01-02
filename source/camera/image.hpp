@@ -22,7 +22,7 @@ struct Image
     size_t num_pixels;
 
 private:
-    double getMid() const;
+    double getMid(double exposure_factor) const;
     double getMax() const;
     double getExposureFactor() const;
 

@@ -195,11 +195,14 @@ void PhotonMap::emitPhoton(const Ray& ray, const glm::dvec3& flux, size_t thread
 
     Intersection intersect = scene->intersect(ray, true);
 
-    if (!intersect) return;
+    if (!intersect)
+    {
+        return;
+    }
 
     // Delay path termination until any new photons have been stored.
     double absorb = ray_depth > 0 ? 1.0 - intersect.material->reflect_probability : 0.0;
-    bool should_absorb = absorb > Random::range(0, 1);
+    bool should_absorb = Random::trial(absorb);
 
     Ray new_ray(intersect.position);
 
@@ -212,7 +215,7 @@ void PhotonMap::emitPhoton(const Ray& ray, const glm::dvec3& flux, size_t thread
     {
         case Path::REFLECT:
         {
-            if (ray_depth == 0 && Random::range(0, 1) < non_caustic_reject)
+            if (ray_depth == 0 && Random::trial(non_caustic_reject))
             {
                 createShadowPhotons(Ray(intersect.position - intersect.normal * C::EPSILON, intersect.position + ray.direction), thread);
             }
@@ -234,7 +237,7 @@ void PhotonMap::emitPhoton(const Ray& ray, const glm::dvec3& flux, size_t thread
         {
             if (ray_depth == 0)
             { 
-                if (Random::range(0, 1) < non_caustic_reject)
+                if (Random::trial(non_caustic_reject))
                 {
                     direct_vecs[thread].emplace_back(flux / non_caustic_reject, intersect.position, ray.direction);
                     createShadowPhotons(Ray(intersect.position - intersect.normal * C::EPSILON, intersect.position + ray.direction), thread);
@@ -246,7 +249,7 @@ void PhotonMap::emitPhoton(const Ray& ray, const glm::dvec3& flux, size_t thread
                 {
                     caustic_vecs[thread].emplace_back(flux, intersect.position, ray.direction);
                 }
-                else if(Random::range(0, 1) < non_caustic_reject)
+                else if(Random::trial(non_caustic_reject))
                 {
                     indirect_vecs[thread].emplace_back(flux / non_caustic_reject, intersect.position, ray.direction);
                 }
@@ -267,7 +270,10 @@ void PhotonMap::createShadowPhotons(const Ray& ray, size_t thread)
 {
     Intersection intersect = scene->intersect(ray, true);
 
-    if (!intersect) return;
+    if (!intersect)
+    {
+        return;
+    }
 
     if (intersect.material->can_diffusely_reflect)
     {
@@ -288,11 +294,17 @@ glm::dvec3 PhotonMap::sampleRay(const Ray& ray, size_t ray_depth)
 
     Intersection intersect = scene->intersect(ray, true);
 
-    if (!intersect) return scene->skyColor(ray);
+    if (!intersect)
+    {
+        return scene->skyColor(ray);
+    }
 
     double absorb = ray_depth > min_ray_depth ? 1.0 - intersect.material->reflect_probability : 0.0;
-
-    if (absorb > Random::range(0, 1)) return glm::dvec3(0.0);
+    
+    if (Random::trial(absorb))
+    {
+        return glm::dvec3(0.0);
+    }
 
     Ray new_ray(intersect.position);
 
@@ -300,6 +312,7 @@ glm::dvec3 PhotonMap::sampleRay(const Ray& ray, size_t ray_depth)
 
     bool global_contribution_evaluated = false;
     glm::dvec3 caustics(0.0), direct(0.0), indirect(0.0), BRDF(1.0);
+    glm::dvec3 emittance = (ray_depth == 0 || ray.specular) ? intersect.material->emittance : glm::dvec3(0.0);
 
     double n1 = ray.medium_ior;
     double n2 = abs(ray.medium_ior - scene->ior) < C::EPSILON ? intersect.material->ior : scene->ior;
@@ -350,8 +363,6 @@ glm::dvec3 PhotonMap::sampleRay(const Ray& ray, size_t ray_depth)
     {
         indirect = sampleRay(new_ray, ray_depth + 1);
     }
-
-    glm::dvec3 emittance = (ray_depth == 0 || ray.specular) ? intersect.material->emittance : glm::dvec3(0.0);
 
     // BRDF is 1 if the indirect and direct radiance was estimated from the photon maps.
     return (emittance + caustics + (indirect + direct) * BRDF) / (1.0 - absorb);

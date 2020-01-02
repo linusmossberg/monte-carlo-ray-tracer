@@ -27,6 +27,10 @@ public:
     {
         can_diffusely_reflect = !perfect_mirror && std::abs(transparency - 1.0) > C::EPSILON;
         reflect_probability = calculateReflectProbability(scene_ior);
+
+        double variance = pow2(roughness);
+        A = 1.0 - 0.5 * variance / (variance + 0.33);
+        B = 0.45 * variance / (variance + 0.09);
     }
 
     glm::dvec3 DiffuseBRDF(const glm::dvec3 &i, const glm::dvec3 &o);
@@ -47,4 +51,7 @@ public:
 private:
     // Used for russian roulette path termination
     double calculateReflectProbability(double scene_ior);
+
+    // Pre-computed Oren-Nayar variables.
+    double A, B;
 };

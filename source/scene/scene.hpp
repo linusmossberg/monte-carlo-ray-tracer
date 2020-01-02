@@ -4,6 +4,8 @@
 #include <thread>
 #include <memory>
 
+#include <glm/gtx/norm.hpp>
+
 #include "../surface/surface.hpp"
 #include "../ray/ray.hpp"
 #include "../random/random.hpp"
@@ -23,8 +25,6 @@ public:
     }
 
     glm::dvec3 sampleRay(Ray ray, size_t ray_depth = 0);
-
-    glm::dvec3 sampleRay_old(Ray ray, size_t ray_depth = 0);
 
     Intersection intersect(const Ray& ray, bool align_normal = false, double min_distance = -1);
 

@@ -6,8 +6,8 @@ Image::Image(size_t width, size_t height)
 
 void Image::save(const std::string& filename) const
 {
-    double midpoint = getMid();
     double exposure_factor = getExposureFactor();
+    double midpoint = getMid(exposure_factor);
 
     HeaderTGA header((uint16_t)width, (uint16_t)height);
     std::ofstream out_tonemapped(filename + ".tga", std::ios::binary);
@@ -25,12 +25,12 @@ glm::dvec3& Image::operator()(size_t col, size_t row)
     return blob[row * width + col];
 }
 
-double Image::getMid() const
+double Image::getMid(double exposure_factor) const
 {
     double sum = 0.0;
     for (const auto& p : blob)
     {
-        glm::dvec3 fp = glm::clamp(filmic(p), glm::dvec3(0.0), glm::dvec3(1.0));
+        glm::dvec3 fp = glm::clamp(filmic(p * exposure_factor), glm::dvec3(0.0), glm::dvec3(1.0));
         sum += glm::compAdd(fp) / 3.0;
     }
     return sum / blob.size();

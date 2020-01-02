@@ -44,6 +44,11 @@ size_t Random::weightedUIntSample(const std::vector<double>& weights)
     return i;
 }
 
+bool Random::trial(double probability)
+{
+    return probability > range(0, 1);
+}
+
 glm::dvec3 Random::CosWeightedHemiSample()
 {
     // Generate uniform sample on unit disk at radius r and angle azimuth

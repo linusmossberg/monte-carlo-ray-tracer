@@ -22,6 +22,8 @@ struct Random
 
     static size_t weightedUIntSample(const std::vector<double>& weights);
 
+    static bool trial(double probability);
+
     static glm::dvec3 CosWeightedHemiSample();
     
     static glm::dvec3 UniformHemiSample();

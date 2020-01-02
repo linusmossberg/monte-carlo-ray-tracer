@@ -32,7 +32,7 @@ inline glm::dvec3 reinhard(glm::dvec3 in)
 
 inline glm::dvec3 adjustments(glm::dvec3 in, double midpoint)
 {
-    //double contrast = 1.05;
+    //double contrast = 1.1;
     //return contrast * (in - glm::dvec3(midpoint)) + glm::dvec3(midpoint);
     return in;
 }

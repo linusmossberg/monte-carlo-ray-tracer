@@ -2,6 +2,8 @@
 
 void Camera::samplePixel(size_t x, size_t y)
 {
+    auto& pixel = image(x, y);
+
     double pixel_size = sensor_width / image.width;
     double sub_step = 1.0 / sqrtspp;
 
@@ -16,15 +18,16 @@ void Camera::samplePixel(size_t x, size_t y)
 
             if (photon_map)
             {
-                image(x, y) += photon_map->sampleRay(Ray(eye, sensor_pos, scene->ior));
+                pixel += photon_map->sampleRay(Ray(eye, sensor_pos, scene->ior));
             } 
             else
             {
-                image(x, y) += scene->sampleRay(Ray(eye, sensor_pos, scene->ior));
+                pixel += scene->sampleRay(Ray(eye, sensor_pos, scene->ior));
             } 
         }
     }
-    image(x, y) /= pow2(static_cast<double>(sqrtspp));
+    pixel /= pow2(static_cast<double>(sqrtspp));
+    num_sampled_pixels++;
 }
 
 void Camera::sampleImage(std::shared_ptr<Scene> s, std::shared_ptr<PhotonMap> pm)
@@ -80,7 +83,6 @@ void Camera::sampleImageThread(WorkQueue<Bucket>& buckets)
             for (size_t y = bucket.min.y; y < bucket.max.y; y++)
             {
                 samplePixel(x, y);
-                num_sampled_pixels++;
             }
         }
     }
