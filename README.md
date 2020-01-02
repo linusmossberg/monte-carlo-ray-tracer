@@ -6,23 +6,31 @@ This program was developed for the course [Advanced Global Illumination and Rend
 
 ## Renders
 
-The following images are renders of [scenes/hexagon_room.json](scenes/hexagon_room.json) produced by the program.
+The following images are renders of [scenes/hexagon_room.json](scenes/hexagon_room.json) and [scenes/oren_nayar_test.json](scenes/oren_nayar_test.json) produced by the program:
 
-<h4 align="center">Path Traced, Scene IOR 1.0</h4>
+___
+
+<h3 align="center">Path Traced, Scene IOR 1.0</h3>
 
 ![](renders/c1_64sqrtspp_report_4k_downscaled.png "Path Traced, Scene IOR 1")
 
 ___
 
-<h4 align="center">Path Traced, Scene IOR 1.75</h4>
+<h3 align="center">Path Traced, Scene IOR 1.75</h3>
 
 ![](renders/c1_64sqrtspp_report_4k_flintglass_downscaled.png "Path Traced, Scene IOR 1.75")
 
 ___
 
-<h4 align="center">Photon Mapped, Scene IOR 1.0</h4>
+<h3 align="center">Photon Mapped, Scene IOR 1.0</h3>
 
 ![](renders/c1_photon-map_report_2e6_250_16sqrtspp.png "Photon Mapped")
+
+___
+
+<h3 align="center">Path Traced, Skylit Oren-Nayar Spheres</h3>
+
+![](renders/oren_nayar_test.png "Path Traced, Skylit Oren-Nayar Spheres")
 
 ## Compiling
 
