@@ -1,5 +1,3 @@
-# Monte Carlo Ray Tracer
-
 Monte Carlo ray tracer with Path Tracing and Photon Mapping written in C++. 
 This program was developed for the course [Advanced Global Illumination and Rendering (TNCG15)](https://liu.se/studieinfo/kurs/tncg15) at Linköpings Universitet. 
 
