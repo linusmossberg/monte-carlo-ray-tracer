@@ -22,15 +22,15 @@ The basic outline of the scene format is the following JSON object:
   "naive": false,
   "ior": 1.75,
 
-  "photon_map": { ... },
+  "photon_map": { /* ... */ },
 
-  "cameras": [ ... ],
+  "cameras": [ /* ... */ ],
 
-  "materials":  [ ... ],
+  "materials":  [ /* ... */ ],
 
-  "vertices": [ ... ],
+  "vertices": [ /* ... */ ],
 
-  "surfaces": [ ... ]
+  "surfaces": [ /* ... */ ]
 }
 ```
 
@@ -97,13 +97,13 @@ Example:
 
 The **cameras** object contains an array of different cameras. The **focal_length** and **sensor_width** fields are defined in millimeters. A sensor width of 35mm (full frame) is most often usefull since focal lengths normally are defined in terms of 35mm-equivalent focal lengths.
 
-The **eye** field defines the position of the camera, and the **up** and **forward** field defines the orientation vectors of the camera. The up and forward vectors can be replaced with the **look_at** field, which defines the coordinate that the camera should look at instead.
+The **eye** field defines the position of the camera, and the **up** and **forward** fields defines the orientation vectors of the camera. The up and forward vectors can be replaced with the **look_at** field, which defines the coordinate that the camera should look at instead.
 
 The **width** and **height** properties are the dimensions of the sensor/image in terms of pixels. 
 
 The **sqrtspp** (Square-Rooted Samples Per Pixel) property defines the square-rooted number of ray paths that should be sampled from each pixel in the camera.
 
-The **savename** property defines the name of the resulting saved image file. Images are saved in Truevision TGA format with the *\*.tga* extension.
+The **savename** property defines the name of the resulting saved image file. Images are saved in Truevision TGA format with the *.tga* extension.
 
 ### Materials Object
 
@@ -211,7 +211,7 @@ Example:
     "radius": 1.15485
   },
   {
-    "type": "triangle",
+    "type": "triangle",
     "material":  "red",
     "vertices": [ 
       [ 9, 4.9, -2.5 ],
@@ -226,16 +226,13 @@ The **surfaces** object contains an array of surfaces. Each surface has a **type
 
 #### Type-specific fields:
 
-##### Sphere
-
+**Sphere:**
 The sphere position is defined by the **origin** field, while the sphere radius is defined by the **radius** field.
 
-##### Triangle
-
+**Triangle:**
 The triangle is simply defined by its vertices, which is defined by the 3 vertices in the vertex array **vertices** in xyz-coordinates. The order of the vertices defines the normal direction, but this only matters if the surface has an emissive material.
 
-##### Object
-
+**Object:**
 The **object** surface type defines a triangular object that consists of multiple triangles. The **set** field defines the index of the vertex set to pull vertices from, while the **triangles** field specifies the array of triangles of the object. Each triangle of the array consists of 3 indices that references the corresponding vertex index in the vertex set.
 
 ## Usage Walkthrough
