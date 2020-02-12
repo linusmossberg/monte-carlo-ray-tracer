@@ -22,9 +22,9 @@ Having an understanding of these topics are therefore prerequisites for the repo
 
 ## Usage
 
-The basic usage is very simple. Just run the program in the directory that contains the *scene* directory, i.e. the root folder of this repository. The program will then automatically parse all scene files and create several scene options for you to choose from in the terminal. A walkthrough of a typical run with terminal outputs is available in the [Usage Walkthrough section](#usage-walkthrough).
+The basic usage is simple. Just run the program in the directory that contains the *scenes* directory, i.e. the root folder of this repository. The program will then automatically parse all scene files and create several scene options for you to choose from in the terminal. A walkthrough of a typical run with terminal outputs is available in the [usage walkthrough](#usage-walkthrough) section.
 
-For more advanced use, see [Scene Format](#scene-format).
+For more advanced use, see [scene format](#scene-format).
 
 ## Scene Format
 
