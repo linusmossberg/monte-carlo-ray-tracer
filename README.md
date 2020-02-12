@@ -1,14 +1,24 @@
 # Monte Carlo Ray Tracer
 
-This is a multithreaded ray tracer that achieves global illumination using the Monte Carlo based methods *Path Tracing* and *Photon Mapping*. This program was developed over a period of about 2 months for the course [Advanced Global Illumination and Rendering (TNCG15)](https://liu.se/studieinfo/kurs/tncg15) at Linköpings Universitet. The program is written in C++ and frequently makes use of C++17.
+This is a multithreaded ray tracer that achieves global illumination using the Monte Carlo based methods *Path Tracing* and *Photon Mapping*.
 
 ![](renders/c1_64sqrtspp_report_4k_flintglass_downscaled.png "Path Traced, Scene IOR 1.75")
+
+This program was developed over a period of about 2 months for the course [Advanced Global Illumination and Rendering (TNCG15)](https://liu.se/studieinfo/kurs/tncg15) at Linköpings Universitet. The program is written in C++ and frequently makes use of C++17.
 
 ## Report
 
 A report describing this work in more detail is available [here](report.pdf). 
 
-Due to length limitations, I mostly focused on my own solutions and things that sets my implementation apart from the course syllabus. The report therefore references but doesen't explicitly explain a lot of standard topics such as: ray-surface intersections (Möller Trumbore etc.), ray reflection and refractions (Snell's law etc.), Schlick's approximation of Fresnel factor, Oren-Nayar BRDF etc. Having an understanding of these topics are therefore prerequisites for the report.
+Due to length limitations, I mostly focused on my own solutions and things that sets my implementation apart from the course syllabus. The report therefore references but doesen't explicitly explain a lot of standard topics such as:
+
+* Ray-surface intersections (Möller Trumbore etc.)
+* Ray reflection and refractions (Snell's law etc.) 
+* Schlick's approximation of Fresnel factor
+* Lambertian/Oren-Nayar BRDFs
+* ...
+
+Having an understanding of these topics are therefore prerequisites for the report.
 
 ## Scene Format
 
@@ -316,6 +326,12 @@ Press enter to exit.
 ```
 
 Note: The program makes heavy use of the *\\r* carriage return character for console output in order to print progress information on the same line. This may work differently on different platforms which may mess up the output.
+
+Note 2: The program also creates and writes to a log file called *log.txt* for certain rare events. An example entry is:
+```cpp
+[2019-10-31 16:46] Bias introduced: Max ray depth reached in PhotonMap::emitPhoton()
+```
+These events are not errors. The above entry just means that a rare ray path managed to bounce around the scene the maximum number of times and had to be terminated artificially, which slightly reduces the physical accuracy or 'unbiased:ness' of the render.
 
 ## Renders
 
