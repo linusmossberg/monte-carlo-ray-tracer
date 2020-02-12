@@ -325,9 +325,9 @@ Render Completed: 2020-02-11 11:09, Elapsed Time: 00:08:43
 Press enter to exit.
 ```
 
-Note: The program makes heavy use of the *\\r* carriage return character for console output in order to print progress information on the same line. This may work differently on different platforms which may mess up the output.
+**Note:** The program makes heavy use of the *\\r* carriage return character for console output in order to print progress information on the same line. This may work differently on different platforms which may mess up the output.
 
-Note 2: The program also creates and writes to a log file called *log.txt* for certain rare events. An example entry is:
+**Note 2:** The program also creates and writes to a log file called *log.txt* for certain rare events. An example entry is:
 ```cpp
 [2019-10-31 16:46] Bias introduced: Max ray depth reached in PhotonMap::emitPhoton()
 ```
