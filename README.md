@@ -20,6 +20,12 @@ Due to length limitations, I mostly focused on my own solutions and things that 
 
 Having an understanding of these topics are therefore prerequisites for the report.
 
+## Usage
+
+The basic usage is very simple. Just run the program in the directory that contains the *scene* directory, i.e. the root folder of this repository. The program will then automatically parse all scene files and create several scene options for you to choose from in the terminal. A walkthrough of a typical run with terminal outputs is available in the [Usage Walkthrough section](#usage-walkthrough).
+
+For more advanced use, see [Scene Format](#scene-format).
+
 ## Scene Format
 
 I created a scene file format for this project to simplify scene creation. The format is defined using JSON and I used the library [nlohmann::json](https://github.com/nlohmann/json) for JSON parsing. A complete scenefile example can be seen at [scenes/hexagon_room.json](scenes/hexagon_room.json).
