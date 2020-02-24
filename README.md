@@ -1,6 +1,6 @@
 # Monte Carlo Ray Tracer
 
-This is a multithreaded ray tracer that achieves global illumination using the Monte Carlo based methods *Path Tracing* and *Photon Mapping*.
+This is a physically based renderer with *Path Tracing* and *Photon Mapping*.
 
 ![](renders/c1_64sqrtspp_report_4k_flintglass_downscaled.png "Path Traced, Scene IOR 1.75")
 
@@ -16,15 +16,20 @@ Due to length limitations, I mostly focused on my own solutions and things that 
 * Ray reflection and refractions (Snell's law etc.) 
 * Schlick's approximation of Fresnel factor
 * Lambertian/Oren-Nayar BRDFs
-* ...
 
 Having an understanding of these topics are therefore prerequisites for the report.
 
 ## Usage
 
-The basic usage is simple. Just run the program in the directory that contains the *scenes* directory, i.e. the root folder of this repository. The program will then automatically parse all scene files and create several scene options for you to choose from in the terminal. A walkthrough of a typical run with terminal outputs is available in the [usage walkthrough](#usage-walkthrough) section.
+For basic use, just run the program in the directory that contains the *scenes* directory, i.e. the root folder of this repository. The program will then parse all scene files located in the scenes directory and create several rendering options for you to choose from in the terminal. For more advanced use, see [scene format](#scene-format).
 
-For more advanced use, see [scene format](#scene-format).
+**Note:** The program makes heavy use of the *\\r* carriage return character for console output in order to print progress information on the same line. This may work differently on different platforms which may mess up the output.
+
+**Note 2:** The program creates and writes to a log file called *log.txt* for certain rare events. An example entry is:
+```cpp
+[2019-10-31 16:46] Bias introduced: Max ray depth reached in PhotonMap::emitPhoton()
+```
+These events are not errors. The above entry just means that a rare ray path managed to bounce around the scene the maximum number of times and had to be terminated artificially, which slightly reduces the physical accuracy of the render.
 
 ## Scene Format
 
@@ -119,7 +124,7 @@ The **width** and **height** properties are the dimensions of the sensor/image i
 
 The **sqrtspp** (Square-Rooted Samples Per Pixel) property defines the square-rooted number of ray paths that should be sampled from each pixel in the camera.
 
-The **savename** property defines the name of the resulting saved image file. Images are saved in Truevision TGA format with the *.tga* extension.
+The **savename** property defines the name of the resulting saved image file. Images are saved in TGA format.
 
 ### Materials Object
 
@@ -167,7 +172,7 @@ These fields are all optional and any combination of fields can be used. A mater
 
 The **reflectance** and **specular_reflectance** fields specifies the amount of radiance that should be diffusely and specularly reflected for each RGB channel. This is a simplification since radiance and reflectances are spectral properties that varies with wavelength and not by the resulting tristimulus values of the virtual camera, but this is computationally cheaper and simpler. The reflectance properties are linear and are defined in the range [0,1]. Color pickers usually display gamma corrected color values, which means that these has to be linearized before using them here to achieve the same color.
 
-The **emittance** field defines the emittance of each RGB channel in flux. This means that surfaces of different sizes will emit the same amount of total radiance if they are assigned the same emissive material. 
+The **emittance** field defines the radiant flux of each RGB channel in watts. This means that surfaces with different surface areas will emit the same amount of radiant energy if they are assigned the same emissive material.
 
 ### Vertices Object
 
@@ -242,102 +247,11 @@ The **surfaces** object contains an array of surfaces. Each surface has a **type
 
 #### Type-specific fields:
 
-**Sphere:**<br>
-The sphere position is defined by the **origin** field, while the sphere radius is defined by the **radius** field.
+**Sphere:** The sphere position is defined by the **origin** field, while the sphere radius is defined by the **radius** field.
 
-**Triangle:**<br>
-The triangle is simply defined by its vertices, which is defined by the 3 vertices in the vertex array **vertices** in xyz-coordinates. The order of the vertices defines the normal direction, but this only matters if the surface has an emissive material.
+**Triangle:** The triangle is simply defined by its vertices, which is defined by the 3 vertices in the vertex array **vertices** in xyz-coordinates. The order of the vertices defines the normal direction, but this only matters if the surface has an emissive material.
 
-**Object:**<br>
-The **object** surface type defines a triangle mesh object that consists of multiple triangles. The **set** field defines the index of the vertex set to pull vertices from, while the **triangles** field specifies the array of triangles of the object. Each triangle of the array consists of 3 indices that references the corresponding vertex index in the vertex set.
-
-## Usage Walkthrough
-
-The program should be started in the directory that contains the *scenes* directory. Most settings are defined in the scene files.
-
-When you first start the program, you're greeted with a menu similar to this:
-```
-Scene directory:
-C:\Users\Laptop\Documents\TNCG15\monte-carlo-ray-tracer\scenes
-
- ____________________________________________________________________________________
-| Scene option | File                 | Camera                                       |
-|______________|______________________|______________________________________________|
-| 0            | hexagon_room         | Eye: (-2 0 0), Focal length: 23mm (35mm)     |
-|______________|______________________|______________________________________________|
-| 1            | hexagon_room         | Eye: (-1 0 0), Focal length: 24mm (35mm)     |
-|______________|______________________|______________________________________________|
-| 2            | hexagon_room         | Eye: (-3 1 0), Focal length: 19mm (35mm)     |
-|______________|______________________|______________________________________________|
-| 3            | hexagon_room         | Eye: (-1 0 0), Focal length: 120mm (35mm)    |
-|______________|______________________|______________________________________________|
-| 4            | hexagon_room_diffuse | Eye: (-2 0 0), Focal length: 21mm (35mm)     |
-|______________|______________________|______________________________________________|
-| 5            | oren_nayar_test      | Eye: (-80 40 80), Focal length: 300mm (35mm) |
-|______________|______________________|______________________________________________|
-
-Select scene option:
-```
-
-One scene option is created for each camera in the scene files. Select the scene you want to render by entering the scene option number and pressing enter.
-```
-Select scene option: 0
-
-Threads used for rendering: 4
-
-Use photon mapping? (y/n)
-```
-
-If the selected scene option has a photon map defined you'll get this query. Enter either *y* if you want to use photon mapping or *n* otherwise and press enter. At this point the program will start creating the photon map and the progress will be printed to the console. If no photon map is present or if *n* is selected, the program will jump directly to the main rendering pass. No more input is required after this point.
-```
-Use photon mapping? (y/n) y
-
-----------------------------| PHOTON MAPPING PASS |----------------------------
-
-Total number of photon emissions from light sources: 25 000 000
-
-Photons emitted: 10.80%
-```
-
-Once the photon maps have been constructed, a bunch of stats is printed to the console and then the main rendering pass starts. 
-```
-----------------------------| PHOTON MAPPING PASS |----------------------------
-
-Total number of photon emissions from light sources: 25 000 000
-
-Photons emitted in 00:01:07. Octrees constructed in 00:00:04.
-
-Photon maps and numbers of stored photons:
-
-   Direct photons: 918 163
- Indirect photons: 1 150 005
-  Caustic photons: 2 908 859
-   Shadow photons: 677 229
-
-----------------------------| MAIN RENDERING PASS |----------------------------
-
-Samples per pixel: 16
-```
-
-The main rendering pass prints more verbose progress information. Time remaining is the estimated hours, minutes and seconds remaining until the render is completed. ETA is the estimated completion date and time. Finally, Samples/s is the number of complete ray paths that the program is currently calculating per second.
-```
-Time remaining: 00:06:16 || 18.00% || ETA: 2020-02-11 11:08 || Samples/s: 424 057
-```
-
-Once the render has completed, stats about the elapsed time is printed to the console. The program then waits for the user to press enter before exiting the program. This is done to prevent the console from closing and erasing all stats before the user has seen them.
-```
-Render Completed: 2020-02-11 11:09, Elapsed Time: 00:08:43
-
-Press enter to exit.
-```
-
-**Note:** The program makes heavy use of the *\\r* carriage return character for console output in order to print progress information on the same line. This may work differently on different platforms which may mess up the output.
-
-**Note 2:** The program also creates and writes to a log file called *log.txt* for certain rare events. An example entry is:
-```cpp
-[2019-10-31 16:46] Bias introduced: Max ray depth reached in PhotonMap::emitPhoton()
-```
-These events are not errors. The above entry just means that a rare ray path managed to bounce around the scene the maximum number of times and had to be terminated artificially, which slightly reduces the physical accuracy or 'unbiased:ness' of the render.
+**Object:** The object surface type defines a triangle mesh object that consists of multiple triangles. The **set** field defines the index of the vertex set to pull vertices from, while the **triangles** field specifies the array of triangles of the object. Each triangle of the array consists of 3 indices that references the corresponding vertex index in the vertex set.
 
 ## Renders
 
