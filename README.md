@@ -280,7 +280,3 @@ ___
 <h3 align="center">Path Traced, Skylit Oren-Nayar Spheres</h3>
 
 ![](renders/oren_nayar_test.png "Path Traced, Skylit Oren-Nayar Spheres")
-
-## Compiling
-
-Currently only Visual Studio 2019 project files are included. Compiling on other platforms should be straightforward however, just compile the *.cpp* files in [source](source) with [external/glm](external/glm) and [external/nlohmann](external/nlohmann) directories added to the include path. Requires a compiler with C++17 support.

@@ -4,10 +4,8 @@
 !README.md
 !LICENSE
 !report.pdf
-!/monte-carlo-ray-tracer.sln
-!/monte-carlo-ray-tracer.vcxproj
-!/monte-carlo-ray-tracer.vcxproj.filters
+!CMakeLists.txt
 !/source/
 !/renders/
 !/scenes/
-!/external/
+!/lib/
