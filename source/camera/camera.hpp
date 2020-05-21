@@ -17,7 +17,7 @@
 #include <glm/gtx/rotate_vector.hpp>
 #include <glm/gtx/vector_angle.hpp>
 
-#include "Image.hpp"
+#include "image.hpp"
 
 #include "../ray/ray.hpp"
 #include "../scene/scene.hpp"

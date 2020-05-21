@@ -35,7 +35,7 @@ glm::dvec3 Surface::Sphere::operator()(double u, double v) const
     double r = std::sqrt(1.0 - pow2(z));
     double phi = C::TWO_PI * v;
 
-    return origin + radius * glm::dvec3(r * cos(phi), r * sin(phi), z);
+    return origin + radius * glm::dvec3(r * std::cos(phi), r * std::sin(phi), z);
 }
 
 glm::dvec3 Surface::Sphere::normal(const glm::dvec3& pos) const

@@ -209,7 +209,7 @@ void PhotonMap::emitPhoton(const Ray& ray, const glm::dvec3& flux, size_t thread
     glm::dvec3 BRDF;
 
     double n1 = ray.medium_ior;
-    double n2 = abs(ray.medium_ior - scene->ior) < C::EPSILON ? intersect.material->ior : scene->ior;
+    double n2 = std::abs(ray.medium_ior - scene->ior) < C::EPSILON ? intersect.material->ior : scene->ior;
 
     switch (intersect.selectNewPath(n1, n2, -ray.direction))
     {
@@ -315,7 +315,7 @@ glm::dvec3 PhotonMap::sampleRay(const Ray& ray, size_t ray_depth)
     glm::dvec3 emittance = (ray_depth == 0 || ray.specular) ? intersect.material->emittance : glm::dvec3(0.0);
 
     double n1 = ray.medium_ior;
-    double n2 = abs(ray.medium_ior - scene->ior) < C::EPSILON ? intersect.material->ior : scene->ior;
+    double n2 = std::abs(ray.medium_ior - scene->ior) < C::EPSILON ? intersect.material->ior : scene->ior;
 
     switch (intersect.selectNewPath(n1, n2, -ray.direction))
     {

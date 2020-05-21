@@ -4,7 +4,7 @@ Simple class to abstract away some stuff from main.
 
 #pragma once
 
-#include "Scene.hpp"
+#include "scene.hpp"
 #include "../camera/camera.hpp"
 #include "../photon-map/photon-map.hpp"
 

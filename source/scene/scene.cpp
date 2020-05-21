@@ -34,7 +34,7 @@ glm::dvec3 Scene::sampleRay(Ray ray, size_t ray_depth)
     glm::dvec3 emittance = (ray_depth == 0 || ray.specular || naive) ? intersection.material->emittance : glm::dvec3(0);
 
     double n1 = ray.medium_ior;
-    double n2 = abs(ray.medium_ior - ior) < C::EPSILON ? intersection.material->ior : ior;
+    double n2 = std::abs(ray.medium_ior - ior) < C::EPSILON ? intersection.material->ior : ior;
 
     switch (intersection.selectNewPath(n1, n2, -ray.direction))
     {

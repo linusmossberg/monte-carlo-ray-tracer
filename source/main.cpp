@@ -7,7 +7,7 @@ int main()
 {
     Random::seed(std::random_device{}());
     
-    std::filesystem::path path(std::filesystem::current_path().string() + "\\scenes");
+    std::filesystem::path path(std::filesystem::current_path() / "scenes");
     std::cout << "Scene directory:" << std::endl << path.string() << std::endl << std::endl;
 
     std::vector<SceneOption> options;

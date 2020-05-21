@@ -10,11 +10,12 @@ namespace Format
     inline std::string date(const std::chrono::time_point<std::chrono::system_clock>& date)
     {
         std::time_t now = std::chrono::system_clock::to_time_t(date);
-        struct tm timeinfo;
-        localtime_s(&timeinfo, &now);
+
+        // localtime_r is not available on windows and localtime_s is not available on linux
+        struct tm* timeinfo = localtime(&now);
 
         std::string s(26, ' ');
-        std::strftime(s.data(), s.size(), "%Y-%m-%d %H:%M", &timeinfo);
+        std::strftime(s.data(), s.size(), "%Y-%m-%d %H:%M", timeinfo);
 
         auto p = s.find_last_not_of(' ');
         s.erase(p, s.size() - p);

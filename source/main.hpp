@@ -4,6 +4,7 @@
 #include <string>
 #include <filesystem>
 #include <numeric>
+#include <vector>
 
 struct SceneOption
 {

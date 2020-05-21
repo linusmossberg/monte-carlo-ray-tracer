@@ -8,9 +8,9 @@
 #include <glm/gtx/component_wise.hpp>
 #include <glm/vector_relational.hpp>
 
-#include "Octree.hpp"
-#include "Octree.cpp" // Has to be included when methods are defined outside of templated class
-#include "Photon.hpp"
+#include "octree.hpp"
+#include "octree.cpp" // Has to be included when methods are defined outside of templated class
+#include "photon.hpp"
 
 #include "../common/util.hpp"
 #include "../scene/scene.hpp"

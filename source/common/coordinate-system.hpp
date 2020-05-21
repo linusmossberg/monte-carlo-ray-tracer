@@ -8,10 +8,10 @@
 
 inline glm::dvec3 orthogonalUnitVector(const glm::dvec3& v)
 {
-    if (abs(v.x) > abs(v.y))
-        return glm::dvec3(-v.z, 0, v.x) / sqrt(pow2(v.x) + pow2(v.z));
+    if (std::abs(v.x) > std::abs(v.y))
+        return glm::dvec3(-v.z, 0, v.x) / std::sqrt(pow2(v.x) + pow2(v.z));
     else
-        return glm::dvec3(0, v.z, -v.y) / sqrt(pow2(v.y) + pow2(v.z));
+        return glm::dvec3(0, v.z, -v.y) / std::sqrt(pow2(v.y) + pow2(v.z));
 }
 
 struct CoordinateSystem
