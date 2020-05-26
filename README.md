@@ -1,10 +1,10 @@
 # Monte Carlo Ray Tracer
 
-This is a physically based renderer with *Path Tracing* and *Photon Mapping*.
+This is a physically based renderer with Path Tracing and Photon Mapping.
 
 ![](renders/c1_64sqrtspp_report_4k_flintglass_downscaled.png "Path Traced, Scene IOR 1.75")
 
-This program was developed over a period of about 2 months for the course [Advanced Global Illumination and Rendering (TNCG15)](https://liu.se/studieinfo/kurs/tncg15) at Linköpings Universitet. The program is written in C++ and frequently makes use of C++17.
+This program was developed over a period of about 2 months for the course [Advanced Global Illumination and Rendering (TNCG15)](https://liu.se/studieinfo/kurs/tncg15) at Linköpings Universitet. The program is written in C++ and requires a compiler with C++17 support.
 
 ## Report
 
@@ -55,13 +55,13 @@ The basic outline of the scene format is the following JSON object:
 }
 ```
 
-The **num_render_threads** field defines the number of rendering threads to use. This is limited between 1 and the number of concurrent threads availible on the system, i.e. the number of effective CPU cores. If the specified value is outside of this range, then all concurrent threads are used automatically.
+The `num_render_threads` field defines the number of rendering threads to use. This is limited between 1 and the number of concurrent threads availible on the system, i.e. the number of effective CPU cores. If the specified value is outside of this range, then all concurrent threads are used automatically.
 
-The **naive** field specifies whether or not naive path tracing should be used rather than using explicit direct light sampling. There's no good reason to set this to true other than to test the massive difference in convergence time.
+The `naive` field specifies whether or not naive path tracing should be used rather than using explicit direct light sampling. There's no good reason to set this to true other than to test the massive difference in convergence time.
 
-The **ior** field specifies the scene IOR (index of refraction). This can be used to simulate different types of environment mediums to see the effects this has on the angle of refraction and the Fresnel factor. This is usually set to 1.0 to simulate air, but using values such as 1.333 will render the scene as if it was submerged in water instead.
+The `ior` field specifies the scene IOR (index of refraction). This can be used to simulate different types of environment mediums to see the effects this has on the angle of refraction and the Fresnel factor. This is usually set to 1.0 to simulate air, but using values such as 1.333 will render the scene as if it was submerged in water instead.
 
-The **photon_map**, **cameras**, **materials**, **vertices**, and **surfaces** objects defines different render settings and the scene contents. I will go through each of these in the following sections.
+The `photon_map`, `cameras`, `materials`, `vertices`, and `surfaces` objects defines different render settings and the scene contents. I will go through each of these in the following sections.
 
 ### Photon Map Object
 
@@ -77,15 +77,15 @@ Example:
 }
 ```
 
-The **photon_map** object is optional and it defines the photon map properties. The **emissions** field determines the base number of rays that should be emitted from light sources. More emissions will result in more spawned photons. 
+The `photon_map` object is optional and it defines the photon map properties. The `emissions` field determines the base number of rays that should be emitted from light sources. More emissions will result in more spawned photons. 
 
-The **caustic_factor** determines how many times more caustic photons should be generated relative to other photon types. 1 is the "natural" factor, but this results in blurry caustics since the caustic photon map is visualized directly.
+The `caustic_factor` determines how many times more caustic photons should be generated relative to other photon types. 1 is the "natural" factor, but this results in blurry caustics since the caustic photon map is visualized directly.
 
-The **radius** field determines the radius of the search sphere (in meters) used during the rendering pass. Smaller values results in sharper results and faster evaluation, but too small values results in bad estimates since this reduces the number of photons that contributes to the estimate. **caustic_radius** is the same but is used exclusively for caustic photons.
+The `radius` field determines the radius of the search sphere (in meters) used during the rendering pass. Smaller values results in sharper results and faster evaluation, but too small values results in bad estimates since this reduces the number of photons that contributes to the estimate. `caustic_radius` is the same but is used exclusively for caustic photons.
 
-The **max_photons_per_octree_leaf** field affects both the octree radius-search performance and memory usage of the application. I cover this more in the report and this value can probably be left at 190 in most cases.
+The `max_photons_per_octree_leaf` field affects both the octree radius-search performance and memory usage of the application. I cover this more in the report and this value can probably be left at 190 in most cases.
 
-The **direct_visualization** field can be used to visualize the photon maps directly. Setting this to true will make the program evaluate the global radiance from all photon maps at the first diffuse reflection. An example of this is in the report. 
+The `direct_visualization` field can be used to visualize the photon maps directly. Setting this to true will make the program evaluate the global radiance from all photon maps at the first diffuse reflection. An example of this is in the report. 
 
 ### Cameras Object
 
@@ -95,6 +95,7 @@ Example:
   {
     "focal_length": 23,
     "sensor_width": 35,
+    "f_stop": 1.8,
     "eye": [ -2, 0, 0 ],
     "look_at": [ 13, -0.55, 0 ],
     "width": 960,
@@ -105,6 +106,8 @@ Example:
   {
     "focal_length": 50,
     "sensor_width": 35,
+    "f_stop": 5.6,
+    "focus_distance": 3,
     "eye": [ -1, 0, 0 ],
     "forward": [ 1, 0, 0 ],
     "up": [ 0, 1, 0 ],
@@ -116,15 +119,17 @@ Example:
 ]
 ```
 
-The **cameras** object contains an array of different cameras. The **focal_length** and **sensor_width** fields are defined in millimeters. A sensor width of 35mm (full frame) is most often usefull since focal lengths normally are defined in terms of 35mm-equivalent focal lengths.
+The `cameras` object contains an array of different cameras. The `focal_length` and `sensor_width` fields are defined in millimeters. A sensor width of 35mm (full frame) is most often usefull since focal lengths normally are defined in terms of 35mm-equivalent focal lengths.
 
-The **eye** field defines the position of the camera, and the **up** and **forward** fields defines the orientation vectors of the camera. The up and forward vectors can be replaced with the **look_at** field, which defines the coordinate that the camera should look at instead.
+The `eye` field defines the position of the camera, and the `up` and `forward` fields defines the orientation vectors of the camera. The up and forward vectors can be replaced with the `look_at` field, which defines the coordinate that the camera should look at instead.
 
-The **width** and **height** properties are the dimensions of the sensor/image in terms of pixels. 
+The `f_stop` and `focus_distance` fields defines the depth of field properties of the camera and are optional. The distance from the camera to the `look_at` coordinate is used as focus distance if this coordinate is specified and no valid `focus_distance` is specified.
 
-The **sqrtspp** (Square-Rooted Samples Per Pixel) property defines the square-rooted number of ray paths that should be sampled from each pixel in the camera.
+The `width` and `height` properties are the dimensions of the sensor/image in terms of pixels. 
 
-The **savename** property defines the name of the resulting saved image file. Images are saved in TGA format.
+The `sqrtspp` (Square-Rooted Samples Per Pixel) property defines the square-rooted number of ray paths that should be sampled from each pixel in the camera.
+
+The `savename` property defines the name of the resulting saved image file. Images are saved in TGA format.
 
 ### Materials Object
 
@@ -154,7 +159,7 @@ Example:
 ]
 ```
 
-The **materials** object contains an array of different materials. The material field **name** can be any string and it's used later when assigning a material to a surface. The **"default"** name is used for the material that should be used on all surfaces that hasn't specified a material.
+The `materials` object contains an array of different materials. The material field `name` is used later when assigning a material to a surface. The `default` name is used for the material that should be used on all surfaces that hasn't specified a material.
 
 The remaining material fields are:
 
@@ -168,11 +173,11 @@ The remaining material fields are:
 | transparency         | scalar     | 0             |
 | perfect_mirror       | boolean    | false         |
 
-These fields are all optional and any combination of fields can be used. A material can for example be a combination of diffusely reflecting, specularly reflecting, emissive, transparent (specularly refracting) and rough. If the IOR is specified to be the same as the scene IOR, then the material is assumed to be completely diffuse. If set to true, the **perfect_mirror** field overrides most other fields to simulate a perfect mirror with infinite IOR.
+These fields are all optional and any combination of fields can be used. A material can for example be a combination of diffusely reflecting, specularly reflecting, emissive, transparent (specularly refracting) and rough. If the IOR is specified to be the same as the scene IOR, then the material is assumed to be completely diffuse. If set to true, the `perfect_mirror` field overrides most other fields to simulate a perfect mirror with infinite IOR.
 
-The **reflectance** and **specular_reflectance** fields specifies the amount of radiance that should be diffusely and specularly reflected for each RGB channel. This is a simplification since radiance and reflectances are spectral properties that varies with wavelength and not by the resulting tristimulus values of the virtual camera, but this is computationally cheaper and simpler. The reflectance properties are linear and are defined in the range [0,1]. Color pickers usually display gamma corrected color values, which means that these has to be linearized before using them here to achieve the same color.
+The `reflectance` and `specular_reflectance` fields specifies the amount of radiance that should be diffusely and specularly reflected for each RGB channel. This is a simplification since radiance and reflectances are spectral properties that varies with wavelength and not by the resulting tristimulus values of the virtual camera, but this is computationally cheaper and simpler. The reflectance properties are linear and are defined in the range [0,1]. Color pickers usually display gamma corrected color values, which means that these has to be linearized before using them here to achieve the same color.
 
-The **emittance** field defines the radiant flux of each RGB channel in watts. This means that surfaces with different surface areas will emit the same amount of radiant energy if they are assigned the same emissive material.
+The `emittance` field defines the radiant flux of each RGB channel in watts. This means that surfaces with different surface areas will emit the same amount of radiant energy if they are assigned the same emissive material.
 
 ### Vertices Object
 
@@ -195,9 +200,9 @@ Example:
 ]
 ```
 
-The **vertices** object contains an array of vertex sets. Each vertex set contains an array of vertices specified as xyz-coordinates. The vertex sets are implicitly assigned an index starting from 0 depending on their order in the array. In the above example the first set has the index 0 and the second the index 1.
+The `vertices` object contains an array of vertex sets. Each vertex set contains an array of vertices specified as xyz-coordinates. The vertex sets are implicitly assigned an index starting from 0 depending on their order in the array. In the above example the first set has the index 0 and the second the index 1.
 
-The vertex set index is used later to specify which set of vertices to build the surface from when creating surfaces of **object** types. The first set in the above example defines 4 vertices that makes up the square light source seen in the hexagon room renders, while the second set defines the 5 vertices that makes up the crystal object.
+The vertex set index is used later to specify which set of vertices to build the surface from when creating surfaces of `object` types. The first set in the above example defines 4 vertices that makes up the square light source seen in the hexagon room renders, while the second set defines the 5 vertices that makes up the crystal object.
 
 ### Surfaces Object
 
@@ -243,15 +248,15 @@ Example:
 ]
 ```
 
-The **surfaces** object contains an array of surfaces. Each surface has a **type** field which can be either **"sphere"**, **"triangle"** or **"object"**. All surfaces also has an optional **material** field, which specifies the material that the surface should use by name. 
+The `surfaces` object contains an array of surfaces. Each surface has a `type` field which can be either `sphere`, `triangle` or `object`. All surfaces also has an optional `material` field, which specifies the material that the surface should use by name. 
 
 #### Type-specific fields:
 
-**Sphere:** The sphere position is defined by the **origin** field, while the sphere radius is defined by the **radius** field.
+**Sphere:** The sphere position is defined by the `origin` field, while the sphere radius is defined by the `radius` field.
 
-**Triangle:** The triangle is simply defined by its vertices, which is defined by the 3 vertices in the vertex array **vertices** in xyz-coordinates. The order of the vertices defines the normal direction, but this only matters if the surface has an emissive material.
+**Triangle:** The triangle is simply defined by its vertices, which is defined by the 3 vertices in the vertex array `vertices` in xyz-coordinates. The order of the vertices defines the normal direction, but this only matters if the surface has an emissive material.
 
-**Object:** The object surface type defines a triangle mesh object that consists of multiple triangles. The **set** field defines the index of the vertex set to pull vertices from, while the **triangles** field specifies the array of triangles of the object. Each triangle of the array consists of 3 indices that references the corresponding vertex index in the vertex set.
+**Object:** The object surface type defines a triangle mesh object that consists of multiple triangles. The `set` field defines the index of the vertex set to pull vertices from, while the `triangles` field specifies the array of triangles of the object. Each triangle of the array consists of 3 indices that references the corresponding vertex index in the vertex set.
 
 ## Renders
 
@@ -279,4 +284,4 @@ ___
 
 <h3 align="center">Path Traced, Skylit Oren-Nayar Spheres</h3>
 
-![](renders/oren_nayar_test.png "Path Traced, Skylit Oren-Nayar Spheres")
+![](renders/oren_nayar_test_dof.jpg "Path Traced, Skylit Oren-Nayar Spheres")

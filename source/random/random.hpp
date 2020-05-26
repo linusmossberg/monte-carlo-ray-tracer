@@ -3,6 +3,7 @@
 #include <random>
 
 #include <glm/vec3.hpp>
+#include <glm/vec2.hpp>
 
 #include "../common/constants.hpp"
 
@@ -23,6 +24,8 @@ struct Random
     static size_t weightedUIntSample(const std::vector<double>& weights);
 
     static bool trial(double probability);
+
+    static glm::dvec2 UniformDiskSample();
 
     static glm::dvec3 CosWeightedHemiSample();
     

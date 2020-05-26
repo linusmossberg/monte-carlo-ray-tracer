@@ -49,6 +49,12 @@ bool Random::trial(double probability)
     return probability > range(0, 1);
 }
 
+glm::dvec2 Random::UniformDiskSample()
+{
+    double azimuth = range(0, C::TWO_PI);
+    return glm::dvec2(std::cos(azimuth), std::sin(azimuth)) * std::sqrt(range(0, 1));
+}
+
 glm::dvec3 Random::CosWeightedHemiSample()
 {
     // Generate uniform sample on unit disk at radius r and angle azimuth

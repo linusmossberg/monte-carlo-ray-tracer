@@ -16,13 +16,25 @@ void Camera::samplePixel(size_t x, size_t y)
 
             glm::dvec3 sensor_pos = eye + forward * focal_length + left * center_offset.x + up * center_offset.y;
 
+            // Pinhole camera ray
+            Ray ray(eye, sensor_pos, scene->ior);
+
+            if (aperture_radius > 0.0 && focus_distance > 0.0)
+            {
+                // Thin lens camera ray for depth of field
+                glm::dvec3 focus_point = ray(focus_distance / glm::dot(ray.direction, forward));
+                glm::dvec2 aperture_sample = Random::UniformDiskSample() * aperture_radius;
+                ray.start += left * aperture_sample.x + up * aperture_sample.y;
+                ray.direction = glm::normalize(focus_point - ray.start);
+            }
+
             if (photon_map)
             {
-                pixel += photon_map->sampleRay(Ray(eye, sensor_pos, scene->ior));
+                pixel += photon_map->sampleRay(ray);
             } 
             else
             {
-                pixel += scene->sampleRay(Ray(eye, sensor_pos, scene->ior));
+                pixel += scene->sampleRay(ray);
             } 
         }
     }

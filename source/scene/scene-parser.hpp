@@ -74,12 +74,19 @@ public:
 
         const auto& c = j.at("cameras").at(camera_idx);
 
+        double f_stop = getOptional(c, "f_stop", -1.0);
+        double focus_distance = getOptional(c, "focus_distance", -1.0);
+
         std::shared_ptr<Camera> camera;
         if (c.find("look_at") != c.end())
         {
+            glm::dvec3 eye = j2v(c.at("eye"));
+            glm::dvec3 look_at = j2v(c.at("look_at"));
+            if (focus_distance < 0.0) focus_distance = glm::distance(eye, look_at);
             camera = std::make_shared<Camera>(
-                j2v(c.at("eye")), j2v(c.at("look_at")), 
+                eye, look_at,
                 c.at("focal_length"), c.at("sensor_width"), 
+                f_stop, focus_distance,
                 c.at("width"), c.at("height"),
                 c.at("sqrtspp"), c.at("savename")
             );
@@ -89,6 +96,7 @@ public:
             camera = std::make_shared<Camera>(
                 j2v(c.at("eye")), j2v(c.at("forward")), j2v(c.at("up")), 
                 c.at("focal_length"), c.at("sensor_width"), 
+                f_stop, focus_distance,
                 c.at("width"), c.at("height"),
                 c.at("sqrtspp"), c.at("savename")
             );
