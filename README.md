@@ -3,6 +3,7 @@
 This is a physically based renderer with Path Tracing and Photon Mapping.
 
 ![](renders/c1_64sqrtspp_report_4k_flintglass_downscaled.png "Path Traced, Scene IOR 1.75")
+![](renders/glossy_dof.jpg "Glossy Spheres with Depth of Field")
 
 This program was developed over a period of about 2 months for the course [Advanced Global Illumination and Rendering (TNCG15)](https://liu.se/studieinfo/kurs/tncg15) at Linköpings Universitet. The program is written in C++ and requires a compiler with C++17 support.
 
@@ -123,7 +124,7 @@ The `cameras` object contains an array of different cameras. The `focal_length` 
 
 The `eye` field defines the position of the camera, and the `up` and `forward` fields defines the orientation vectors of the camera. The up and forward vectors can be replaced with the `look_at` field, which defines the coordinate that the camera should look at instead.
 
-The `f_stop` and `focus_distance` fields defines the depth of field properties of the camera and are optional. The distance from the camera to the `look_at` coordinate is used as focus distance if this coordinate is specified and no valid `focus_distance` is specified.
+The `f_stop` and `focus_distance` fields defines the depth of field properties of the camera and are optional. The distance from the camera to the `look_at` coordinate can be used as focus distance if no valid focus distance is specified.
 
 The `width` and `height` properties are the dimensions of the sensor/image in terms of pixels. 
 
@@ -260,7 +261,13 @@ The `surfaces` object contains an array of surfaces. Each surface has a `type` f
 
 ## Renders
 
-The following images are renders of [scenes/hexagon_room.json](scenes/hexagon_room.json) and [scenes/oren_nayar_test.json](scenes/oren_nayar_test.json) produced by the program:
+The following images are renders produced by the program:
+
+___
+
+<h3 align="center">Glossy Spheres with Depth of Field</h3>
+
+![](renders/glossy_dof.jpg "Glossy Spheres with Depth of Field")
 
 ___
 
@@ -284,4 +291,4 @@ ___
 
 <h3 align="center">Path Traced, Skylit Oren-Nayar Spheres</h3>
 
-![](renders/oren_nayar_test_dof.jpg "Path Traced, Skylit Oren-Nayar Spheres")
+![](renders/oren_nayar_test.png "Path Traced, Skylit Oren-Nayar Spheres")
