@@ -44,7 +44,7 @@ public:
 
 private:
     const size_t min_ray_depth = 3;
-    const size_t max_ray_depth = 64; // prevent call stack overflow
+    const size_t max_ray_depth = 96; // prevent call stack overflow
 
     bool naive;
 

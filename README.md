@@ -48,9 +48,9 @@ The basic outline of the scene format is the following JSON object:
 
   "cameras": [ ],
 
-  "materials":  [ ],
+  "materials":  { },
 
-  "vertices": [ ],
+  "vertices": { },
 
   "surfaces": [ ]
 }
@@ -99,8 +99,7 @@ Example:
     "f_stop": 1.8,
     "eye": [ -2, 0, 0 ],
     "look_at": [ 13, -0.55, 0 ],
-    "width": 960,
-    "height": 720,
+    "image": { "width": 960, "height": 720 },
     "sqrtspp": 4,
     "savename": "c1b"
   },
@@ -112,8 +111,7 @@ Example:
     "eye": [ -1, 0, 0 ],
     "forward": [ 1, 0, 0 ],
     "up": [ 0, 1, 0 ],
-    "width": 960,
-    "height": 540,
+    "image": { "width": 960, "height": 540 },
     "sqrtspp": 1,
     "savename": "c2"
   }
@@ -124,9 +122,9 @@ The `cameras` object contains an array of different cameras. The `focal_length` 
 
 The `eye` field defines the position of the camera, and the `up` and `forward` fields defines the orientation vectors of the camera. The up and forward vectors can be replaced with the `look_at` field, which defines the coordinate that the camera should look at instead.
 
-The `f_stop` and `focus_distance` fields defines the depth of field properties of the camera and are optional. The distance from the camera to the `look_at` coordinate can be used as focus distance if no valid focus distance is specified.
+The `f_stop` and `focus_distance` fields defines the depth of field properties of the camera and are optional. The distance from the camera to the `look_at` coordinate is used as focus distance if this coordinate is specified and if no valid focus distance is specified.
 
-The `width` and `height` properties are the dimensions of the sensor/image in terms of pixels. 
+The `image` object specifies the `width` and `height` properties of the sensor/image in terms of pixels. 
 
 The `sqrtspp` (Square-Rooted Samples Per Pixel) property defines the square-rooted number of ray paths that should be sampled from each pixel in the camera.
 
@@ -136,33 +134,29 @@ The `savename` property defines the name of the resulting saved image file. Imag
 
 Example:
 ```json
-"materials": [
-  {
-    "name": "default",
-    "reflectance": [ 0.5, 0.5, 0.5 ]
+"materials": {
+  "default": {
+      "reflectance": [ 0.5, 0.5, 0.5 ]
   },
-  {
-    "name": "red",
+  "red": {
     "reflectance": [ 1.0, 0.218, 0.218 ],
     "roughness": 10.0
   },
-  {
-    "name": "crystal",
+  "crystal": {
     "ior": 2.0,
     "transparency":  1.0,
     "specular_reflectance": [ 0.5, 1.0, 0.9 ]
   },
-  {
-    "name": "light",
+  "light": {
     "reflectance": [ 0.8, 0.8, 0.8 ],
     "emittance": [ 1000, 1000, 1000 ]
   }
-]
+}
 ```
 
-The `materials` object contains an array of different materials. The material field `name` is used later when assigning a material to a surface. The `default` name is used for the material that should be used on all surfaces that hasn't specified a material.
+The `materials` object contains a map of different materials. The key string is used later when assigning a material to a surface. The material with the `default` key string is used for all surfaces that hasn't specified a material.
 
-The remaining material fields are:
+The material fields are:
 
 | field                | type       | default value |
 | -------------------- | ---------- | ------------- |
@@ -184,26 +178,26 @@ The `emittance` field defines the radiant flux of each RGB channel in watts. Thi
 
 Example:
 ```json
-"vertices": [
-  [
+"vertices": {
+  "light": [
     [ 8, 4.9, -2.5 ],
     [ 9, 4.9, -2.5 ],
     [ 9, 4.9, -1.5 ],
     [ 8, 4.9, -1.5 ]
   ],
-  [
+  "crystal": [
     [ 8.28362, -5.0, -4.78046 ],
     [ 6.47867, -0.90516, -3.67389 ],
     [ 7.97071, -0.85108, -2.79588 ],
     [ 7.93553, -0.41379, -4.47145 ],
     [ 6.63966, 3.55331, -2.51368 ]
   ]
-]
+}
 ```
 
-The `vertices` object contains an array of vertex sets. Each vertex set contains an array of vertices specified as xyz-coordinates. The vertex sets are implicitly assigned an index starting from 0 depending on their order in the array. In the above example the first set has the index 0 and the second the index 1.
+The `vertices` object contains a map of vertex sets. Each vertex set contains an array of vertices specified as xyz-coordinates.
 
-The vertex set index is used later to specify which set of vertices to build the surface from when creating surfaces of `object` types. The first set in the above example defines 4 vertices that makes up the square light source seen in the hexagon room renders, while the second set defines the 5 vertices that makes up the crystal object.
+The vertex set key string is used later to specify which set of vertices to build the surface from when creating surfaces of `object` type.
 
 ### Surfaces Object
 
@@ -213,7 +207,7 @@ Example:
   {
     "type": "object",
     "material": "light",
-    "set": 0,
+    "vertex_set": "light",
     "triangles": [
       [ 0, 1, 2 ],
       [ 0, 2, 3 ]
@@ -222,7 +216,7 @@ Example:
   {
     "type": "object",
     "material": "crystal",
-    "set": 1,
+    "vertex_set": "crystal",
     "triangles": [
       [ 0, 2, 1 ],
       [ 0, 3, 2 ],
@@ -257,7 +251,7 @@ The `surfaces` object contains an array of surfaces. Each surface has a `type` f
 
 **Triangle:** The triangle is simply defined by its vertices, which is defined by the 3 vertices in the vertex array `vertices` in xyz-coordinates. The order of the vertices defines the normal direction, but this only matters if the surface has an emissive material.
 
-**Object:** The object surface type defines a triangle mesh object that consists of multiple triangles. The `set` field defines the index of the vertex set to pull vertices from, while the `triangles` field specifies the array of triangles of the object. Each triangle of the array consists of 3 indices that references the corresponding vertex index in the vertex set.
+**Object:** The object surface type defines a triangle mesh object that consists of multiple triangles. The `vertex_set` field specifies the key string of the vertex set to pull vertices from, while the `triangles` field specifies the array of triangles of the object. Each triangle of the array consists of 3 indices that references the corresponding vertex index in the vertex set.
 
 ## Renders
 

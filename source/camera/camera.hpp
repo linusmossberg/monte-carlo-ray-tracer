@@ -17,6 +17,8 @@
 #include <glm/gtx/rotate_vector.hpp>
 #include <glm/gtx/vector_angle.hpp>
 
+#include <nlohmann/json.hpp>
+
 #include "image.hpp"
 
 #include "../ray/ray.hpp"
@@ -41,36 +43,31 @@ struct Bucket
 class Camera
 {
 public:
-    Camera(glm::dvec3 eye, glm::dvec3 forward, glm::dvec3 up, 
-           double focal_length, double sensor_width, double f_stop, double focus_distance,
-           size_t width, size_t height, size_t sqrtspp, const std::string& savename) 
-        : 
-        eye(eye),
-        forward(glm::normalize(forward)),
-        left(glm::cross(glm::normalize(up), glm::normalize(forward))),
-        up(glm::normalize(up)),
-        focal_length(focal_length / 1000.0),
-        sensor_width(sensor_width / 1000.0),
-        aperture_radius(((focal_length / 1000.0) / f_stop) / 2.0),
-        focus_distance(focus_distance),
-        image(width, height),
-        sqrtspp(sqrtspp),
-        savename(savename) { }
-
-    Camera(glm::dvec3 eye, glm::dvec3 look_at, 
-           double focal_length, double sensor_width, double f_stop, double focus_distance,
-           size_t width, size_t height, size_t sqrtspp, const std::string& savename)
-        : 
-        eye(eye),
-        focal_length(focal_length / 1000.0),
-        sensor_width(sensor_width / 1000.0),
-        aperture_radius(((focal_length / 1000.0) / f_stop) / 2.0),
-        focus_distance(focus_distance),
-        image(width, height),
-        sqrtspp(sqrtspp),
-        savename(savename)
+    Camera(const nlohmann::json &c) : image(c.at("image"))
     {
-        lookAt(look_at);
+        eye = c.at("eye");
+        focal_length = c.at("focal_length").get<double>() / 1000.0;
+        sensor_width = c.at("sensor_width").get<double>() / 1000.0;
+        sqrtspp = c.at("sqrtspp");
+        savename = c.at("savename");
+        aperture_radius = (focal_length / getOptional(c, "f_stop", -1.0)) / 2.0;
+        focus_distance = getOptional(c, "focus_distance", -1.0);
+
+        if (c.find("look_at") != c.end())
+        {
+            glm::dvec3 look_at = c.at("look_at");
+            lookAt(look_at);
+            if (focus_distance < 0.0)
+            {
+                focus_distance = glm::distance(eye, look_at);
+            }
+        }
+        else
+        {
+            forward = glm::normalize(c.at("forward").get<glm::dvec3>());
+            up = glm::normalize(c.at("up").get<glm::dvec3>());
+            left = glm::normalize(glm::cross(up, forward));
+        }
     }
 
     void sampleImage(std::shared_ptr<Scene> s, std::shared_ptr<PhotonMap> pm);

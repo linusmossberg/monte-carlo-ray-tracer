@@ -200,10 +200,6 @@ void PhotonMap::emitPhoton(const Ray& ray, const glm::dvec3& flux, size_t thread
         return;
     }
 
-    // Delay path termination until any new photons have been stored.
-    double absorb = ray_depth > 0 ? 1.0 - intersect.material->reflect_probability : 0.0;
-    bool should_absorb = Random::trial(absorb);
-
     Ray new_ray(intersect.position);
 
     glm::dvec3 BRDF;
@@ -220,15 +216,12 @@ void PhotonMap::emitPhoton(const Ray& ray, const glm::dvec3& flux, size_t thread
                 createShadowPhotons(Ray(intersect.position - intersect.normal * C::EPSILON, intersect.position + ray.direction), thread);
             }
 
-            if (should_absorb) return;
-
             BRDF = intersect.material->SpecularBRDF();
             new_ray.reflectSpecular(ray.direction, intersect.normal, n1);
             break;
         }
         case Path::REFRACT:
         {
-            if (should_absorb) return;
             BRDF = intersect.material->SpecularBRDF();
             new_ray.refractSpecular(ray.direction, intersect.normal, n1, n2);
             break;
@@ -255,15 +248,23 @@ void PhotonMap::emitPhoton(const Ray& ray, const glm::dvec3& flux, size_t thread
                 }
             }
 
-            if (should_absorb) return;
-
             CoordinateSystem cs(intersect.normal);
             new_ray.reflectDiffuse(cs, n1);
             BRDF = C::PI * intersect.material->DiffuseBRDF(cs.globalToLocal(new_ray.direction), cs.globalToLocal(-ray.direction));
         }
     }
 
-    emitPhoton(new_ray, flux * BRDF / (1.0 - absorb), thread, ray_depth + 1);
+    glm::dvec3 new_flux = flux * BRDF;
+
+    // Based on slide 13 of https://cgg.mff.cuni.cz/~jaroslav/teaching/2015-npgr010/slides/11%20-%20npgr010-2015%20-%20PM.pdf
+    double survive = std::min(1.0, glm::compMax(new_flux) / glm::compMax(flux));
+
+    if (Random::trial(survive))
+    {
+        emitPhoton(new_ray, new_flux / survive, thread, ray_depth + 1);
+    }
+
+    return;
 }
 
 void PhotonMap::createShadowPhotons(const Ray& ray, size_t thread)

@@ -8,11 +8,13 @@
 #include <glm/vec3.hpp>
 #include <glm/gtx/component_wise.hpp>
 
+#include <nlohmann/json.hpp>
+
 #include "pixel-operators.hpp"
 
 struct Image
 {
-    Image(size_t width, size_t height);
+    Image(const nlohmann::json &j);
 
     void save(const std::string& filename) const;
 

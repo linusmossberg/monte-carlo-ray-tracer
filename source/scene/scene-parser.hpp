@@ -7,33 +7,8 @@
 #include <nlohmann/json.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include "../common/util.hpp"
 #include "scene-renderer.hpp"
-
-inline glm::dvec3 j2v(const nlohmann::json &j)
-{
-    return glm::dvec3(j.at(0), j.at(1), j.at(2));
-}
-
-template <class T>
-inline T getOptional(const nlohmann::json &j, std::string value, T default_value)
-{
-    T ret = default_value;
-    if (j.find(value) != j.end())
-    {
-        ret = j.at(value);
-    }
-    return ret;
-}
-
-inline glm::dvec3 getOptional(const nlohmann::json &j, std::string value, const glm::dvec3 &default_value)
-{
-    glm::dvec3 ret = default_value;
-    if (j.find(value) != j.end())
-    {
-        ret = j2v(j.at(value));
-    }
-    return ret;
-}
 
 class SceneParser
 {
@@ -52,7 +27,7 @@ public:
             int i = 0;
             for (const auto& camera : j.at("cameras"))
             {
-                glm::dvec3 eye = j2v(camera.at("eye"));
+                glm::dvec3 eye = camera.at("eye");
                 double f = camera.at("focal_length");
                 double s = camera.at("sensor_width");
                 std::stringstream ss;
@@ -72,64 +47,13 @@ public:
         nlohmann::json j;
         scene_file >> j;
 
-        const auto& c = j.at("cameras").at(camera_idx);
-
-        double f_stop = getOptional(c, "f_stop", -1.0);
-        double focus_distance = getOptional(c, "focus_distance", -1.0);
-
-        std::shared_ptr<Camera> camera;
-        if (c.find("look_at") != c.end())
-        {
-            glm::dvec3 eye = j2v(c.at("eye"));
-            glm::dvec3 look_at = j2v(c.at("look_at"));
-            if (focus_distance < 0.0) focus_distance = glm::distance(eye, look_at);
-            camera = std::make_shared<Camera>(
-                eye, look_at,
-                c.at("focal_length"), c.at("sensor_width"), 
-                f_stop, focus_distance,
-                c.at("width"), c.at("height"),
-                c.at("sqrtspp"), c.at("savename")
-            );
-        }
-        else
-        {
-            camera = std::make_shared<Camera>(
-                j2v(c.at("eye")), j2v(c.at("forward")), j2v(c.at("up")), 
-                c.at("focal_length"), c.at("sensor_width"), 
-                f_stop, focus_distance,
-                c.at("width"), c.at("height"),
-                c.at("sqrtspp"), c.at("savename")
-            );
-        }
+        std::shared_ptr<Camera> camera = std::make_shared<Camera>(j.at("cameras").at(camera_idx));
 
         double scene_ior = j.at("ior");
 
-        std::unordered_map<std::string, std::shared_ptr<Material>> materials;
-        for (const auto& m : j.at("materials"))
-        {
-            double roughness                = getOptional(m, "roughness", 0.0);
-            double ior                      = getOptional(m, "ior", scene_ior);
-            double transparency             = getOptional(m, "transparency", 0.0);
-            bool perfect_mirror             = getOptional(m, "perfect_mirror", false);
-            glm::dvec3 reflectance          = getOptional(m, "reflectance", glm::dvec3(0.0));
-            glm::dvec3 specular_reflectance = getOptional(m, "specular_reflectance", glm::dvec3(0.0));
-            glm::dvec3 emittance            = getOptional(m, "emittance", glm::dvec3(0.0));
+        std::unordered_map<std::string, std::shared_ptr<Material>> materials = j.at("materials");
 
-            auto mat = std::make_shared<Material>(reflectance, specular_reflectance, emittance, roughness, ior, transparency, perfect_mirror, scene_ior);
-            materials.insert({ m.at("name"), mat });
-        }
-
-        int i = 0;
-        std::vector<std::vector<glm::dvec3>> vertices; // [set][vertices]
-        for (const auto &s : j.at("vertices"))
-        {
-            vertices.push_back(std::vector<glm::dvec3>());
-            for (const auto &v : s)
-            {
-                vertices[i].push_back(j2v(v));
-            }
-            i++;
-        }
+        std::unordered_map<std::string, std::vector<glm::dvec3>> vertices = j.at("vertices");
 
         std::vector<std::shared_ptr<Surface::Base>> surfaces;
         for (const auto& s : j.at("surfaces"))
@@ -144,7 +68,7 @@ public:
             std::string type = s.at("type");
             if (type == "object")
             {
-                const auto& v = vertices.at(s.at("set"));
+                const auto& v = vertices.at(s.at("vertex_set"));
 
                 bool is_emissive = material->emittance.r > C::EPSILON || material->emittance.g > C::EPSILON || material->emittance.b > C::EPSILON;
                 double total_area = 0.0;
@@ -176,11 +100,11 @@ public:
             else if (type == "triangle")
             {
                 const auto& v = s.at("vertices");
-                surfaces.push_back(std::make_shared<Surface::Triangle>(j2v(v.at(0)), j2v(v.at(1)), j2v(v.at(2)), material));
+                surfaces.push_back(std::make_shared<Surface::Triangle>(v.at(0), v.at(1), v.at(2), material));
             }
             else if (type == "sphere")
             {	
-                surfaces.push_back(std::make_shared<Surface::Sphere>(j2v(s.at("origin")), s.at("radius"), material));
+                surfaces.push_back(std::make_shared<Surface::Sphere>(s.at("origin"), s.at("radius"), material));
             }
         }
         scene_file.close();

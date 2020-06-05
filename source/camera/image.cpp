@@ -1,8 +1,12 @@
 #include "image.hpp"
 
-Image::Image(size_t width, size_t height)
-    : blob(std::vector<glm::dvec3>((uint64_t)width* height, glm::dvec3())), 
-      width(width), height(height), num_pixels(width* height) { }
+Image::Image(const nlohmann::json &j)
+{
+    width = j.at("width");
+    height = j.at("height");
+    num_pixels = width * height;
+    blob = std::vector<glm::dvec3>(num_pixels, glm::dvec3());
+}
 
 void Image::save(const std::string& filename) const
 {

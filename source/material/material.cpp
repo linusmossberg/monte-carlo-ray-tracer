@@ -34,16 +34,41 @@ double Material::Fresnel(double n1, double n2, const glm::dvec3& normal, const g
 {
     if (perfect_mirror) return 1;
 
-    if (std::abs(n1 - n2) < C::EPSILON) return 0;
+    if (std::abs(n1 - n2) < C::EPSILON || n2 < 1.0) return 0;
 
     double R0 = pow2((n1 - n2) / (n1 + n2));
     return R0 + (1.0 - R0) * std::pow(1.0 - glm::dot(normal, dir), 5);
 }
 
-double Material::calculateReflectProbability(double scene_ior)
+void Material::computeProperties()
 {
-    // Give max value to materials that can produce caustics
-    if (perfect_mirror || std::abs(ior - scene_ior) > C::EPSILON) return 0.9;
+    can_diffusely_reflect = !perfect_mirror && std::abs(transparency - 1.0) > C::EPSILON;
+    reflect_probability = calculateReflectProbability();
 
-    return (glm::compAdd(reflectance) + glm::compAdd(specular_reflectance)) / (20.0 / 3.0); // at most .9
+    double variance = pow2(roughness);
+    A = 1.0 - 0.5 * variance / (variance + 0.33);
+    B = 0.45 * variance / (variance + 0.09);
+}
+
+double Material::calculateReflectProbability()
+{
+    return std::min(std::max(glm::compMax(reflectance), glm::compMax(specular_reflectance)), 0.8);
+}
+
+void from_json(const nlohmann::json &j, Material &m)
+{
+    getToOptional(j, "roughness", m.roughness);
+    getToOptional(j, "ior", m.ior);
+    getToOptional(j, "transparency", m.transparency);
+    getToOptional(j, "perfect_mirror", m.perfect_mirror);
+    getToOptional(j, "reflectance", m.reflectance);
+    getToOptional(j, "specular_reflectance", m.specular_reflectance);
+    getToOptional(j, "emittance", m.emittance);
+
+    m.computeProperties();
+}
+
+void std::from_json(const nlohmann::json &j, std::shared_ptr<Material> &m)
+{
+    m = std::make_shared<Material>(j.get<Material>());
 }

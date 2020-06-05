@@ -4,6 +4,8 @@
 #include <glm/vec3.hpp>
 #include <glm/gtx/component_wise.hpp>
 
+#include <nlohmann/json.hpp>
+
 #include "../common/util.hpp"
 #include "../random/random.hpp"
 #include "../common/constants.hpp"
@@ -11,26 +13,17 @@
 class Material
 {
 public:
-    Material(
-        const glm::dvec3& reflectance, 
-        const glm::dvec3& specular_reflectance, 
-        const glm::dvec3& emission, 
-        double roughness, double ior, 
-        double transparency, bool perfect_mirror, 
-        double scene_ior) 
-        : 
-        reflectance(reflectance),
-        specular_reflectance(specular_reflectance),
-        emittance(emission), roughness(roughness), 
-        ior(ior), transparency(transparency),
-        perfect_mirror(perfect_mirror)
+    Material()
     {
-        can_diffusely_reflect = !perfect_mirror && std::abs(transparency - 1.0) > C::EPSILON;
-        reflect_probability = calculateReflectProbability(scene_ior);
+        roughness = 0.0;
+        ior = -1.0;
+        transparency = 0.0;
+        perfect_mirror = false;
+        reflectance = glm::dvec3(0.0);
+        specular_reflectance = glm::dvec3(0.0);
+        emittance = glm::dvec3(0.0);
 
-        double variance = pow2(roughness);
-        A = 1.0 - 0.5 * variance / (variance + 0.33);
-        B = 0.45 * variance / (variance + 0.09);
+        computeProperties();
     }
 
     glm::dvec3 DiffuseBRDF(const glm::dvec3 &i, const glm::dvec3 &o);
@@ -39,6 +32,8 @@ public:
     glm::dvec3 OrenNayarBRDF(const glm::dvec3 &i, const glm::dvec3 &o);
 
     double Fresnel(double n1, double n2, const glm::dvec3& normal, const glm::dvec3& dir) const;
+
+    void computeProperties();
 
     glm::dvec3 reflectance, specular_reflectance, emittance;
     double roughness, ior, transparency, reflect_probability;
@@ -50,8 +45,15 @@ public:
 
 private:
     // Used for russian roulette path termination
-    double calculateReflectProbability(double scene_ior);
+    double calculateReflectProbability();
 
     // Pre-computed Oren-Nayar variables.
     double A, B;
 };
+
+void from_json(const nlohmann::json &j, Material &m);
+
+namespace std
+{
+    void from_json(const nlohmann::json &j, shared_ptr<Material> &m);
+}
