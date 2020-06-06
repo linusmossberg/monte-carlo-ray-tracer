@@ -1,5 +1,9 @@
 #include "random.hpp"
 
+#include <glm/vec2.hpp>
+
+#include "../common/constants.hpp"
+
 thread_local std::mt19937_64 Random::engine;
 thread_local unsigned Random::engine_seed;
 

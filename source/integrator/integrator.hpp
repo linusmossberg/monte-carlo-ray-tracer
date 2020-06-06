@@ -7,15 +7,9 @@
 class Integrator
 {
 public:
-    Integrator(const nlohmann::json &j) : scene(j)
-    {
-        int threads = getOptional(j, "num_render_threads", -1);
-        naive = getOptional(j, "naive", false);
+    Integrator(const nlohmann::json &j);
 
-        size_t max_threads = std::thread::hardware_concurrency();
-        num_threads = (threads < 1 || threads > max_threads) ? max_threads : threads;
-        std::cout << "Threads used for rendering: " << num_threads << std::endl << std::endl;
-    }
+    virtual ~Integrator() { }
 
     virtual glm::dvec3 sampleRay(Ray ray, size_t ray_depth = 0) = 0;
 

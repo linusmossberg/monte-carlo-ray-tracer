@@ -1,14 +1,7 @@
 #pragma once
 
-#include <glm/glm.hpp>
 #include <glm/vec3.hpp>
-#include <glm/gtx/component_wise.hpp>
-
 #include <nlohmann/json.hpp>
-
-#include "../common/util.hpp"
-#include "../random/random.hpp"
-#include "../common/constants.hpp"
 
 class Material
 {

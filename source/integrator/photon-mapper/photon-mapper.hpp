@@ -1,12 +1,8 @@
 #pragma once
 
 #include <vector>
-#include <atomic>
 
-#include <glm/glm.hpp>
 #include <glm/vec3.hpp>
-#include <glm/gtx/component_wise.hpp>
-#include <glm/vector_relational.hpp>
 #include <nlohmann/json.hpp>
 
 #include "../integrator.hpp"
@@ -14,11 +10,6 @@
 #include "octree.hpp"
 #include "octree.cpp" // Has to be included when methods are defined outside of templated class
 #include "photon.hpp"
-
-#include "../../common/util.hpp"
-#include "../../common/work-queue.hpp"
-#include "../../common/constants.hpp"
-#include "../../common/format.hpp"
 
 class PhotonMapper : public Integrator
 {

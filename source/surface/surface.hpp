@@ -1,14 +1,11 @@
 #pragma once
 
-#include <glm/glm.hpp>
 #include <glm/vec3.hpp>
 
 #include "../ray/ray.hpp"
+#include "../ray/intersection.hpp"
 #include "../material/material.hpp"
-#include "../common/constants.hpp"
-#include "../common/intersection.hpp"
 #include "../common/bounding-box.hpp"
-#include "../common/util.hpp"
 
 namespace Surface
 {
@@ -17,6 +14,8 @@ namespace Surface
     public:
         Base(std::shared_ptr<Material> material)
             : material(material), area_(0) { };
+
+        virtual ~Base() { }
 
         virtual bool intersect(const Ray& ray, Intersection& intersection) const = 0;
         virtual glm::dvec3 operator()(double u, double v) const = 0; // point on surface
@@ -57,8 +56,7 @@ namespace Surface
     class Triangle : public Base
     {
     public:
-        Triangle(const glm::dvec3& v0, const glm::dvec3& v1, const glm::dvec3& v2, std::shared_ptr<Material> material)
-            : Base(material), v0(v0), v1(v1), v2(v2), E1(v1 - v0), E2(v2 - v0), normal_(glm::normalize(glm::cross(E1, E2))) { computeArea(); }
+        Triangle(const glm::dvec3& v0, const glm::dvec3& v1, const glm::dvec3& v2, std::shared_ptr<Material> material);
 
         virtual bool intersect(const Ray& ray, Intersection& intersection) const;
         virtual glm::dvec3 operator()(double u, double v) const;

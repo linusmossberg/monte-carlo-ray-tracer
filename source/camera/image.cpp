@@ -1,4 +1,8 @@
 #include "image.hpp"
+#include <fstream>
+#include <glm/glm.hpp>
+#include <glm/gtx/component_wise.hpp>
+#include "pixel-operators.hpp"
 
 Image::Image(const nlohmann::json &j)
 {

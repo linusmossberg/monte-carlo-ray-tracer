@@ -1,7 +1,6 @@
 #pragma once
 
 #include <nlohmann/json.hpp>
-#include <glm/glm.hpp>
 #include <glm/vec3.hpp>
 
 #include "../integrator.hpp"

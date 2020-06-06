@@ -1,12 +1,7 @@
 #pragma once
 
-#include <memory>
-
-#include <glm/glm.hpp>
 #include <glm/vec3.hpp>
 
-#include "../material/material.hpp"
-#include "../random/random.hpp"
 #include "../common/coordinate-system.hpp"
 
 class Ray
@@ -25,6 +20,5 @@ public:
     // Normalized direction -> t corresponds to euclidian distance in metric units
     glm::dvec3 start, direction;
     double medium_ior;
-    const double offset = C::EPSILON;
     bool specular = false;
 };

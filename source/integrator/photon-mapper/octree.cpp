@@ -1,5 +1,10 @@
 #include "octree.hpp"
 
+#include <glm/glm.hpp>
+#include <glm/gtx/norm.hpp>
+
+#include "../../common/util.hpp"
+
 /**************
 Octant:  x y z
      0:  0 0 0
@@ -52,7 +57,7 @@ void Octree<Data>::insert(const Data& data)
                 {
                     new_origin[c] += half_size[c] * (i & (0b100 >> c) ? 0.5 : -0.5);
                 }
-                octants[i] = std::make_shared<Octree>(new_origin, half_size * 0.5, max_node_data);
+                octants[i] = std::make_unique<Octree>(new_origin, half_size * 0.5, max_node_data);
             }
 
             for (const auto& d : temp_data)

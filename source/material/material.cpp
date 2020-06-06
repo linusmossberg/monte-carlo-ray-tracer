@@ -1,5 +1,11 @@
 #include "material.hpp"
 
+#include <glm/glm.hpp>
+#include <glm/gtx/component_wise.hpp>
+
+#include "../common/util.hpp"
+#include "../common/constants.hpp"
+
 glm::dvec3 Material::DiffuseBRDF(const glm::dvec3 &i, const glm::dvec3 &o)
 {
     return roughness > C::EPSILON ? OrenNayarBRDF(i, o) : LambertianBRDF();

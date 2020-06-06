@@ -2,15 +2,10 @@
 
 #include <vector>
 #include <memory>
-#include <iostream>
 
-#include <glm/glm.hpp>
 #include <glm/vec3.hpp>
-#include <glm/gtx/norm.hpp>
 
 #include "../../common/bounding-box.hpp"
-#include "../../common/util.hpp"
-#include "../../common/constants.hpp"
 
 struct OctreeData
 {
@@ -51,5 +46,5 @@ private:
     uint16_t max_node_data;
 
     std::vector<Data> data_vec;
-    std::vector<std::shared_ptr<Octree>> octants;
+    std::vector<std::unique_ptr<Octree>> octants;
 };

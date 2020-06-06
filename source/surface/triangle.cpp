@@ -1,5 +1,13 @@
 #include "surface.hpp"
 
+#include "../common/constants.hpp"
+
+Surface::Triangle::Triangle(const glm::dvec3& v0, const glm::dvec3& v1, const glm::dvec3& v2, std::shared_ptr<Material> material)
+    : Base(material), v0(v0), v1(v1), v2(v2), E1(v1 - v0), E2(v2 - v0), normal_(glm::normalize(glm::cross(E1, E2))) 
+{
+    computeArea();
+}
+
 bool Surface::Triangle::intersect(const Ray& ray, Intersection& intersection) const
 {
     glm::dvec3 P = glm::cross(ray.direction, E2);

@@ -1,11 +1,12 @@
 #include <filesystem>
+#include <iostream>
+#include <fstream>
 
 #include "camera/camera.hpp"
-#include "integrator/path-tracer/path-tracer.hpp"
-#include "integrator/photon-mapper/photon-mapper.hpp"
 
 #include "common/option.hpp"
 #include "random/random.hpp"
+#include "common/util.hpp"
 
 int main()
 {
@@ -34,6 +35,7 @@ int main()
     }
 
     Option scene_option = getOption(options);
+
     {
         std::ifstream scene_file(scene_option.path);
         nlohmann::json j;

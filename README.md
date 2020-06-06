@@ -243,7 +243,7 @@ Example:
 ]
 ```
 
-The `surfaces` object contains an array of surfaces. Each surface has a `type` field which can be either `sphere`, `triangle` or `object`. All surfaces also has an optional `material` field, which specifies the material that the surface should use by name. 
+The `surfaces` object contains an array of surfaces. Each surface has a `type` field which can be either `sphere`, `triangle` or `object`. All surfaces also has an optional `material` field, which specifies the material that the surface should use by material key string.
 
 #### Type-specific fields:
 

@@ -27,7 +27,7 @@ endif()
 include_directories(${PROJECT_SOURCE_DIR}/lib/glm/)
 include_directories(${PROJECT_SOURCE_DIR}/lib/nlohmann/)
 
-file(GLOB_RECURSE _source_list ${PROJECT_SOURCE_DIR}/source/*.cpp ${PROJECT_SOURCE_DIR}/source/*.hpp)
+file(GLOB_RECURSE _source_list ${PROJECT_SOURCE_DIR}/source/*.cpp ${PROJECT_SOURCE_DIR}/source/*.hpp ${PROJECT_SOURCE_DIR}/scenes/*.json)
 
 foreach(_source IN ITEMS ${_source_list})
     get_filename_component(_source_path "${_source}" PATH)

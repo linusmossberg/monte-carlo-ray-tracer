@@ -1,5 +1,22 @@
 #include "integrator.hpp"
 
+#include <iostream>
+#include <thread>
+
+#include "../common/util.hpp"
+#include "../common/constants.hpp"
+#include "../random/random.hpp"
+
+Integrator::Integrator(const nlohmann::json &j) : scene(j)
+{
+    int threads = getOptional(j, "num_render_threads", -1);
+    naive = getOptional(j, "naive", false);
+
+    size_t max_threads = std::thread::hardware_concurrency();
+    num_threads = (threads < 1 || threads > max_threads) ? max_threads : threads;
+    std::cout << "Threads used for rendering: " << num_threads << std::endl << std::endl;
+}
+
 /**********************************************************************************************
 Only applies cos(theta) from the rendering equation to the diffuse point that samples this
 direct contribution. This way direct and indirect (which uses cosine weighted sampling with

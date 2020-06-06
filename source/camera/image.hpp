@@ -2,15 +2,10 @@
 
 #include <vector>
 #include <cstdint>
-#include <fstream>
 
-#include <glm/glm.hpp>
 #include <glm/vec3.hpp>
-#include <glm/gtx/component_wise.hpp>
 
 #include <nlohmann/json.hpp>
-
-#include "pixel-operators.hpp"
 
 struct Image
 {

@@ -1,5 +1,8 @@
 #include "surface.hpp"
 
+#include "../common/util.hpp"
+#include "../common/constants.hpp"
+
 bool Surface::Sphere::intersect(const Ray& ray, Intersection& intersection) const
 {
     glm::dvec3 so = ray.start - origin;

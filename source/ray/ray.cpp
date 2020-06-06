@@ -1,5 +1,9 @@
 #include "ray.hpp"
 
+#include "../common/util.hpp"
+#include "../random/random.hpp"
+#include "../common/constants.hpp"
+
 Ray::Ray() : start(), direction(), medium_ior(1) { }
 
 Ray::Ray(const glm::dvec3& start) : start(start), direction(), medium_ior(1) { }
@@ -15,7 +19,7 @@ glm::dvec3 Ray:: operator()(double t) const
 void Ray::reflectDiffuse(const CoordinateSystem& cs, double n1)
 {
     direction = cs.localToGlobal(Random::CosWeightedHemiSample());
-    start += cs.normal * offset;
+    start += cs.normal * C::EPSILON;
     specular = false;
     medium_ior = n1;
 }
@@ -23,7 +27,7 @@ void Ray::reflectDiffuse(const CoordinateSystem& cs, double n1)
 void Ray::reflectSpecular(const glm::dvec3 &in, const glm::dvec3 &normal, double n1)
 {
     direction = glm::reflect(in, normal);
-    start += normal * offset;
+    start += normal * C::EPSILON;
     specular = true;
     medium_ior = n1;
 }
@@ -39,14 +43,14 @@ void Ray::refractSpecular(const glm::dvec3 &in, const glm::dvec3 &normal, double
     {
         /* SPECULAR REFRACTION */
         direction = ior_quotient * in - (ior_quotient * cos_theta + std::sqrt(k)) * normal;
-        start -= normal * offset;
+        start -= normal * C::EPSILON;
         medium_ior = n2;
     }
     else
     {
         /* CRITICAL ANGLE, SPECULAR REFLECTION */
         direction = in - normal * cos_theta * 2.0;
-        start += normal * offset;
+        start += normal * C::EPSILON;
         medium_ior = n1;
     }
 }

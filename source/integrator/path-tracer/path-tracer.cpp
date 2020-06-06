@@ -1,5 +1,9 @@
 #include "path-tracer.hpp"
 
+#include "../../common/util.hpp"
+#include "../../random/random.hpp"
+#include "../../common/constants.hpp"
+
 /*************************************************************************************************************
 A material can be any combination of reflective, transparent and diffuse, but instead of branching into several
 paths only one is selected probabilistically based on the fresnel and transparency at the intersection point.

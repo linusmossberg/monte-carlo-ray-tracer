@@ -1,5 +1,58 @@
 #include "camera.hpp"
 
+#include <thread>
+#include <algorithm>
+#include <functional>
+#include <iostream>
+#include <iomanip>
+#include <sstream>
+
+#include "../ray/ray.hpp"
+#include "../integrator/path-tracer/path-tracer.hpp"
+#include "../integrator/photon-mapper/photon-mapper.hpp"
+#include "../random/random.hpp"
+#include "../common/util.hpp"
+#include "../common/format.hpp"
+
+Camera::Camera(const nlohmann::json &j, const Option &option)
+{
+    if (option.photon_map)
+    {
+        integrator = std::make_unique<PhotonMapper>(j);
+    }
+    else
+    {
+        integrator = std::make_unique<PathTracer>(j);
+    }
+
+    const nlohmann::json &c = j.at("cameras").at(option.camera_idx);
+
+    image = Image(c.at("image"));
+    eye = c.at("eye");
+    focal_length = c.at("focal_length").get<double>() / 1000.0;
+    sensor_width = c.at("sensor_width").get<double>() / 1000.0;
+    sqrtspp = c.at("sqrtspp");
+    savename = c.at("savename");
+    aperture_radius = (focal_length / getOptional(c, "f_stop", -1.0)) / 2.0;
+    focus_distance = getOptional(c, "focus_distance", -1.0);
+
+    if (c.find("look_at") != c.end())
+    {
+        glm::dvec3 look_at = c.at("look_at");
+        lookAt(look_at);
+        if (focus_distance < 0.0)
+        {
+            focus_distance = glm::distance(eye, look_at);
+        }
+    }
+    else
+    {
+        forward = glm::normalize(c.at("forward").get<glm::dvec3>());
+        up = glm::normalize(c.at("up").get<glm::dvec3>());
+        left = glm::normalize(glm::cross(up, forward));
+    }
+}
+
 void Camera::samplePixel(size_t x, size_t y)
 {
     auto& pixel = image(x, y);
@@ -88,6 +141,13 @@ void Camera::sampleImageThread(WorkQueue<Bucket>& buckets)
             }
         }
     }
+}
+
+void Camera::lookAt(const glm::dvec3& p)
+{
+    forward = glm::normalize(p - eye);
+    left = glm::normalize(glm::cross(glm::dvec3(0.0, 1.0, 0.0), forward));
+    up = glm::normalize(glm::cross(forward, left));
 }
 
 void Camera::capture()

@@ -1,5 +1,17 @@
 #include "photon-mapper.hpp"
 
+#include <iostream>
+#include <iomanip>
+#include <atomic>
+
+#include <glm/gtx/component_wise.hpp>
+
+#include "../../random/random.hpp"
+#include "../../common/util.hpp"
+#include "../../common/work-queue.hpp"
+#include "../../common/constants.hpp"
+#include "../../common/format.hpp"
+
 PhotonMapper::PhotonMapper(const nlohmann::json& j) : Integrator(j)
 {
     bool print = true;
@@ -349,7 +361,7 @@ glm::dvec3 PhotonMapper::sampleRay(Ray ray, size_t ray_depth)
         {
             CoordinateSystem cs(intersect.normal);
 
-            caustics = estimateRadiance(caustic_map, intersect, -ray.direction, cs, caustic_radius);
+            caustics = estimateCausticRadiance(intersect, -ray.direction, cs);
 
             bool has_shadow_photons = hasShadowPhoton(intersect);
             if (!direct_visualization && (ray_depth == 0 || ray.specular || has_shadow_photons))

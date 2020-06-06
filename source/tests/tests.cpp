@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <chrono>
 
 #ifdef _WIN32
     #include "windows.h"
@@ -8,6 +9,7 @@
 #endif
 
 #include "../integrator/photon-mapper/photon-mapper.hpp"
+#include "../random/random.hpp"
 
 void PhotonMapper::test(std::ostream& log, size_t num_iterations) const
 {

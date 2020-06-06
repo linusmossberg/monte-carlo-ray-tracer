@@ -1,16 +1,8 @@
 #pragma once
 
-#include <iomanip>
-#include <sstream>
-#include <fstream>
-#include <algorithm>
-
-#include <glm/glm.hpp>
 #include <glm/vec3.hpp>
 
 #include <nlohmann/json.hpp>
-
-#include "../common/format.hpp"
 
 inline std::ostream& operator<<(std::ostream& out, const glm::dvec3& v)
 {
@@ -22,21 +14,9 @@ inline double pow2(double x)
     return x * x;
 }
 
-inline void Log(const std::string& message)
-{
-    std::ofstream log("log.txt", std::ios::app);
-    std::string temp = message;
-    temp.erase(std::remove(temp.begin(), temp.end(), '\n'), temp.end());
-    log << "[" << Format::date(std::chrono::system_clock::now()) << "] " << temp << std::endl;
-}
+void Log(const std::string& message);
 
-inline void waitForInput()
-{
-    std::cout << std::endl << "Press enter to exit." << std::flush;
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-    char c;
-    while (std::cin.get(c) && c != '\n') {}
-}
+void waitForInput();
 
 namespace glm
 {
