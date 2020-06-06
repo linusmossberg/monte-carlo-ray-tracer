@@ -23,13 +23,16 @@
 
 #include "../ray/ray.hpp"
 #include "../scene/scene.hpp"
-#include "../photon-map/photon-map.hpp"
+#include "../integrator/integrator.hpp"
+#include "../integrator/path-tracer/path-tracer.hpp"
+#include "../integrator/photon-mapper/photon-mapper.hpp"
 #include "../surface/surface.hpp"
 #include "../random/random.hpp"
 #include "../common/work-queue.hpp"
 #include "../common/util.hpp"
 #include "../common/intersection.hpp"
 #include "../common/coordinate-system.hpp"
+#include "../common/option.hpp"
 
 struct Bucket
 {
@@ -43,8 +46,20 @@ struct Bucket
 class Camera
 {
 public:
-    Camera(const nlohmann::json &c) : image(c.at("image"))
+    Camera(const nlohmann::json &j, const Option &option) 
     {
+        if (option.photon_map)
+        {
+            integrator = std::make_unique<PhotonMapper>(j);
+        }
+        else
+        {
+            integrator = std::make_unique<PathTracer>(j);
+        }
+
+        const nlohmann::json &c = j.at("cameras").at(option.camera_idx);
+
+        image = Image(c.at("image"));
         eye = c.at("eye");
         focal_length = c.at("focal_length").get<double>() / 1000.0;
         sensor_width = c.at("sensor_width").get<double>() / 1000.0;
@@ -70,7 +85,9 @@ public:
         }
     }
 
-    void sampleImage(std::shared_ptr<Scene> s, std::shared_ptr<PhotonMap> pm);
+    void capture();
+
+    void sampleImage();
 
     void saveImage() const
     {
@@ -91,12 +108,6 @@ public:
 
     size_t sqrtspp;
 
-private:
-    void samplePixel(size_t x, size_t y);
-    void sampleImageThread(WorkQueue<Bucket>& buckets);
-
-    void printInfoThread(WorkQueue<Bucket>& buckets);
-
     glm::dvec3 eye;
     glm::dvec3 forward, left, up;
 
@@ -105,10 +116,15 @@ private:
 
     std::string savename;
 
+private:
+    void samplePixel(size_t x, size_t y);
+    void sampleImageThread(WorkQueue<Bucket>& buckets);
+
+    void printInfoThread(WorkQueue<Bucket>& buckets);
+
     const size_t bucket_size = 32;
 
-    std::shared_ptr<Scene> scene;
-    std::shared_ptr<PhotonMap> photon_map;
+    std::unique_ptr<Integrator> integrator;
 
     std::atomic_size_t num_sampled_pixels = 0;
     size_t last_num_sampled_pixels = 0;

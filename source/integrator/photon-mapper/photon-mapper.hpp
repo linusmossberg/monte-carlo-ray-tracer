@@ -7,28 +7,29 @@
 #include <glm/vec3.hpp>
 #include <glm/gtx/component_wise.hpp>
 #include <glm/vector_relational.hpp>
+#include <nlohmann/json.hpp>
+
+#include "../integrator.hpp"
 
 #include "octree.hpp"
 #include "octree.cpp" // Has to be included when methods are defined outside of templated class
 #include "photon.hpp"
 
-#include "../common/util.hpp"
-#include "../scene/scene.hpp"
-#include "../common/work-queue.hpp"
-#include "../common/constants.hpp"
-#include "../common/format.hpp"
+#include "../../common/util.hpp"
+#include "../../common/work-queue.hpp"
+#include "../../common/constants.hpp"
+#include "../../common/format.hpp"
 
-class PhotonMap
+class PhotonMapper : public Integrator
 {
 public:
-    PhotonMap(std::shared_ptr<Scene> s, size_t photon_emissions, uint16_t max_node_data, 
-              double caustic_factor, double radius, double caustic_radius, bool direct_visualization, bool print = true);
+    PhotonMapper(const nlohmann::json& j);
 
     void emitPhoton(const Ray& ray, const glm::dvec3& flux, size_t thread, size_t ray_depth = 0);
 
     void createShadowPhotons(const Ray& ray, size_t thread);
 
-    glm::dvec3 sampleRay(const Ray& ray, size_t ray_depth = 0);
+    virtual glm::dvec3 sampleRay(Ray ray, size_t ray_depth = 0);
 
     glm::dvec3 estimateRadiance(const Octree<Photon>& map, const Intersection& intersect,
                                 const glm::dvec3& direction, const CoordinateSystem& cs, double r) const;
@@ -40,7 +41,7 @@ public:
         return !shadow_map.radiusSearch(intersect.position, radius).empty();
     }
 
-    glm::dvec3 sampleDirect(const Intersection& intersect, bool has_shadow_photons, bool use_direct_map) const;
+    virtual glm::dvec3 sampleDirect(const Intersection& intersect, bool has_shadow_photons, bool use_direct_map) const;
 
     // Implemented in Tests.cpp
     void test(std::ostream& log, size_t num_iterations) const;
@@ -59,8 +60,6 @@ private:
     std::vector<std::vector<Photon>> indirect_vecs;
     std::vector<std::vector<ShadowPhoton>> shadow_vecs;
 
-    std::shared_ptr<Scene> scene;
-
     double radius;
     double caustic_radius;
     double non_caustic_reject;
@@ -68,7 +67,4 @@ private:
     bool direct_visualization;
 
     uint16_t max_node_data;
-
-    const size_t min_ray_depth = 3;
-    const size_t max_ray_depth = 96; // Prevent call stack overflow, unlikely to ever happen.
 };

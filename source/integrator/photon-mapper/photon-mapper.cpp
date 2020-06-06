@@ -1,22 +1,33 @@
-#include "photon-map.hpp"
+#include "photon-mapper.hpp"
 
-PhotonMap::PhotonMap(std::shared_ptr<Scene> s, size_t photon_emissions, uint16_t max_node_data, 
-                     double caustic_factor, double radius, double caustic_radius, bool direct_visualization, bool print)
-
-    : scene(s), non_caustic_reject(1.0 / caustic_factor), radius(radius), caustic_radius(caustic_radius), 
-      max_node_data(max_node_data), direct_visualization(direct_visualization),
-      indirect_map(s->boundingBox(1), max_node_data), 
-        direct_map(s->boundingBox(0), max_node_data),
-       caustic_map(s->boundingBox(0), max_node_data), 
-        shadow_map(s->boundingBox(0), max_node_data)
-          
+PhotonMapper::PhotonMapper(const nlohmann::json& j) : Integrator(j)
 {
+    bool print = true;
+
+    const nlohmann::json& pm = j.at("photon_map");
+
+    double caustic_factor = pm.at("caustic_factor");
+    size_t photon_emissions = pm.at("emissions");
+
+    non_caustic_reject = 1.0 / caustic_factor;
+    radius = pm.at("radius");
+    caustic_radius = pm.at("caustic_radius");
+    max_node_data = pm.at("max_photons_per_octree_leaf");
+    direct_visualization = getOptional(pm, "direct_visualization", false);
+    
+    BoundingBox BB = scene.boundingBox(true);
+
+    indirect_map = Octree<Photon>(BB, max_node_data);
+    direct_map   = Octree<Photon>(BB, max_node_data);
+    caustic_map  = Octree<Photon>(BB, max_node_data);
+    shadow_map   = Octree<ShadowPhoton>(BB, max_node_data);
+
     photon_emissions = static_cast<size_t>(photon_emissions * caustic_factor);
 
     const size_t EPW = 100000;
 
     double total_add_flux = 0.0;
-    for (const auto& light : scene->emissives)
+    for (const auto& light : scene.emissives)
     {
         total_add_flux += glm::compAdd(light->material->emittance * light->area());
     }
@@ -34,7 +45,7 @@ PhotonMap::PhotonMap(std::shared_ptr<Scene> s, size_t photon_emissions, uint16_t
 
     std::vector<EmissionWork> work_vec;
 
-    for (const auto& light : scene->emissives)
+    for (const auto& light : scene.emissives)
     {
         glm::dvec3 light_flux = light->material->emittance * light->area();
         double photon_emissions_share = glm::compAdd(light_flux) / total_add_flux;
@@ -53,7 +64,7 @@ PhotonMap::PhotonMap(std::shared_ptr<Scene> s, size_t photon_emissions, uint16_t
     std::shuffle(work_vec.begin(), work_vec.end(), Random::getEngine());
     WorkQueue<EmissionWork> work_queue(work_vec);
 
-    std::vector<std::unique_ptr<std::thread>> threads(scene->num_threads);
+    std::vector<std::unique_ptr<std::thread>> threads(Integrator::num_threads);
 
     direct_vecs.resize(threads.size());
     indirect_vecs.resize(threads.size());
@@ -79,7 +90,7 @@ PhotonMap::PhotonMap(std::shared_ptr<Scene> s, size_t photon_emissions, uint16_t
 
                         pos += normal * C::EPSILON;
 
-                        emitPhoton(Ray(pos, pos + dir, scene->ior), work.photon_flux, thread);
+                        emitPhoton(Ray(pos, pos + dir, scene.ior), work.photon_flux, thread);
                     }
                 }
             }
@@ -185,15 +196,15 @@ PhotonMap::PhotonMap(std::shared_ptr<Scene> s, size_t photon_emissions, uint16_t
     }
 }
 
-void PhotonMap::emitPhoton(const Ray& ray, const glm::dvec3& flux, size_t thread, size_t ray_depth)
+void PhotonMapper::emitPhoton(const Ray& ray, const glm::dvec3& flux, size_t thread, size_t ray_depth)
 {
-    if (ray_depth == max_ray_depth)
+    if (ray_depth == Integrator::max_ray_depth)
     {
         Log("Bias introduced: Max ray depth reached in PhotonMap::emitPhoton()");
         return;
     }
 
-    Intersection intersect = scene->intersect(ray, true);
+    Intersection intersect = scene.intersect(ray, true);
 
     if (!intersect)
     {
@@ -205,7 +216,7 @@ void PhotonMap::emitPhoton(const Ray& ray, const glm::dvec3& flux, size_t thread
     glm::dvec3 BRDF;
 
     double n1 = ray.medium_ior;
-    double n2 = std::abs(ray.medium_ior - scene->ior) < C::EPSILON ? intersect.material->ior : scene->ior;
+    double n2 = std::abs(ray.medium_ior - scene.ior) < C::EPSILON ? intersect.material->ior : scene.ior;
 
     switch (intersect.selectNewPath(n1, n2, -ray.direction))
     {
@@ -267,9 +278,9 @@ void PhotonMap::emitPhoton(const Ray& ray, const glm::dvec3& flux, size_t thread
     return;
 }
 
-void PhotonMap::createShadowPhotons(const Ray& ray, size_t thread)
+void PhotonMapper::createShadowPhotons(const Ray& ray, size_t thread)
 {
-    Intersection intersect = scene->intersect(ray, true);
+    Intersection intersect = scene.intersect(ray, true);
 
     if (!intersect)
     {
@@ -285,19 +296,19 @@ void PhotonMap::createShadowPhotons(const Ray& ray, size_t thread)
     createShadowPhotons(Ray(pos, pos + ray.direction), thread);
 }
 
-glm::dvec3 PhotonMap::sampleRay(const Ray& ray, size_t ray_depth)
+glm::dvec3 PhotonMapper::sampleRay(Ray ray, size_t ray_depth)
 {
-    if (ray_depth == max_ray_depth)
+    if (ray_depth == Integrator::max_ray_depth)
     {
         Log("Bias introduced: Max ray depth reached in PhotonMap::sampleRay()");
         return glm::dvec3(0.0);
     }
 
-    Intersection intersect = scene->intersect(ray, true);
+    Intersection intersect = scene.intersect(ray, true);
 
     if (!intersect)
     {
-        return scene->skyColor(ray);
+        return scene.skyColor(ray);
     }
 
     double absorb = ray_depth > min_ray_depth ? 1.0 - intersect.material->reflect_probability : 0.0;
@@ -316,7 +327,7 @@ glm::dvec3 PhotonMap::sampleRay(const Ray& ray, size_t ray_depth)
     glm::dvec3 emittance = (ray_depth == 0 || ray.specular) ? intersect.material->emittance : glm::dvec3(0.0);
 
     double n1 = ray.medium_ior;
-    double n2 = std::abs(ray.medium_ior - scene->ior) < C::EPSILON ? intersect.material->ior : scene->ior;
+    double n2 = std::abs(ray.medium_ior - scene.ior) < C::EPSILON ? intersect.material->ior : scene.ior;
 
     switch (intersect.selectNewPath(n1, n2, -ray.direction))
     {
@@ -369,7 +380,7 @@ glm::dvec3 PhotonMap::sampleRay(const Ray& ray, size_t ray_depth)
     return (emittance + caustics + (indirect + direct) * BRDF) / (1.0 - absorb);
 }
 
-glm::dvec3 PhotonMap::estimateRadiance(const Octree<Photon>& map, const Intersection& intersect,
+glm::dvec3 PhotonMapper::estimateRadiance(const Octree<Photon>& map, const Intersection& intersect,
                                        const glm::dvec3& direction, const CoordinateSystem& cs, double r) const
 {
     glm::dvec3 radiance(0.0);
@@ -389,7 +400,7 @@ This seems to exacerbate hot spots in places with sparse caustic photons however
 which appears as bright blobs the size of the caustic_radius in places where
 you wouldn't expect to see high intensity caustics.
 *******************************************************************************/
-glm::dvec3 PhotonMap::estimateCausticRadiance(const Intersection& intersect, const glm::dvec3& direction, const CoordinateSystem& cs) const
+glm::dvec3 PhotonMapper::estimateCausticRadiance(const Intersection& intersect, const glm::dvec3& direction, const CoordinateSystem& cs) const
 {
     auto photons = caustic_map.radiusSearch(intersect.position, caustic_radius);
     const double k = 1.0;
@@ -404,7 +415,7 @@ glm::dvec3 PhotonMap::estimateCausticRadiance(const Intersection& intersect, con
     return radiance / (pow2(caustic_radius) * (1.0 - 2.0 / (3.0 * k)));
 }
 
-glm::dvec3 PhotonMap::sampleDirect(const Intersection& intersect, bool has_shadow_photons, bool use_direct_map) const
+glm::dvec3 PhotonMapper::sampleDirect(const Intersection& intersect, bool has_shadow_photons, bool use_direct_map) const
 {
     /**************************************************************************************************************************
     If enabled, this reduces the number of shadow rays used at points that most likely aren't under direct illumination without
@@ -415,5 +426,5 @@ glm::dvec3 PhotonMap::sampleDirect(const Intersection& intersect, bool has_shado
     {
         return glm::dvec3(0.0);
     }
-    return scene->sampleDirect(intersect);
+    return Integrator::sampleDirect(intersect);
 }

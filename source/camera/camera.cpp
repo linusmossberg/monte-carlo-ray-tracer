@@ -17,7 +17,7 @@ void Camera::samplePixel(size_t x, size_t y)
             glm::dvec3 sensor_pos = eye + forward * focal_length + left * center_offset.x + up * center_offset.y;
 
             // Pinhole camera ray
-            Ray ray(eye, sensor_pos, scene->ior);
+            Ray ray(eye, sensor_pos, integrator->scene.ior);
 
             if (aperture_radius > 0.0 && focus_distance > 0.0)
             {
@@ -28,25 +28,15 @@ void Camera::samplePixel(size_t x, size_t y)
                 ray.direction = glm::normalize(focus_point - ray.start);
             }
 
-            if (photon_map)
-            {
-                pixel += photon_map->sampleRay(ray);
-            } 
-            else
-            {
-                pixel += scene->sampleRay(ray);
-            } 
+            pixel += integrator->sampleRay(ray);
         }
     }
     pixel /= pow2(static_cast<double>(sqrtspp));
     num_sampled_pixels++;
 }
 
-void Camera::sampleImage(std::shared_ptr<Scene> s, std::shared_ptr<PhotonMap> pm)
+void Camera::sampleImage()
 {
-    scene = s;
-    photon_map = pm;
-
     std::vector<Bucket> buckets_vec;
     for (size_t x = 0; x < image.width; x += bucket_size)
     {
@@ -66,7 +56,7 @@ void Camera::sampleImage(std::shared_ptr<Scene> s, std::shared_ptr<PhotonMap> pm
 
     std::function<void(Camera*, WorkQueue<Bucket>&)> f = &Camera::sampleImageThread;
 
-    std::vector<std::unique_ptr<std::thread>> threads(scene->num_threads);
+    std::vector<std::unique_ptr<std::thread>> threads(integrator->num_threads);
     for (auto& thread : threads)
     {
         thread = std::make_unique<std::thread>(f, this, std::ref(buckets));
@@ -98,6 +88,19 @@ void Camera::sampleImageThread(WorkQueue<Bucket>& buckets)
             }
         }
     }
+}
+
+void Camera::capture()
+{
+    std::cout << std::string(28, '-') << "| MAIN RENDERING PASS |" << std::string(28, '-') << std::endl << std::endl;
+    std::cout << "Samples per pixel: " << pow2(static_cast<double>(sqrtspp)) << std::endl << std::endl;
+    auto before = std::chrono::system_clock::now();
+    sampleImage();
+    saveImage();
+    auto now = std::chrono::system_clock::now();
+    std::cout << "\r" + std::string(100, ' ') + "\r";
+    std::cout << "Render Completed: " << Format::date(now);
+    std::cout << ", Elapsed Time: " << Format::timeDuration(std::chrono::duration_cast<std::chrono::milliseconds>(now - before).count()) << std::endl;
 }
 
 void Camera::printInfoThread(WorkQueue<Bucket>& buckets)

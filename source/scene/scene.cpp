@@ -1,70 +1,6 @@
 #include "scene.hpp"
 
-/*************************************************************************************************************
-A material can be any combination of reflective, transparent and diffuse, but instead of branching into several 
-paths only one is selected probabilistically based on the fresnel and transparency at the intersection point. 
-Energy is conserved 'automatically' because the path probability is set to be the same as the path weight.
-*************************************************************************************************************/
-glm::dvec3 Scene::sampleRay(Ray ray, size_t ray_depth)
-{
-    if (ray_depth == max_ray_depth)
-    {
-        Log("Bias introduced: Max ray depth reached in Scene::sampleRay()");
-        return glm::dvec3(0.0);
-    }
-
-    Intersection intersection = intersect(ray, true);
-
-    if (!intersection)
-    {
-        return skyColor(ray);
-    }   
-
-    double absorb = ray_depth > min_ray_depth ? 1.0 - intersection.material->reflect_probability : 0.0;
-
-    if (Random::trial(absorb))
-    {
-        return glm::dvec3(0.0);
-    }
-
-    Ray new_ray(intersection.position);
-
-    glm::dvec3 BRDF;
-    glm::dvec3 direct(0);
-    glm::dvec3 emittance = (ray_depth == 0 || ray.specular || naive) ? intersection.material->emittance : glm::dvec3(0);
-
-    double n1 = ray.medium_ior;
-    double n2 = std::abs(ray.medium_ior - ior) < C::EPSILON ? intersection.material->ior : ior;
-
-    switch (intersection.selectNewPath(n1, n2, -ray.direction))
-    {
-        case Path::REFLECT:
-        {
-            BRDF = intersection.material->SpecularBRDF();
-            new_ray.reflectSpecular(ray.direction, intersection.normal, n1);
-            break;
-        }
-        case Path::REFRACT:
-        {
-            BRDF = intersection.material->SpecularBRDF();
-            new_ray.refractSpecular(ray.direction, intersection.normal, n1, n2);
-            break;
-        }
-        case Path::DIFFUSE:
-        {
-            CoordinateSystem cs(intersection.normal);
-            new_ray.reflectDiffuse(cs, n1);
-            BRDF = intersection.material->DiffuseBRDF(cs.globalToLocal(new_ray.direction), cs.globalToLocal(-ray.direction)) * C::PI;
-            if (!naive) direct = sampleDirect(intersection);
-            break;
-        }
-    }
-    glm::dvec3 indirect = sampleRay(new_ray, ray_depth + 1);
-
-    return (emittance + BRDF * (direct + indirect)) / (1.0 - absorb);
-}
-
-Intersection Scene::intersect(const Ray& ray, bool align_normal, double min_distance)
+Intersection Scene::intersect(const Ray& ray, bool align_normal, double min_distance) const
 {
     bool use_stop_condition = min_distance > 0;
 
@@ -86,48 +22,6 @@ Intersection Scene::intersect(const Ray& ray, bool align_normal, double min_dist
         intersect.normal = -intersect.normal;
     }
     return intersect;
-}
-
-/**********************************************************************************************
-Only applies cos(theta) from the rendering equation to the diffuse point that samples this 
-direct contribution. This way direct and indirect (which uses cosine weighted sampling with 
-PDF = cos(theta) / PI) can be treated the same way later, i.e. (direct + indirect) * (BRDF*PI). 
-We also need to divide by PI to make (BRDF*PI)  applicable to the direct contribution as well.
-**********************************************************************************************/
-glm::dvec3 Scene::sampleDirect(const Intersection& intersection)
-{
-    // Pick one light source and divide with probability of picking light source
-    if (!emissives.empty())
-    {
-        const auto& light = emissives[Random::uirange(0, emissives.size() - 1)];
-
-        glm::dvec3 light_pos = light->operator()(Random::range(0, 1), Random::range(0, 1));
-        Ray shadow_ray(intersection.position + intersection.normal * C::EPSILON, light_pos);
-
-        double cos_theta = glm::dot(shadow_ray.direction, intersection.normal);
-
-        if (cos_theta <= 0)
-            return glm::dvec3(0.0);
-
-        double min_distance = glm::distance(light_pos, intersection.position) - C::EPSILON;
-
-        Intersection shadow_intersection = intersect(shadow_ray, false, min_distance);
-
-        if (shadow_intersection)
-        {
-            double cos_light_theta = glm::dot(shadow_intersection.normal, -shadow_ray.direction);
-
-            if (cos_light_theta <= 0 || glm::distance(shadow_intersection.position, light_pos) > C::EPSILON)
-                return glm::dvec3(0.0);
-
-            // Factor to transform the PDF of sampling the point on the light (1/area) to 
-            // the solid angle PDF at the diffuse point that samples this direct contribution.
-            double t = light->area() * cos_light_theta / pow2(shadow_intersection.t);
-
-            return (light->material->emittance * t * cos_theta * static_cast<double>(emissives.size())) / C::PI;
-        }
-    }
-    return glm::dvec3(0.0);
 }
 
 void Scene::generateEmissives()

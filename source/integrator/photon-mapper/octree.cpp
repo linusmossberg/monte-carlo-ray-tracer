@@ -25,6 +25,10 @@ Octree<Data>::Octree(const BoundingBox& bb, uint16_t max_node_data)
 }
 
 template <class Data>
+Octree<Data>::Octree()
+    : octants(0), max_node_data(190), origin(), half_size() { }
+
+template <class Data>
 void Octree<Data>::insert(const Data& data)
 {
     if (leaf())

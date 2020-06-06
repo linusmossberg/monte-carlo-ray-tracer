@@ -30,6 +30,14 @@ inline void Log(const std::string& message)
     log << "[" << Format::date(std::chrono::system_clock::now()) << "] " << temp << std::endl;
 }
 
+inline void waitForInput()
+{
+    std::cout << std::endl << "Press enter to exit." << std::flush;
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    char c;
+    while (std::cin.get(c) && c != '\n') {}
+}
+
 namespace glm
 {
     void from_json(const nlohmann::json &j, dvec3 &v);

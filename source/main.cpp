@@ -1,6 +1,10 @@
-#include "main.hpp"
+#include <filesystem>
 
-#include "scene/scene-parser.hpp"
+#include "camera/camera.hpp"
+#include "integrator/path-tracer/path-tracer.hpp"
+#include "integrator/photon-mapper/photon-mapper.hpp"
+
+#include "common/option.hpp"
 #include "random/random.hpp"
 
 int main()
@@ -10,10 +14,10 @@ int main()
     std::filesystem::path path(std::filesystem::current_path() / "scenes");
     std::cout << "Scene directory:" << std::endl << path.string() << std::endl << std::endl;
 
-    std::vector<SceneOption> options;
+    std::vector<Option> options;
     try
     {
-        options = SceneParser::availible(path);
+        options = availible(path);
     }
     catch (const std::exception& ex)
     {
@@ -29,12 +33,17 @@ int main()
         return -1;
     }
 
-    size_t scene_option = getSceneOption(options);
+    Option scene_option = getOption(options);
     {
-        std::unique_ptr<SceneRenderer> scene_renderer;
+        std::ifstream scene_file(scene_option.path);
+        nlohmann::json j;
+        scene_file >> j;
+        scene_file.close();
+
+        std::unique_ptr<Camera> camera;
         try
         {
-            scene_renderer = std::make_unique<SceneRenderer>(SceneParser::parseScene(options[scene_option].path, options[scene_option].camera_idx));
+            camera = std::make_unique<Camera>(j, scene_option);
         }
         catch (const std::exception& ex)
         {
@@ -43,7 +52,7 @@ int main()
             return -1;
         }
 
-        scene_renderer->render();
+        camera->capture();
     }
 
     waitForInput();

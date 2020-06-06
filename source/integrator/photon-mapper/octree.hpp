@@ -8,9 +8,9 @@
 #include <glm/vec3.hpp>
 #include <glm/gtx/norm.hpp>
 
-#include "../common/bounding-box.hpp"
-#include "../common/util.hpp"
-#include "../common/constants.hpp"
+#include "../../common/bounding-box.hpp"
+#include "../../common/util.hpp"
+#include "../../common/constants.hpp"
 
 struct OctreeData
 {
@@ -26,6 +26,8 @@ public:
     Octree(const glm::dvec3& origin, const glm::dvec3& half_size, uint16_t max_node_data);
 
     Octree(const BoundingBox& bb, uint16_t max_node_data);
+
+    Octree();
 
     void insert(const Data& data);
 

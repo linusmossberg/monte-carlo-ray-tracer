@@ -14,6 +14,7 @@
 
 struct Image
 {
+    Image() { }
     Image(const nlohmann::json &j);
 
     void save(const std::string& filename) const;
