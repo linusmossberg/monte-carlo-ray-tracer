@@ -1,6 +1,8 @@
 #pragma once
 
 #include <glm/vec3.hpp>
+#include <glm/mat4x4.hpp>
+#include <nlohmann/json.hpp>
 
 #include "../ray/ray.hpp"
 #include "../ray/intersection.hpp"
@@ -71,5 +73,24 @@ namespace Surface
 
         // Pre-computed edges and normal
         glm::dvec3 E1, E2, normal_;
+    };
+
+    class Quadric : public Base
+    {
+    public:
+        Quadric(const nlohmann::json &j, std::shared_ptr<Material> material);
+
+        virtual bool intersect(const Ray& ray, Intersection& intersection) const;
+        virtual glm::dvec3 operator()(double u, double v) const;
+        virtual glm::dvec3 normal(const glm::dvec3& pos) const;
+        virtual BoundingBox boundingBox() const;
+
+    protected:
+        virtual void computeArea();
+
+    private:
+        glm::dmat4x4 Q; // Quadric matrix
+        glm::dmat4x3 G; // Gradient matrix
+        BoundingBox BB;
     };
 }

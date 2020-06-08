@@ -63,6 +63,18 @@ Scene::Scene(const nlohmann::json& j)
         {
             surfaces.push_back(std::make_shared<Surface::Sphere>(s.at("origin"), s.at("radius"), material));
         }
+        else if (type == "quadric")
+        {
+            // Emittance is not supported for general quadrics 
+            // (no parameterization -> no uniform surface sampling or surface area integral)
+            std::shared_ptr<Material> mat = material;
+            if (glm::compMax(material->emittance) > C::EPSILON)
+            {
+                mat = std::make_shared<Material>(*material);
+                mat->emittance = glm::dvec3(0.0);
+            }
+            surfaces.push_back(std::make_shared<Surface::Quadric>(s, mat));
+        }
     }
 
     generateEmissives();
@@ -70,7 +82,7 @@ Scene::Scene(const nlohmann::json& j)
 
 Intersection Scene::intersect(const Ray& ray, bool align_normal, double min_distance) const
 {
-    bool use_stop_condition = min_distance > 0;
+    bool use_stop_condition = min_distance > 0.0;
 
     Intersection intersect;
     for (const auto& surface : surfaces)
@@ -85,7 +97,7 @@ Intersection Scene::intersect(const Ray& ray, bool align_normal, double min_dist
                 intersect = t_intersect;
         }
     }
-    if (align_normal && glm::dot(ray.direction, intersect.normal) > 0)
+    if (align_normal && glm::dot(ray.direction, intersect.normal) > 0.0)
     {
         intersect.normal = -intersect.normal;
     }
