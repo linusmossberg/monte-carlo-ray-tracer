@@ -1,9 +1,11 @@
 #include "bounding-box.hpp"
 
+#include <algorithm>
+
 bool BoundingBox::intersect(const Ray &ray, double &t) const
 {
     double t_max = std::numeric_limits<double>::max();
-    double t_min = -t_max;
+    t = 0.0;
 
     for (int i = 0; i < 3; i++)
     {
@@ -14,21 +16,17 @@ bool BoundingBox::intersect(const Ray &ray, double &t) const
 
         if (inv_d < 0.0)
         {
-            double temp = t0;
-            t0 = t1;
-            t1 = temp;
+            std::swap(t0, t1);
         }
 
-        if (t0 > t_min) t_min = t0;
+        if (t0 > t) t = t0;
         if (t1 < t_max) t_max = t1;
 
-        if (t_max < t_min)
+        if (t_max < t)
         {
             return false;
         }
     }
-
-    t = t_min;
 
     return true;
 }

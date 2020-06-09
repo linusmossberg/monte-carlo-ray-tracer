@@ -22,7 +22,7 @@ glm::dvec3 PathTracer::sampleRay(Ray ray, size_t ray_depth)
     if (!intersection)
     {
         return scene.skyColor(ray);
-    }   
+    }
 
     double absorb = ray_depth > Integrator::min_ray_depth ? 1.0 - intersection.material->reflect_probability : 0.0;
 

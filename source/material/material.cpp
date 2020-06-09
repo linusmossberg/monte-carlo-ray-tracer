@@ -1,5 +1,7 @@
 #include "material.hpp"
 
+#include <sstream>
+
 #include <glm/glm.hpp>
 #include <glm/gtx/component_wise.hpp>
 
@@ -58,18 +60,48 @@ void Material::computeProperties()
 
 double Material::calculateReflectProbability()
 {
+    return 0.8;
     return std::min(std::max(glm::compMax(reflectance), glm::compMax(specular_reflectance)), 0.8);
 }
 
 void from_json(const nlohmann::json &j, Material &m)
 {
+    auto getReflectance = [&](const std::string &field, glm::dvec3 &reflectance)
+    {
+        if (j.find(field) != j.end())
+        {
+            const nlohmann::json &r = j.at(field);
+            if (r.type() == nlohmann::json::value_t::string)
+            {
+                std::string hex_string = r.get<std::string>();
+                if (hex_string.size() == 7 && hex_string[0] == '#')
+                {
+                    hex_string.erase(0, 1);
+                    std::stringstream ss;
+                    ss << std::hex << hex_string;
+
+                    uint32_t color_int;
+                    ss >> color_int;
+
+                    reflectance = intToColor(color_int);
+                }
+            }
+            else
+            {
+                reflectance = r.get<glm::dvec3>();
+            }
+        }
+    };
+
     getToOptional(j, "roughness", m.roughness);
     getToOptional(j, "ior", m.ior);
     getToOptional(j, "transparency", m.transparency);
     getToOptional(j, "perfect_mirror", m.perfect_mirror);
-    getToOptional(j, "reflectance", m.reflectance);
-    getToOptional(j, "specular_reflectance", m.specular_reflectance);
     getToOptional(j, "emittance", m.emittance);
+    getReflectance("reflectance", m.reflectance);
+    getReflectance("specular_reflectance", m.specular_reflectance);
+
+    m.reflectance = glm::pow(m.reflectance, glm::dvec3(2.2));
 
     m.computeProperties();
 }

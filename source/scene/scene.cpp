@@ -9,7 +9,7 @@
 Scene::Scene(const nlohmann::json& j)
 {
     std::unordered_map<std::string, std::shared_ptr<Material>> materials = j.at("materials");
-    std::unordered_map<std::string, std::vector<glm::dvec3>> vertices = j.at("vertices");
+    auto vertices = getOptional(j, "vertices", std::unordered_map<std::string, std::vector<glm::dvec3>>());
 
     ior = j.at("ior");
 
