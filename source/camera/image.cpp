@@ -88,7 +88,7 @@ double Image::getExposure() const
 
 /*************************************************************
 Histogram method to find the gain that positions the histogram 
-to the right such that 1% of image pixels are clipped
+to the right such that 0.5% of image pixels are clipped
 **************************************************************/
 double Image::getGain(double exposure_factor) const
 {

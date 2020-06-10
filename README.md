@@ -3,7 +3,7 @@
 This is a physically based renderer with Path Tracing and Photon Mapping.
 
 <div about="renders/quadric.jpg">
-  <img src="renders/quadric.jpg" alt="Path traced render with quadric surfaces only" title="Path traced render with quadric surfaces only" />
+  <img src="renders/quadric.jpg" alt="Path traced render of scene with only quadric surfaces" title="Path traced render of scene with only quadric surfaces" />
   <a rel="license" href="https://creativecommons.org/licenses/by/4.0/"></a>
 </div>
 <div about="renders/c1_64sqrtspp_report_4k_flintglass_downscaled.png">
@@ -70,7 +70,7 @@ The `ior` field specifies the scene IOR (index of refraction). This can be used 
 
 The `photon_map`, `cameras`, `materials`, `vertices`, and `surfaces` objects defines different render settings and the scene contents. I will go through each of these in the following sections.
 
-### Photon Map Object
+<details><summary><strong>Photon Map Object</strong></summary><br>
 
 Example:
 ```json
@@ -93,8 +93,9 @@ The `radius` field determines the radius of the search sphere (in meters) used d
 The `max_photons_per_octree_leaf` field affects both the octree radius-search performance and memory usage of the application. I cover this more in the report and this value can probably be left at 190 in most cases.
 
 The `direct_visualization` field can be used to visualize the photon maps directly. Setting this to true will make the program evaluate the global radiance from all photon maps at the first diffuse reflection. An example of this is in the report. 
+</details>
 
-### Cameras Object
+<details><summary><strong>Cameras Object</strong></summary><br>
 
 Example:
 ```json
@@ -149,8 +150,9 @@ The program has histogram-based auto-exposure which centers the histogram around
 The program also has a histogram-based auto-gain method which is applied after auto-exposure and tone-mapping, which instead tries to position the histogram of the resulting image to the right. This can similarly be offset with the optional `gain_compensation` field, which is also specified in EV units.
 
 The reason for separating these steps is that the tone-mapping/camera response is non-linear, and as a result `exposure_compensation` mostly controls the camera response (contrast, dynamic range etc.) while `gain_compensation` controls the overall image intensity. The tonemapping operator used by the program is the [filmic tonemapper](http://filmicworlds.com/blog/filmic-tonemapping-operators/) developed by John Hable.
+</details>
 
-### Materials Object
+<details><summary><strong>Materials Object</strong></summary><br>
 
 Example:
 ```json
@@ -198,8 +200,9 @@ These fields are all optional and any combination of fields can be used. A mater
 The `reflectance` and `specular_reflectance` fields specifies the amount of radiance that should be diffusely and specularly reflected for each RGB channel. This is a simplification since radiance and reflectances are spectral properties that varies with wavelength and not by the resulting tristimulus values of the virtual camera, but this is computationally cheaper and simpler. The reflectance properties are defined in the range `[0,0,0]` to `[1,1,1]`, or `#000000` to `#FFFFFF` if a hex string is used. The reflectance properties now takes gamma-corrected values and linearizes them internally to make it easier to pick colors via color pickers (which usually display gamma corrected values).
 
 The `emittance` field defines the radiant flux of each RGB channel in watts. This means that surfaces with different surface areas will emit the same amount of radiant energy if they are assigned the same emissive material.
+</details>
 
-### Vertices Object
+<details><summary><strong>Vertices Object</strong></summary><br>
 
 Example:
 ```json
@@ -223,8 +226,9 @@ Example:
 The `vertices` object contains a map of vertex sets. Each vertex set contains an array of vertices specified as xyz-coordinates.
 
 The vertex set key string is used later to specify which set of vertices to build the surface from when creating surfaces of `object` type.
+</details>
 
-### Surfaces Object
+<details><summary><strong>Surfaces Object</strong></summary><br>
 
 Example:
 ```json
@@ -288,9 +292,13 @@ The `surfaces` object contains an array of surfaces. Each surface has a `type` f
 **Object:** The object surface type defines a triangle mesh object that consists of multiple triangles. The `vertex_set` field specifies the key string of the vertex set to pull vertices from, while the `triangles` field specifies the array of triangles of the object. Each triangle of the array consists of 3 indices that references the corresponding vertex index in the vertex set.
 
 **Quadric:** A quadric surface consists of all points *(x,y,z)* that satisfies the quadric equation<sup>1</sup>:
-![](renders/quadric_eq.svg)
+
+<p align="center"><img  src="renders/quadric_eq.svg" height="20" /></p>
+
 where A, B, C etc. are real constants. A sphere with radius 1 can for example be defined by:
-![](renders/sphere_eq.svg)
+
+<p align="center"><img  src="renders/sphere_eq.svg" height="20" /></p>
+
 with constants J=-1, A=E=H=1 and the rest 0. This is achieved in the program by specifying the following fields for a quadric surface:
 ```json
 "XX": 1, "YY": 1, "ZZ": 1, "R": -1,
@@ -305,6 +313,7 @@ Quadric surfaces currently does not support emissive materials (the emissive par
 
 ___
 <sup>1</sup> The usual quadric equation looks slightly different when it's derived from the quadric matrix representation *p<sup>T</sup>Qp* since this results in some constants being doubled. The program uses this representation internally but I've eliminated this in the scene format since it's easier to not have to think about whether or not some constants will be doubled when creating a surface.
+</details>
 
 ## Renders
 
