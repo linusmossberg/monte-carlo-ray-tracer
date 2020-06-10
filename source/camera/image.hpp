@@ -20,10 +20,11 @@ struct Image
     size_t num_pixels;
 
 private:
-    double getExposureFactor(double pre_exposure_factor = -1.0) const;
+    double getExposure() const;
+    double getGain(double exposure_factor) const;
 
     std::vector<glm::dvec3> blob;
-    double pre_scale, post_scale;
+    double exposure_scale, gain_scale;
 
     /**************************************************************************
     Hard coded (except for dimensions) uncompressed 24bpp true-color TGA header.

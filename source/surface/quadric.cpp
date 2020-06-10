@@ -19,6 +19,10 @@ Surface::Quadric::Quadric(const nlohmann::json &j, std::shared_ptr<Material> mat
     double Z  = getOptional(j, "Z",  0.0) / 2.0;
     double R  = getOptional(j, "R",  0.0);
 
+    if (std::abs(XY) < C::EPSILON) XY = getOptional(j, "YX", 0.0) / 2.0;
+    if (std::abs(XZ) < C::EPSILON) XZ = getOptional(j, "ZX", 0.0) / 2.0;
+    if (std::abs(YZ) < C::EPSILON) YZ = getOptional(j, "ZY", 0.0) / 2.0;
+
     double Qa[16] {
         XX, XY, XZ, X,
         XY, YY, YZ, Y,
@@ -75,7 +79,7 @@ Surface::Quadric::Quadric(const nlohmann::json &j, std::shared_ptr<Material> mat
  Ray equation: r = o + d*t
  Ray quadric intersection: transpose(r)*Q*r = 0
  
- transpose(r)*Q*r = dot(r,A*r) =
+   transpose(r)*Q*r = dot(r,A*r) =
  = dot(o + d*t, Q * ((o + d*t))) = 
  = dot(d, Q*d) * t^2 + (dot(o, Q*d) + dot(d, Q*o)) * t + dot(o, Q*o) =
  = dot(d, Q*d) * t^2 + 2*dot(d, Q*o) * t + dot(o, Q*o) = 0
@@ -85,7 +89,8 @@ Surface::Quadric::Quadric(const nlohmann::json &j, std::shared_ptr<Material> mat
  b = dot(d, Q*o) * 2
  c = dot(o, Q*o)
  
- then we only need to solve the quadratic equation: a*t^2 + b*t + c = 0 to find eventual ray intersection(s).
+ then we can find eventual ray intersections by solving the quadratic equation: 
+ a*t^2 + b*t + c = 0
 /**********************************************************************/
 bool Surface::Quadric::intersect(const Ray& ray, Intersection& intersection) const
 {

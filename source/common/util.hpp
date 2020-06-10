@@ -9,8 +9,6 @@ inline std::ostream& operator<<(std::ostream& out, const glm::dvec3& v)
     return out << std::string("( " + std::to_string(v.x) + ", " + std::to_string(v.y) + ", " + std::to_string(v.z) + " )");
 }
 
-bool solveQuadratic(const double a, const double b, const double c, double &x0, double &x1);
-
 inline double pow2(double x)
 {
     return x * x;

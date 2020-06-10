@@ -60,7 +60,6 @@ void Material::computeProperties()
 
 double Material::calculateReflectProbability()
 {
-    return 0.8;
     return std::min(std::max(glm::compMax(reflectance), glm::compMax(specular_reflectance)), 0.8);
 }
 
