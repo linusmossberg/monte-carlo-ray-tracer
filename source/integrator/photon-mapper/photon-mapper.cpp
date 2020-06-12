@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <iomanip>
+#include <thread>
 #include <atomic>
 
 #include <glm/gtx/component_wise.hpp>
