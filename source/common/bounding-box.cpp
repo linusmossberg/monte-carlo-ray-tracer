@@ -1,11 +1,12 @@
 #include "bounding-box.hpp"
 
 #include <algorithm>
+#include <glm/gtx/component_wise.hpp>
 
 bool BoundingBox::intersect(const Ray &ray, double &t) const
 {
-    double t_max = std::numeric_limits<double>::max();
     t = 0.0;
+    double t_max = std::numeric_limits<double>::max();
 
     for (int i = 0; i < 3; i++)
     {

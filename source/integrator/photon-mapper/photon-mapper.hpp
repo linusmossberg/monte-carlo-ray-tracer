@@ -7,8 +7,7 @@
 
 #include "../integrator.hpp"
 
-#include "octree.hpp"
-#include "octree.cpp" // Has to be included when methods are defined outside of templated class
+#include "../../octree/octree.hpp"
 #include "photon.hpp"
 
 class PhotonMapper : public Integrator

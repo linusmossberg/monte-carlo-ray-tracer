@@ -6,6 +6,7 @@ Surface::Triangle::Triangle(const glm::dvec3& v0, const glm::dvec3& v1, const gl
     : Base(material), v0(v0), v1(v1), v2(v2), E1(v1 - v0), E2(v2 - v0), normal_(glm::normalize(glm::cross(E1, E2))) 
 {
     computeArea();
+    computeBoundingBox();
 }
 
 bool Surface::Triangle::intersect(const Ray& ray, Intersection& intersection) const
@@ -53,15 +54,18 @@ glm::dvec3 Surface::Triangle::normal(const glm::dvec3& pos) const
     return normal_;
 }
 
-BoundingBox Surface::Triangle::boundingBox() const
+glm::dvec3 Surface::Triangle::midPoint() const
 {
-    BoundingBox bb;
+    return (v0 + v1 + v2) / 3.0;
+}
+
+void Surface::Triangle::computeBoundingBox()
+{
     for (uint8_t c = 0; c < 3; c++)
     {
-        bb.min[c] = std::min(v0[c], std::min(v1[c], v2[c]));
-        bb.max[c] = std::max(v0[c], std::max(v1[c], v2[c]));
+        BB.min[c] = std::min(v0[c], std::min(v1[c], v2[c]));
+        BB.max[c] = std::max(v0[c], std::max(v1[c], v2[c]));
     }
-    return bb;
 }
 
 void Surface::Triangle::computeArea()

@@ -12,6 +12,8 @@
 #include "../../common/constants.hpp"
 #include "../../common/format.hpp"
 
+#include "../../octree/octree.cpp"
+
 PhotonMapper::PhotonMapper(const nlohmann::json& j) : Integrator(j)
 {
     bool print = true;

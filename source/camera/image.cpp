@@ -116,9 +116,9 @@ double Image::getGain(double exposure_factor) const
         histogram[static_cast<size_t>(std::floor(t / bin_size))]++;
     }
 
-    size_t num_clipped_pixels = static_cast<size_t>(blob.size() * 0.005);
+    size_t num_clipped_pixels = static_cast<size_t>(blob.size() * 0.01);
     size_t count = 0;
-    double L = 1.0;
+    double L = 0.99;
     for (size_t i = histogram.size() - 1; i >= 0; i--)
     {
         count += histogram[i];
@@ -128,5 +128,5 @@ double Image::getGain(double exposure_factor) const
             break;
         }
     }
-    return 1.0 / L;
+    return 0.99 / L;
 }

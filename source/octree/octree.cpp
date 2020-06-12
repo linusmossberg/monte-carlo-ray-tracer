@@ -3,7 +3,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/norm.hpp>
 
-#include "../../common/util.hpp"
+#include "../common/util.hpp"
+#include "../common/constants.hpp"
 
 /**************
 Octant:  x y z
@@ -18,11 +19,11 @@ Octant:  x y z
 ***************/
 
 template <class Data>
-Octree<Data>::Octree(const glm::dvec3& origin, const glm::dvec3& half_size, uint16_t max_node_data)
+Octree<Data>::Octree(const glm::dvec3& origin, const glm::dvec3& half_size, size_t max_node_data)
     : origin(origin), half_size(half_size), octants(0), max_node_data(max_node_data) { }
 
 template <class Data>
-Octree<Data>::Octree(const BoundingBox& bb, uint16_t max_node_data)
+Octree<Data>::Octree(const BoundingBox& bb, size_t max_node_data)
     : octants(0), max_node_data(max_node_data)
 {
     origin = bb.min + bb.max / 2.0;

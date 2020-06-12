@@ -5,7 +5,7 @@
 
 #include <glm/vec3.hpp>
 
-#include "../../common/bounding-box.hpp"
+#include "../common/bounding-box.hpp"
 
 struct OctreeData
 {
@@ -18,9 +18,9 @@ class Octree
 static_assert(std::is_base_of<OctreeData, Data>::value, "Octree Data type must derive from OctreeData.");
 
 public:
-    Octree(const glm::dvec3& origin, const glm::dvec3& half_size, uint16_t max_node_data);
+    Octree(const glm::dvec3& origin, const glm::dvec3& half_size, size_t max_node_data);
 
-    Octree(const BoundingBox& bb, uint16_t max_node_data);
+    Octree(const BoundingBox& bb, size_t max_node_data);
 
     Octree();
 
@@ -29,13 +29,16 @@ public:
     std::vector<Data> boxSearch(const glm::dvec3& min, const glm::dvec3& max) const;
     std::vector<Data> radiusSearch(const glm::dvec3& point, double radius) const;
 
-private:
-    void insertInOctant(const Data& data);
-
     bool leaf() const
     {
         return octants.empty();
     }
+
+    std::vector<Data> data_vec;
+    std::vector<std::unique_ptr<Octree>> octants;
+
+private:
+    void insertInOctant(const Data& data);
 
     void recursiveBoxSearch(const glm::dvec3& min, const glm::dvec3& max, std::vector<Data>& result) const;
     void recursiveRadiusSearch(const glm::dvec3& p, double radius2, std::vector<Data>& result) const;
@@ -43,8 +46,5 @@ private:
     glm::dvec3 origin;
     glm::dvec3 half_size;
 
-    uint16_t max_node_data;
-
-    std::vector<Data> data_vec;
-    std::vector<std::unique_ptr<Octree>> octants;
+    size_t max_node_data;
 };
