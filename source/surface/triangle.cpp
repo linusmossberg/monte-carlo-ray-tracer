@@ -66,6 +66,7 @@ void Surface::Triangle::computeBoundingBox()
         BB.min[c] = std::min(v0[c], std::min(v1[c], v2[c]));
         BB.max[c] = std::max(v0[c], std::max(v1[c], v2[c]));
     }
+    BB.computeProperties();
 }
 
 void Surface::Triangle::computeArea()

@@ -92,7 +92,7 @@ Scene::Scene(const nlohmann::json& j)
         }
     }
 
-    bvh = std::make_unique<BVH>(boundingBox(true), surfaces);
+    bvh = std::make_unique<BVH>(boundingBox(true), surfaces, HiearchyMethod::OCTREE);
 
     generateEmissives();
 }
@@ -120,7 +120,14 @@ Intersection Scene::intersect(const Ray& ray, bool align_normal, double min_dist
     //}
     //return intersect;
 
-    return bvh->intersect(ray, align_normal);
+    Intersection intersect = bvh->intersect(ray);
+
+    if (align_normal && intersect && glm::dot(ray.direction, intersect.normal) > 0.0)
+    {
+        intersect.normal = -intersect.normal;
+    }
+
+    return intersect;
 }
 
 void Scene::generateEmissives()
@@ -160,7 +167,7 @@ BoundingBox Scene::boundingBox(bool recompute)
 glm::dvec3 Scene::skyColor(const Ray& ray) const
 {
     double f = (1.0 + glm::dot(glm::dvec3(0.0, 1.0, 0.0), ray.direction)) / 2.0;
-    if (f < 0.5) return glm::dvec3(0.25);
+    if (f < 0.2) return glm::dvec3(0.1);
     return glm::mix(glm::dvec3(1.0, 0.5, 0.0), glm::dvec3(0.0, 0.5, 1.0), f);
 }
 

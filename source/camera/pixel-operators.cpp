@@ -6,7 +6,8 @@
 // http://filmicworlds.com/blog/filmic-tonemapping-operators/
 glm::dvec3 filmic(glm::dvec3 in)
 {
-    const double A = 0.15, B = 0.50, C = 0.10, D = 0.20, E = 0.02, F = 0.30, W = 11.2;
+    //const double A = 0.15, B = 0.50, C = 0.10, D = 0.20, E = 0.02, F = 0.30, W = 11.2;
+    const double A = 0.22, B = 0.30, C = 0.10, D = 0.20, E = 0.01, F = 0.30, W = 11.2;
 
     auto f = [&](const glm::dvec3& x)
     {

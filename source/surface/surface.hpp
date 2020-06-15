@@ -37,11 +37,12 @@ namespace Surface
 
         std::shared_ptr<Material> material;
 
+        BoundingBox BB;
+
     protected:
         virtual void computeArea() = 0;
         virtual void computeBoundingBox() = 0;
         double area_;
-        BoundingBox BB;
     };
 
     class Sphere : public Base
@@ -96,7 +97,7 @@ namespace Surface
 
     protected:
         virtual void computeArea();
-        virtual void computeBoundingBox() { }
+        virtual void computeBoundingBox() { BB.computeProperties(); }
 
     private:
         glm::dmat4x4 Q; // Quadric matrix

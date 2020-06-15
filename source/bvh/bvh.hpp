@@ -2,6 +2,7 @@
 
 #include "../surface/surface.hpp"
 #include "../octree/octree.hpp"
+#include "../ray/intersection.hpp"
 
 struct SurfacePoint : public OctreeData
 {
@@ -29,11 +30,11 @@ struct BVHNode
     std::vector<std::shared_ptr<Surface::Base>> surfaces;
 
     // Used for priority queue
-    struct Intersection
+    struct NodeIntersection
     {
-        Intersection(std::shared_ptr<BVHNode> node, double t) : t(t), node(node) { }
+        NodeIntersection(std::shared_ptr<BVHNode> node, double t) : t(t), node(node) { }
 
-        bool operator< (const Intersection& i) const
+        bool operator< (const NodeIntersection& i) const
         {
             return i.t < t;
         }
@@ -43,13 +44,31 @@ struct BVHNode
     };
 };
 
-struct BVH
+enum HiearchyMethod
 {
-    BVH(const BoundingBox &BB, const std::vector<std::shared_ptr<Surface::Base>> &surfaces);
+    OCTREE,
+    BINARY_SAH,
+    OCTONARY_SAH
+};
 
-    void recursiveBuild(const Octree<SurfacePoint> &node, std::shared_ptr<BVHNode> bvh);
+class BVH
+{
+public:
+    BVH(const BoundingBox &BB, 
+        const std::vector<std::shared_ptr<Surface::Base>> &surfaces, 
+        HiearchyMethod miearchy_method);
 
-    Intersection intersect(const Ray& ray, bool align_normal = true);
+    Intersection intersect(const Ray& ray);
 
     std::shared_ptr<BVHNode> root;
+
+    const size_t leaf_surfaces = 8;
+    std::map<size_t, size_t> branching;
+
+    double branchingFactor();
+
+private:
+    void recursiveBuildFromOctree(const Octree<SurfacePoint> &octree_node, std::shared_ptr<BVHNode> bvh_node);
+    void recursiveBuildBinarySAH(std::shared_ptr<BVHNode> bvh_node);
+    void recursiveBuildOctonarySAH(std::shared_ptr<BVHNode> bvh_node);
 };

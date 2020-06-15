@@ -409,12 +409,9 @@ glm::dvec3 PhotonMapper::estimateRadiance(const Octree<Photon>& map, const Inter
     return radiance / pow2(r);
 }
 
-/*******************************************************************************
-Currently unused cone filtering method that can be used for sharper caustics.
-This seems to exacerbate hot spots in places with sparse caustic photons however,
-which appears as bright blobs the size of the caustic_radius in places where
-you wouldn't expect to see high intensity caustics.
-*******************************************************************************/
+/**********************************************************
+Cone filtering method that can be used for sharper caustics.
+***********************************************************/
 glm::dvec3 PhotonMapper::estimateCausticRadiance(const Intersection& intersect, const glm::dvec3& direction, const CoordinateSystem& cs) const
 {
     auto photons = caustic_map.radiusSearch(intersect.position, caustic_radius);

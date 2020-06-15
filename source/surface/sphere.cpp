@@ -69,4 +69,6 @@ void Surface::Sphere::computeBoundingBox()
         glm::dvec3(origin - glm::dvec3(radius)),
         glm::dvec3(origin + glm::dvec3(radius))
     );
+
+    BB.computeProperties();
 }

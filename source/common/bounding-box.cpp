@@ -37,3 +37,38 @@ bool BoundingBox::contains(const glm::dvec3 &p) const
     return p.x >= min.x && p.y >= min.y && p.z >= min.z && 
            p.x <= max.x && p.y <= max.y && p.z <= max.z;
 }
+
+void BoundingBox::computeProperties()
+{
+    centroid = (max + min) / 2.0;
+}
+
+glm::dvec3 BoundingBox::dimensions() const
+{
+    return max - min;
+}
+
+double BoundingBox::area() const
+{
+    glm::dvec3 d = dimensions();
+    double area = 2.0 * (d.x * d.y + d.x * d.z + d.y * d.z);
+    return std::isfinite(area) && area > 0.0 ? area : 0.0;
+}
+
+void BoundingBox::merge(const BoundingBox &BB)
+{
+    for (int i = 0; i < 3; i++)
+    {
+        if (min[i] > BB.min[i]) min[i] = BB.min[i];
+        if (max[i] < BB.max[i]) max[i] = BB.max[i];
+    }
+}
+
+void BoundingBox::merge(const glm::dvec3 &p)
+{
+    for (int i = 0; i < 3; i++)
+    {
+        if (min[i] > p[i]) min[i] = p[i];
+        if (max[i] < p[i]) max[i] = p[i];
+    }
+}
