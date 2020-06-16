@@ -2,6 +2,10 @@
 
 This is a physically based renderer with Path Tracing and Photon Mapping.
 
+<div about="renders/stanford_dragon.jpg">
+  <img src="renders/stanford_dragon.jpg" alt="Path traced render of the stanford dragon, 871 414 triangles." title="Path traced render of the stanford dragon, 871 414 triangles." />
+  <a rel="license" href="https://creativecommons.org/licenses/by/4.0/"></a>
+</div>
 <div about="renders/quadric.jpg">
   <img src="renders/quadric.jpg" alt="Path traced render of scene with only quadric surfaces" title="Path traced render of scene with only quadric surfaces" />
   <a rel="license" href="https://creativecommons.org/licenses/by/4.0/"></a>

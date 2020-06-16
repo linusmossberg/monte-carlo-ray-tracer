@@ -5,9 +5,11 @@
 #include "../ray/intersection.hpp"
 #include "../common/util.hpp"
 #include "../common/constants.hpp"
+#include "../common/format.hpp"
 
 #include <fstream>
 #include <sstream>
+#include <iostream>
 
 Scene::Scene(const nlohmann::json& j)
 {
@@ -92,35 +94,41 @@ Scene::Scene(const nlohmann::json& j)
         }
     }
 
-    bvh = std::make_unique<BVH>(boundingBox(true), surfaces, HiearchyMethod::OCTREE);
+    std::cout << "\nNumber of primitives: " << Format::largeNumber(surfaces.size()) << std::endl;
+
+    if (j.find("bvh") != j.end())
+    {
+        bvh = std::make_unique<BVH>(boundingBox(true), surfaces, j.at("bvh"));
+    }
 
     generateEmissives();
 }
 
 Intersection Scene::intersect(const Ray& ray, bool align_normal, double min_distance) const
 {
-    //bool use_stop_condition = min_distance > 0.0;
+    Intersection intersect;
 
-    //Intersection intersect;
-    //for (const auto& surface : surfaces)
-    //{
-    //    Intersection t_intersect;
-    //    if (surface->intersect(ray, t_intersect))
-    //    {
-    //        if (use_stop_condition && t_intersect.t < min_distance)
-    //            return Intersection();
+    if (bvh)
+    {
+        intersect = bvh->intersect(ray);
+    }
+    else
+    {
+        bool use_stop_condition = min_distance > 0.0;
 
-    //        if (t_intersect.t < intersect.t)
-    //            intersect = t_intersect;
-    //    }
-    //}
-    //if (align_normal && glm::dot(ray.direction, intersect.normal) > 0.0)
-    //{
-    //    intersect.normal = -intersect.normal;
-    //}
-    //return intersect;
+        for (const auto& surface : surfaces)
+        {
+            Intersection t_intersect;
+            if (surface->intersect(ray, t_intersect))
+            {
+                if (use_stop_condition && t_intersect.t < min_distance)
+                    return Intersection();
 
-    Intersection intersect = bvh->intersect(ray);
+                if (t_intersect.t < intersect.t)
+                    intersect = t_intersect;
+            }
+        }
+    }
 
     if (align_normal && intersect && glm::dot(ray.direction, intersect.normal) > 0.0)
     {

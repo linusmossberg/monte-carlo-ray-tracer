@@ -1,5 +1,7 @@
 #pragma once
 
+#include <nlohmann/json.hpp>
+
 #include "../surface/surface.hpp"
 #include "../octree/octree.hpp"
 #include "../ray/intersection.hpp"
@@ -16,9 +18,9 @@ struct SurfacePoint : public OctreeData
     std::shared_ptr<Surface::Base> surface;
 };
 
-struct BVHNode
+struct BuildNode
 {
-    BVHNode() { }
+    BuildNode() { }
 
     bool leaf()
     {
@@ -26,29 +28,26 @@ struct BVHNode
     }
 
     BoundingBox BB;
-    std::vector<std::shared_ptr<BVHNode>> children;
+    std::vector<std::shared_ptr<BuildNode>> children;
     std::vector<std::shared_ptr<Surface::Base>> surfaces;
+    int32_t df_idx; // depth-first index in tree
+};
+
+struct LinearNode
+{
+    BoundingBox BB;
+    std::vector<std::shared_ptr<Surface::Base>> surfaces;
+    int32_t right_sibling; // -1 if there is none
+    bool leaf;
 
     // Used for priority queue
     struct NodeIntersection
     {
-        NodeIntersection(std::shared_ptr<BVHNode> node, double t) : t(t), node(node) { }
-
-        bool operator< (const NodeIntersection& i) const
-        {
-            return i.t < t;
-        }
-
+        NodeIntersection(uint32_t node, double t) : t(t), node(node) { }
+        bool operator< (const NodeIntersection& i) const { return i.t < t; };
         double t;
-        std::shared_ptr<BVHNode> node;
+        uint32_t node;
     };
-};
-
-enum HiearchyMethod
-{
-    OCTREE,
-    BINARY_SAH,
-    OCTONARY_SAH
 };
 
 class BVH
@@ -56,19 +55,24 @@ class BVH
 public:
     BVH(const BoundingBox &BB, 
         const std::vector<std::shared_ptr<Surface::Base>> &surfaces, 
-        HiearchyMethod miearchy_method);
+        const nlohmann::json &j);
 
     Intersection intersect(const Ray& ray);
-
-    std::shared_ptr<BVHNode> root;
 
     const size_t leaf_surfaces = 8;
     std::map<size_t, size_t> branching;
 
-    double branchingFactor();
+    int bins_per_axis = 16;
 
 private:
-    void recursiveBuildFromOctree(const Octree<SurfacePoint> &octree_node, std::shared_ptr<BVHNode> bvh_node);
-    void recursiveBuildBinarySAH(std::shared_ptr<BVHNode> bvh_node);
-    void recursiveBuildOctonarySAH(std::shared_ptr<BVHNode> bvh_node);
+    void recursiveBuildFromOctree(const Octree<SurfacePoint> &octree_node, std::shared_ptr<BuildNode> bvh_node);
+    void recursiveBuildBinarySAH(std::shared_ptr<BuildNode> bvh_node);
+    void recursiveBuildQuaternarySAH(std::shared_ptr<BuildNode> bvh_node);
+    void compact(std::shared_ptr<BuildNode> bvh_node, int32_t idx);
+
+    // Nodes stored in depth-first order
+    std::vector<LinearNode> linear_tree;
+
+    // Depth first index used during construction
+    uint32_t df_idx;
 };
