@@ -55,13 +55,10 @@ The basic outline of the scene format is the following JSON object:
   "ior": 1.75,
 
   "photon_map": { },
-
+  "bvh": { },
   "cameras": [ ],
-
   "materials":  { },
-
   "vertices": { },
-
   "surfaces": [ ]
 }
 ```
@@ -72,7 +69,7 @@ The `naive` field specifies whether or not naive path tracing should be used rat
 
 The `ior` field specifies the scene IOR (index of refraction). This can be used to simulate different types of environment mediums to see the effects this has on the angle of refraction and the Fresnel factor. This is usually set to 1.0 to simulate air, but using values such as 1.333 will render the scene as if it was submerged in water instead.
 
-The `photon_map`, `cameras`, `materials`, `vertices`, and `surfaces` objects defines different render settings and the scene contents. I will go through each of these in the following sections.
+The `photon_map`, `bvh`, `cameras`, `materials`, `vertices`, and `surfaces` objects defines different render settings and the scene contents. I go through each of these in the following sections.
 
 <details><summary><code>Photon Map</code></summary><br>
 
@@ -97,6 +94,32 @@ The `radius` field determines the radius of the search sphere (in meters) used d
 The `max_photons_per_octree_leaf` field affects both the octree radius-search performance and memory usage of the application. I cover this more in the report and this value can probably be left at 190 in most cases.
 
 The `direct_visualization` field can be used to visualize the photon maps directly. Setting this to true will make the program evaluate the global radiance from all photon maps at the first diffuse reflection. An example of this is in the report. 
+</details>
+
+<details><summary><code>BVH</code></summary><br>
+
+Example:
+```json
+"bvh": {
+    "type": "quaternary_sah",
+    "bins_per_axis": 16
+}
+```
+
+The `bvh` object is optional and it defines the Bounding Volume Hierarchy (BVH) acceleration structure properties. Normal naive scene intersection is used if this object is not specified.
+
+The `type` field specifies the hierarchy method to use when constructing the tree.
+
+| `type`  | Method | 
+| ------- | ------ | 
+| `octree` | First creates an octree using the primitive centroids, and then transforms this tree into a BVH by just transfering the node hiearchy and computing the bounding boxes. | 
+| `binary_sah` | Creates a binary-tree BVH by recursively splitting the primitives into two groups. The split occurs along the axis with the largest primitive centroid extent, and the split position is determined by the Surface Area Heuristic (SAH). Binning is performed to reduce the number of evaluated split coordinates along the axis, and the number of bins is determined by the `bins_per_axis` field. | 
+| `quaternary_sah` | Creates a quaternary-tree BVH by recursively splitting the primitives into the four groups that results in the lowest SAH-cost. This is similar to the binary version, but the split now occurs along two axes. The bins form a regular 2D grid and `bins_per_axis`<sup>2</sup> possible split coordinates are evaluated. |
+
+I've also tried splitting along all three axes each recursion to create octonary-trees. This produces good results but there's not much of an improvement compared to the quaternary version and the construction time becomes much longer due to the dimensionality curse when using 3D bins.
+
+`quaternary_sah` produces the best results and is the default method. `octree` and `binary_sah` are faster to construct however which is useful for quick renders. This is especially the case for the octree method, which suprisingly seems to be both faster to construct and create higher quality trees.
+
 </details>
 
 <details><summary><code>Cameras</code></summary><br>

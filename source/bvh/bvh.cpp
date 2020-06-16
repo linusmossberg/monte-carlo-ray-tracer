@@ -53,7 +53,7 @@ BVH::BVH(const BoundingBox &BB,
     }
 
 
-    size_t num_nodes = 0;
+    size_t num_nodes = 1;
     double num_branchings = 0.0;
     for (const auto &b : branching)
     {
