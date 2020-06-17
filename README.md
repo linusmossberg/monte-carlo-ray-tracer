@@ -63,11 +63,13 @@ The `ior` field specifies the scene IOR (index of refraction). This can be used 
 
 The `photon_map`, `bvh`, `cameras`, `materials`, `vertices`, and `surfaces` objects defines different render settings and the scene contents. I go through each of these in the following sections.
 
+___
+
 ### Photon Map
 
 The `photon_map` object is optional and it defines the photon map properties.
 
-<details><summary><code>Details</code></summary><br>
+<details><summary>details</summary><br>
 
 Example:
 ```json
@@ -92,11 +94,13 @@ The `max_photons_per_octree_leaf` field affects both the octree radius-search pe
 The `direct_visualization` field can be used to visualize the photon maps directly. Setting this to true will make the program evaluate the global radiance from all photon maps at the first diffuse reflection. An example of this is in the report. 
 </details>
 
+___
+
 ### BVH
 
-<details><summary><code>Details</code></summary><br>
+The `bvh` object is optional and it defines the Bounding Volume Hierarchy (BVH) acceleration structure properties.
 
-The `bvh` object is optional and it defines the Bounding Volume Hierarchy (BVH) acceleration structure properties. Normal naive scene intersection is used if this object is not specified.
+<details><summary>details</summary><br>
 
 Example:
 ```json
@@ -106,7 +110,7 @@ Example:
 }
 ```
 
-The `type` field specifies the hierarchy method to use when constructing the tree.
+Normal naive scene intersection is used if this object is not specified. The `type` field specifies the hierarchy method to use when constructing the tree.
 
 | `type`  | Method | 
 | ------- | ------ | 
@@ -120,11 +124,13 @@ I've also tried splitting along all three axes each recursion to create octonary
 
 </details>
 
+___
+
 ### Cameras
 
 The `cameras` object contains an array of different cameras
 
-<details><summary><code>Details</code></summary><br>
+<details><summary>details</summary><br>
 
 Example:
 ```json
@@ -181,11 +187,13 @@ The program also has a histogram-based auto-gain method which is applied after a
 The reason for separating these steps is that the tone-mapping/camera response is non-linear, and as a result `exposure_compensation` mostly controls the camera response (contrast, dynamic range etc.) while `gain_compensation` controls the overall image intensity. The tonemapping operator used by the program is the [filmic tonemapper](http://filmicworlds.com/blog/filmic-tonemapping-operators/) developed by John Hable.
 </details>
 
+___
+
 ### Materials
 
 The `materials` object contains a map of different materials.
 
-<details><summary><code>Details</code></summary><br>
+<details><summary>details</summary><br>
 
 Example:
 ```json
@@ -235,11 +243,13 @@ The `reflectance` and `specular_reflectance` fields specifies the amount of radi
 The `emittance` field defines the radiant flux of each RGB channel in watts. This means that surfaces with different surface areas will emit the same amount of radiant energy if they are assigned the same emissive material.
 </details>
 
+___
+
 ### Vertices
 
 The `vertices` object contains a map of vertex sets.
 
-<details><summary><code>Details</code></summary><br>
+<details><summary>details</summary><br>
 
 Example:
 ```json
@@ -263,11 +273,13 @@ Example:
 Each vertex set contains an array of vertices specified as xyz-coordinates. The vertex set key string is used later to specify which set of vertices to build the surface from when creating surfaces of `object` type.
 </details>
 
+___
+
 ### Surfaces
 
 The `surfaces` object contains an array of surfaces.
 
-<details><summary><code>Details</code></summary><br>
+<details><summary>details</summary><br>
 
 Example:
 ```json
@@ -353,6 +365,8 @@ Quadric surfaces currently does not support emissive materials (the emissive par
 ___
 <sup>1</sup> The usual quadric equation looks slightly different when it's derived from the quadric matrix representation *p<sup>T</sup>Qp* since this results in some constants being doubled. The program uses this representation internally but I've eliminated this in the scene format since it's easier to not have to think about whether or not some constants will be doubled when creating a surface.
 </details>
+
+___
 
 ## Renders
 
