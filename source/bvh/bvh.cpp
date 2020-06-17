@@ -234,7 +234,6 @@ void BVH::recursiveBuildBinarySAH(std::shared_ptr<BuildNode> bvh_node)
 
     if (min_cost > S.size())
     {
-        std::cout << split_bin << " " << min_cost << std::endl;
         if (S.size() <= max_leaf_surfaces) return;
     }
 

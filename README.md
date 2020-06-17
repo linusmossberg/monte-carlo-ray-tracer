@@ -63,7 +63,11 @@ The `ior` field specifies the scene IOR (index of refraction). This can be used 
 
 The `photon_map`, `bvh`, `cameras`, `materials`, `vertices`, and `surfaces` objects defines different render settings and the scene contents. I go through each of these in the following sections.
 
-<details><summary><code>Photon Map</code></summary><br>
+### Photon Map
+
+The `photon_map` object is optional and it defines the photon map properties.
+
+<details><summary><code>Details</code></summary><br>
 
 Example:
 ```json
@@ -77,7 +81,7 @@ Example:
 }
 ```
 
-The `photon_map` object is optional and it defines the photon map properties. The `emissions` field determines the base number of rays that should be emitted from light sources. More emissions will result in more spawned photons. 
+The `emissions` field determines the base number of rays that should be emitted from light sources. More emissions will result in more spawned photons. 
 
 The `caustic_factor` determines how many times more caustic photons should be generated relative to other photon types. 1 is the "natural" factor, but this results in blurry caustics since the caustic photon map is visualized directly.
 
@@ -88,7 +92,11 @@ The `max_photons_per_octree_leaf` field affects both the octree radius-search pe
 The `direct_visualization` field can be used to visualize the photon maps directly. Setting this to true will make the program evaluate the global radiance from all photon maps at the first diffuse reflection. An example of this is in the report. 
 </details>
 
-<details><summary><code>BVH</code></summary><br>
+### BVH
+
+<details><summary><code>Details</code></summary><br>
+
+The `bvh` object is optional and it defines the Bounding Volume Hierarchy (BVH) acceleration structure properties. Normal naive scene intersection is used if this object is not specified.
 
 Example:
 ```json
@@ -97,8 +105,6 @@ Example:
     "bins_per_axis": 16
 }
 ```
-
-The `bvh` object is optional and it defines the Bounding Volume Hierarchy (BVH) acceleration structure properties. Normal naive scene intersection is used if this object is not specified.
 
 The `type` field specifies the hierarchy method to use when constructing the tree.
 
@@ -110,11 +116,15 @@ The `type` field specifies the hierarchy method to use when constructing the tre
 
 I've also tried splitting along all three axes each recursion to create octonary-trees. This produces good results but there's not much of an improvement compared to the quaternary version and the construction time becomes much longer due to the dimensionality curse when using 3D bins.
 
-`quaternary_sah` produces the best results and is the default method. `octree` and `binary_sah` are faster to construct however which is useful for quick renders. This is especially the case for the octree method, which suprisingly seems to be both faster to construct and create higher quality trees than the binary-tree SAH method.
+`quaternary_sah` takes the longest to construct but tends to produce the best results. `octree` and `binary_sah` are faster to construct which is useful for quick renders. This is especially the case for the octree method, which suprisingly seems to be both faster to construct and create higher quality trees than the binary-tree SAH method.
 
 </details>
 
-<details><summary><code>Cameras</code></summary><br>
+### Cameras
+
+The `cameras` object contains an array of different cameras
+
+<details><summary><code>Details</code></summary><br>
 
 Example:
 ```json
@@ -152,7 +162,7 @@ Example:
 ]
 ```
 
-The `cameras` object contains an array of different cameras. The `focal_length` and `sensor_width` fields are defined in millimeters. A sensor width of 35mm (full frame) is most often usefull since focal lengths normally are defined in terms of 35mm-equivalent focal lengths.
+The `focal_length` and `sensor_width` fields are defined in millimeters. A sensor width of 35mm (full frame) is most often usefull since focal lengths normally are defined in terms of 35mm-equivalent focal lengths.
 
 The `eye` field defines the position of the camera, and the `up` and `forward` fields defines the orientation vectors of the camera. The up and forward vectors can be replaced with the `look_at` field, which defines the coordinate that the camera should look at instead.
 
@@ -171,7 +181,11 @@ The program also has a histogram-based auto-gain method which is applied after a
 The reason for separating these steps is that the tone-mapping/camera response is non-linear, and as a result `exposure_compensation` mostly controls the camera response (contrast, dynamic range etc.) while `gain_compensation` controls the overall image intensity. The tonemapping operator used by the program is the [filmic tonemapper](http://filmicworlds.com/blog/filmic-tonemapping-operators/) developed by John Hable.
 </details>
 
-<details><summary><code>Materials</code></summary><br>
+### Materials
+
+The `materials` object contains a map of different materials.
+
+<details><summary><code>Details</code></summary><br>
 
 Example:
 ```json
@@ -200,7 +214,7 @@ Example:
 }
 ```
 
-The `materials` object contains a map of different materials. The key string is used later when assigning a material to a surface. The material with the `default` key string is used for all surfaces that hasn't specified a material.
+The key string is used later when assigning a material to a surface. The material with the `default` key string is used for all surfaces that hasn't specified a material.
 
 The material fields are:
 
@@ -221,7 +235,11 @@ The `reflectance` and `specular_reflectance` fields specifies the amount of radi
 The `emittance` field defines the radiant flux of each RGB channel in watts. This means that surfaces with different surface areas will emit the same amount of radiant energy if they are assigned the same emissive material.
 </details>
 
-<details><summary><code>Vertices</code></summary><br>
+### Vertices
+
+The `vertices` object contains a map of vertex sets.
+
+<details><summary><code>Details</code></summary><br>
 
 Example:
 ```json
@@ -242,12 +260,14 @@ Example:
 }
 ```
 
-The `vertices` object contains a map of vertex sets. Each vertex set contains an array of vertices specified as xyz-coordinates.
-
-The vertex set key string is used later to specify which set of vertices to build the surface from when creating surfaces of `object` type.
+Each vertex set contains an array of vertices specified as xyz-coordinates. The vertex set key string is used later to specify which set of vertices to build the surface from when creating surfaces of `object` type.
 </details>
 
-<details><summary><code>Surfaces</code></summary><br>
+### Surfaces
+
+The `surfaces` object contains an array of surfaces.
+
+<details><summary><code>Details</code></summary><br>
 
 Example:
 ```json
@@ -300,7 +320,7 @@ Example:
 ]
 ```
 
-The `surfaces` object contains an array of surfaces. Each surface has a `type` field which can be either `sphere`, `triangle`, `object` or `quadric`. All surfaces also has an optional `material` field, which specifies the material that the surface should use by material key string.
+Each surface has a `type` field which can be either `sphere`, `triangle`, `object` or `quadric`. All surfaces also has an optional `material` field, which specifies the material that the surface should use by material key string.
 
 #### Type-specific fields:
 
