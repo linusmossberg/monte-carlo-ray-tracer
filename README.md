@@ -17,19 +17,6 @@ This is a physically based renderer with Path Tracing and Photon Mapping.
 
 This program was initially developed over a period of about 2 months for the course [Advanced Global Illumination and Rendering (TNCG15)](https://liu.se/studieinfo/kurs/tncg15) at Linköpings Universitet. I have however continued developing it by adding features such as depth of field and quadric surfaces. The program is written in C++ and requires a compiler with C++17 support.
 
-## Report
-
-A report describing this work in more detail is available [here](report.pdf). 
-
-Due to length limitations, I mostly focused on my own solutions and things that sets my implementation apart from the course syllabus. The report therefore references but doesen't explicitly explain a lot of standard topics such as:
-
-* Ray-surface intersections (Möller Trumbore etc.)
-* Ray reflection and refractions (Snell's law etc.) 
-* Schlick's approximation of Fresnel factor
-* Lambertian/Oren-Nayar BRDFs
-
-Having an understanding of these topics are therefore prerequisites for the report.
-
 ## Usage
 
 For basic use, just run the program in the directory that contains the *scenes* directory, i.e. the root folder of this repository. The program will then parse all scene files located in the scenes directory and create several rendering options for you to choose from in the terminal. For more advanced use, see [scene format](#scene-format).
@@ -55,21 +42,19 @@ The basic outline of the scene format is the following JSON object:
 }
 ```
 
-The `num_render_threads` field defines the number of rendering threads to use. This is limited between 1 and the number of concurrent threads availible on the system, i.e. the number of effective CPU cores. If the specified value is outside of this range, then all concurrent threads are used automatically.
+The `num_render_threads` field specifies the number of rendering threads to use. This is limited between 1 and the number of concurrent threads availible on the system. All concurrent threads are used if the specified value is outside of this range.
 
-The `naive` field specifies whether or not naive path tracing should be used rather than using explicit direct light sampling. There's no good reason to set this to true other than to test the massive difference in convergence time.
+The `naive` field specifies whether or not naive path tracing should be used rather than using explicit direct light sampling.
 
-The `ior` field specifies the scene IOR (index of refraction). This can be used to simulate different types of environment mediums to see the effects this has on the angle of refraction and the Fresnel factor. This is usually set to 1.0 to simulate air, but using values such as 1.333 will render the scene as if it was submerged in water instead.
+The `ior` field specifies the scene IOR (index of refraction). This can be used to simulate different types of environment mediums to see the effects this has on the angle of refraction and the Fresnel factor.
 
-The `photon_map`, `bvh`, `cameras`, `materials`, `vertices`, and `surfaces` objects defines different render settings and the scene contents. I go through each of these in the following sections.
+The `photon_map`, `bvh`, `cameras`, `materials`, `vertices`, and `surfaces` objects defines different render settings and the scene contents. I go through each of these in the following sections. Click the summaries for more details.
 
 ___
 
 ### Photon Map
 
-The `photon_map` object is optional and it defines the photon map properties.
-
-<details><summary>details</summary><br>
+<details><summary>The <code>photon_map</code> object is optional and it defines the photon map properties.</summary><br>
 
 Example:
 ```json
@@ -98,9 +83,7 @@ ___
 
 ### BVH
 
-The `bvh` object is optional and it defines the Bounding Volume Hierarchy (BVH) acceleration structure properties.
-
-<details><summary>details</summary><br>
+<details><summary>The <code>bvh</code> object is optional and it defines the Bounding Volume Hierarchy (BVH) acceleration structure properties.</summary><br>
 
 Example:
 ```json
@@ -128,9 +111,7 @@ ___
 
 ### Cameras
 
-The `cameras` object contains an array of different cameras
-
-<details><summary>details</summary><br>
+<details><summary>The <code>cameras</code> object contains an array of different cameras</summary><br>
 
 Example:
 ```json
@@ -191,9 +172,7 @@ ___
 
 ### Materials
 
-The `materials` object contains a map of different materials.
-
-<details><summary>details</summary><br>
+<details><summary>The <code>materials</code> object contains a map of different materials.</summary><br>
 
 Example:
 ```json
@@ -247,9 +226,7 @@ ___
 
 ### Vertices
 
-The `vertices` object contains a map of vertex sets.
-
-<details><summary>details</summary><br>
+<details><summary>The <code>vertices</code> object contains a map of vertex sets.</summary><br>
 
 Example:
 ```json
@@ -277,9 +254,7 @@ ___
 
 ### Surfaces
 
-The `surfaces` object contains an array of surfaces.
-
-<details><summary>details</summary><br>
+<details><summary>The <code>surfaces</code> object contains an array of surfaces.</summary><br>
 
 Example:
 ```json
@@ -365,45 +340,3 @@ Quadric surfaces currently does not support emissive materials (the emissive par
 ___
 <sup>1</sup> The usual quadric equation looks slightly different when it's derived from the quadric matrix representation *p<sup>T</sup>Qp* since this results in some constants being doubled. The program uses this representation internally but I've eliminated this in the scene format since it's easier to not have to think about whether or not some constants will be doubled when creating a surface.
 </details>
-
-___
-
-## Renders
-
-The following images are a few more renders produced by the program:
-
-___
-
-<h3 align="center">Glossy Spheres with Depth of Field</h3>
-
-<div about="renders/glossy_dof.jpg">
-  <img src="renders/glossy_dof.jpg" alt="Glossy Spheres with Depth of Field" title="Glossy Spheres with Depth of Field" />
-  <a rel="license" href="https://creativecommons.org/licenses/by/4.0/"></a>
-</div>
-
-___
-
-<h3 align="center">Path Traced, Scene IOR 1.0</h3>
-
-<div about="renders/c1_64sqrtspp_report_4k_downscaled.png">
-  <img src="renders/c1_64sqrtspp_report_4k_downscaled.png" alt="Path Traced, Scene IOR 1" title="Path Traced, Scene IOR 1" />
-  <a rel="license" href="https://creativecommons.org/licenses/by/4.0/"></a>
-</div>
-
-___
-
-<h3 align="center">Photon Mapped, Scene IOR 1.0</h3>
-
-<div about="renders/c1_photon-map_report_2e6_250_16sqrtspp.png">
-  <img src="renders/c1_photon-map_report_2e6_250_16sqrtspp.png" alt="Photon Mapped" title="Photon Mapped" />
-  <a rel="license" href="https://creativecommons.org/licenses/by/4.0/"></a>
-</div>
-
-___
-
-<h3 align="center">Path Traced, Skylit Oren-Nayar Spheres</h3>
-
-<div about="renders/oren_nayar_test.png">
-  <img src="renders/oren_nayar_test.png" alt="Path Traced, Skylit Oren-Nayar Spheres" title="Path Traced, Skylit Oren-Nayar Spheres" />
-  <a rel="license" href="https://creativecommons.org/licenses/by/4.0/"></a>
-</div>
