@@ -34,14 +34,6 @@ Having an understanding of these topics are therefore prerequisites for the repo
 
 For basic use, just run the program in the directory that contains the *scenes* directory, i.e. the root folder of this repository. The program will then parse all scene files located in the scenes directory and create several rendering options for you to choose from in the terminal. For more advanced use, see [scene format](#scene-format).
 
-**Note:** The program makes heavy use of the *\\r* carriage return character for console output in order to print progress information on the same line. This may work differently on different platforms which may mess up the output.
-
-**Note 2:** The program creates and writes to a log file called *log.txt* for certain rare events. An example entry is:
-```cpp
-[2019-10-31 16:46] Bias introduced: Max ray depth reached in PhotonMap::emitPhoton()
-```
-These events are not errors. The above entry just means that a rare ray path managed to bounce around the scene the maximum number of times and had to be terminated artificially, which slightly reduces the physical accuracy of the render.
-
 ## Scene Format
 
 I created a scene file format for this project to simplify scene creation. The format is defined using JSON and I used the library [nlohmann::json](https://github.com/nlohmann/json) for JSON parsing. A complete scenefile example can be seen at [scenes/hexagon_room.json](scenes/hexagon_room.json).
@@ -112,13 +104,13 @@ The `type` field specifies the hierarchy method to use when constructing the tre
 
 | `type`  | Method | 
 | ------- | ------ | 
-| `octree` | First creates an octree using the primitive centroids, and then transforms this tree into a BVH by just transfering the node hiearchy and computing the bounding boxes. | 
+| `octree` | First creates an octree by iterative insertion of the primitive centroids, and then transforms this tree into a BVH by just transfering the octree node hiearchy and computing the bounding boxes. | 
 | `binary_sah` | Creates a binary-tree BVH by recursively splitting the primitives into two groups. The split occurs along the axis with the largest primitive centroid extent, and the split position is determined by the Surface Area Heuristic (SAH). Binning is performed to reduce the number of evaluated split coordinates along the axis, and the number of bins is determined by the `bins_per_axis` field. | 
 | `quaternary_sah` | Creates a quaternary-tree BVH by recursively splitting the primitives into the four groups that results in the lowest SAH-cost. This is similar to the binary version, but the split now occurs along two axes. The bins form a regular 2D grid and `bins_per_axis`<sup>2</sup> possible split coordinates are evaluated. |
 
 I've also tried splitting along all three axes each recursion to create octonary-trees. This produces good results but there's not much of an improvement compared to the quaternary version and the construction time becomes much longer due to the dimensionality curse when using 3D bins.
 
-`quaternary_sah` produces the best results and is the default method. `octree` and `binary_sah` are faster to construct however which is useful for quick renders. This is especially the case for the octree method, which suprisingly seems to be both faster to construct and create higher quality trees.
+`quaternary_sah` produces the best results and is the default method. `octree` and `binary_sah` are faster to construct however which is useful for quick renders. This is especially the case for the octree method, which suprisingly seems to be both faster to construct and create higher quality trees than the binary-tree SAH method.
 
 </details>
 

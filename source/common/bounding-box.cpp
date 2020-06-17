@@ -38,14 +38,14 @@ bool BoundingBox::contains(const glm::dvec3 &p) const
            p.x <= max.x && p.y <= max.y && p.z <= max.z;
 }
 
-void BoundingBox::computeProperties()
-{
-    centroid = (max + min) / 2.0;
-}
-
 glm::dvec3 BoundingBox::dimensions() const
 {
     return max - min;
+}
+
+glm::dvec3 BoundingBox::centroid() const
+{
+    return (max + min) / 2.0;
 }
 
 double BoundingBox::area() const

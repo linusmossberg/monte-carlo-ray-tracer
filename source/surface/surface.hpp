@@ -97,7 +97,7 @@ namespace Surface
 
     protected:
         virtual void computeArea();
-        virtual void computeBoundingBox() { BB.computeProperties(); }
+        virtual void computeBoundingBox() { }
 
     private:
         glm::dmat4x4 Q; // Quadric matrix

@@ -37,7 +37,7 @@ size_t Random::uirange(size_t min, size_t max)
 
 size_t Random::weightedUIntSample(const std::vector<double>& weights)
 {
-    double p = range(0, 1);
+    double p = range(0.0, 1.0);
     double prev = 0.0;
     size_t i = 0;
     for ( ; i < weights.size() - 1; i++)
@@ -50,21 +50,21 @@ size_t Random::weightedUIntSample(const std::vector<double>& weights)
 
 bool Random::trial(double probability)
 {
-    return probability > range(0, 1);
+    return probability > range(0.0, 1.0);
 }
 
 glm::dvec2 Random::UniformDiskSample()
 {
-    double azimuth = range(0, C::TWO_PI);
-    return glm::dvec2(std::cos(azimuth), std::sin(azimuth)) * std::sqrt(range(0, 1));
+    double azimuth = range(0.0, C::TWO_PI);
+    return glm::dvec2(std::cos(azimuth), std::sin(azimuth)) * std::sqrt(range(0.0, 1.0));
 }
 
 glm::dvec3 Random::CosWeightedHemiSample()
 {
     // Generate uniform sample on unit disk at radius r and angle azimuth
-    double u = range(0, 1);
+    double u = range(0.0, 1.0);
     double r = std::sqrt(u);
-    double azimuth = range(0, C::TWO_PI);
+    double azimuth = range(0.0, C::TWO_PI);
 
     // Project up to hemisphere.
     // The result is a cosine-weighted hemispherical sample.
@@ -74,9 +74,9 @@ glm::dvec3 Random::CosWeightedHemiSample()
 
 glm::dvec3 Random::UniformHemiSample()
 {
-    double u = range(0, 1);
-    double r = std::sqrt(1.0f - u * u);
-    double azimuth = range(0, C::TWO_PI);
+    double u = range(0.0, 1.0);
+    double r = std::sqrt(1.0 - u * u);
+    double azimuth = range(0.0, C::TWO_PI);
 
     return glm::dvec3(r * std::cos(azimuth), r * std::sin(azimuth), u);
 }
