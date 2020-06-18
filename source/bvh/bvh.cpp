@@ -81,13 +81,10 @@ Intersection BVH::intersect(const Ray& ray)
     if (linear_tree[0].BB.intersect(ray, t))
     {
         std::priority_queue<LinearNode::NodeIntersection> to_visit;
-        to_visit.emplace(0, t);
-        int32_t node_idx;
+        int32_t node_idx = 0;
 
-        while (!to_visit.empty() && to_visit.top().t < intersect.t)
+        while (true)
         {
-            node_idx = to_visit.top().node; 
-            to_visit.pop();
             const auto &node = linear_tree[node_idx];
 
             if (node.num_surfaces)
@@ -117,6 +114,14 @@ Intersection BVH::intersect(const Ray& ray)
                     child_idx = linear_tree[child_idx].next_sibling;
                 }
             }
+
+            if (to_visit.empty() || to_visit.top().t >= intersect.t)
+            {
+                break;
+            }
+
+            node_idx = to_visit.top().node; 
+            to_visit.pop();
         }
     }
     return intersect;

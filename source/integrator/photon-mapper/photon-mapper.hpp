@@ -21,10 +21,10 @@ public:
 
     virtual glm::dvec3 sampleRay(Ray ray, size_t ray_depth = 0);
 
-    glm::dvec3 estimateRadiance(const Octree<Photon>& map, const Intersection& intersect,
+    glm::dvec3 estimateRadiance(Octree<Photon>& map, const Intersection& intersect,
                                 const glm::dvec3& direction, const CoordinateSystem& cs, double r) const;
     
-    glm::dvec3 estimateCausticRadiance(const Intersection& intersect, const glm::dvec3& direction, const CoordinateSystem& cs) const;
+    glm::dvec3 estimateCausticRadiance(const Intersection& intersect, const glm::dvec3& direction, const CoordinateSystem& cs);
 
     bool hasShadowPhoton(const Intersection& intersect) const
     {
@@ -57,4 +57,6 @@ private:
     bool direct_visualization;
 
     uint16_t max_node_data;
+    
+    const size_t target_photons = 80;
 };

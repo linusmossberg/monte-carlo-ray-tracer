@@ -395,36 +395,41 @@ glm::dvec3 PhotonMapper::sampleRay(Ray ray, size_t ray_depth)
     return (emittance + caustics + (indirect + direct) * BRDF) / (1.0 - absorb);
 }
 
-glm::dvec3 PhotonMapper::estimateRadiance(const Octree<Photon>& map, const Intersection& intersect,
+glm::dvec3 PhotonMapper::estimateRadiance(Octree<Photon>& map, const Intersection& intersect,
                                        const glm::dvec3& direction, const CoordinateSystem& cs, double r) const
 {
     glm::dvec3 radiance(0.0);
-    auto photons = map.radiusSearch(intersect.position, r);
+    auto photons = map.knnSearch(intersect.position, target_photons, r);
+    if (photons.empty()) return radiance;
+
     for (const auto& p : photons)
     {
-        if (-glm::dot(p.direction, cs.normal) <= 0.0) continue;
+        if (glm::dot(p.direction, cs.normal) >= 0.0) continue;
         glm::dvec3 BRDF = intersect.material->DiffuseBRDF(cs.globalToLocal(p.direction), cs.globalToLocal(direction));
         radiance += p.flux * BRDF;
     }
-    return radiance / pow2(r);
+    return radiance / photons.back().distance2;
 }
 
-/**********************************************************
-Cone filtering method that can be used for sharper caustics.
-***********************************************************/
-glm::dvec3 PhotonMapper::estimateCausticRadiance(const Intersection& intersect, const glm::dvec3& direction, const CoordinateSystem& cs) const
+/*********************************************************************************
+Cone filtering method that can be used for sharper caustics. Simplified for k = 1
+**********************************************************************************/
+glm::dvec3 PhotonMapper::estimateCausticRadiance(const Intersection& intersect, const glm::dvec3& direction, const CoordinateSystem& cs)
 {
-    auto photons = caustic_map.radiusSearch(intersect.position, caustic_radius);
-    const double k = 1.0;
     glm::dvec3 radiance(0.0);
+    auto photons = caustic_map.knnSearch(intersect.position, target_photons, caustic_radius);
+    if (photons.empty()) return radiance;
+
+    double max_squared_radius = photons.back().distance2;
+
     for (const auto& p : photons)
     {
-        if (-glm::dot(p.direction, cs.normal) <= 0.0) continue;
-        double wp = std::max(0.0, 1.0 - glm::distance(intersect.position, p.position) / (k * caustic_radius));
+        if (glm::dot(p.direction, cs.normal) >= 0.0) continue;
+        double wp = std::max(0.0, 1.0 - std::sqrt(p.distance2 / max_squared_radius));
         glm::dvec3 BRDF = intersect.material->DiffuseBRDF(cs.globalToLocal(p.direction), cs.globalToLocal(direction));
         radiance += p.flux * BRDF * wp;
     }
-    return radiance / (pow2(caustic_radius) * (1.0 - 2.0 / (3.0 * k)));
+    return radiance / (max_squared_radius / 3.0);
 }
 
 glm::dvec3 PhotonMapper::sampleDirect(const Intersection& intersect, bool has_shadow_photons, bool use_direct_map) const

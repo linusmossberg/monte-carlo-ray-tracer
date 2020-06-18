@@ -20,19 +20,15 @@ Octant:  x y z
 
 template <class Data>
 Octree<Data>::Octree(const glm::dvec3& origin, const glm::dvec3& half_size, size_t max_node_data)
-    : origin(origin), half_size(half_size), octants(0), max_node_data(max_node_data) { }
+    : BB(origin - half_size, origin + half_size), octants(0), max_node_data(max_node_data) { }
 
 template <class Data>
 Octree<Data>::Octree(const BoundingBox& bb, size_t max_node_data)
-    : octants(0), max_node_data(max_node_data)
-{
-    origin = bb.min + bb.max / 2.0;
-    half_size = (bb.max - origin) + glm::dvec3(C::EPSILON);
-}
+    : BB(bb), octants(0), max_node_data(max_node_data) { }
 
 template <class Data>
 Octree<Data>::Octree()
-    : octants(0), max_node_data(190), origin(), half_size() { }
+    : octants(0), max_node_data(190), BB() { }
 
 template <class Data>
 void Octree<Data>::insert(const Data& data)
@@ -53,7 +49,8 @@ void Octree<Data>::insert(const Data& data)
             octants.resize(8);
             for (uint8_t i = 0; i < octants.size(); i++)
             {
-                glm::dvec3 new_origin = origin;
+                glm::dvec3 new_origin = BB.centroid();
+                glm::dvec3 half_size = BB.dimensions() / 2.0;
                 for (uint8_t c = 0; c < 3; c++)
                 {
                     new_origin[c] += half_size[c] * (i & (0b100 >> c) ? 0.5 : -0.5);
@@ -89,6 +86,7 @@ std::vector<Data> Octree<Data>::radiusSearch(const glm::dvec3& point, double rad
 template <class Data>
 void Octree<Data>::insertInOctant(const Data& data)
 {
+    glm::dvec3 origin = BB.centroid();
     uint8_t octant = 0;
     for (uint8_t c = 0; c < 3; c++)
     {
@@ -104,9 +102,7 @@ void Octree<Data>::recursiveBoxSearch(const glm::dvec3& min, const glm::dvec3& m
     {
         for (const auto& d : data_vec)
         {
-            const auto p = d.pos();
-            if (p.x < max.x && p.y < max.y && p.z < max.z &&
-                p.x > min.x && p.y > min.y && p.z > min.z)
+            if (BB.contains(d.pos()))
             {
                 result.push_back(d);
             }
@@ -116,8 +112,8 @@ void Octree<Data>::recursiveBoxSearch(const glm::dvec3& min, const glm::dvec3& m
     {
         for (const auto& octant : octants)
         {
-            glm::dvec3 min_c = octant->origin - octant->half_size;
-            glm::dvec3 max_c = octant->origin + octant->half_size;
+            const auto &min_c = octant->BB.min;
+            const auto &max_c = octant->BB.max;
 
             if (max_c.x > min.x && max_c.y > min.y && max_c.z > min.z &&
                 min_c.x < max.x && min_c.y < max.y && min_c.z < max.z)
@@ -136,9 +132,11 @@ void Octree<Data>::recursiveRadiusSearch(const glm::dvec3& p, double radius2, st
     {
         for (const auto& data : data_vec)
         {
-            if (glm::distance2(data.pos(), p) <= radius2)
+            double distance2 = glm::distance2(data.pos(), p);
+            if (distance2 <= radius2)
             {
                 result.push_back(data);
+                result.back().distance2 = distance2;
             }
         }
     }
@@ -146,24 +144,70 @@ void Octree<Data>::recursiveRadiusSearch(const glm::dvec3& p, double radius2, st
     {
         for (const auto& octant : octants)
         {
-            glm::dvec3 d(0.0);
-
-            glm::dvec3 min = octant->origin - octant->half_size;
-            glm::dvec3 max = octant->origin + octant->half_size;
-
-            for (uint8_t c = 0; c < 3; c++)
-            {
-                if (p[c] < min[c])
-                    d[c] = pow2(p[c] - min[c]);
-                else if (p[c] > max[c])
-                    d[c] = pow2(p[c] - max[c]);
-            }
-
             // Keep searching in octants that intersects or is contained in the search sphere
-            if (d.x + d.y + d.z <= radius2)
+            if (octant->BB.distance2(p) <= radius2)
             {
                 octant->recursiveRadiusSearch(p, radius2, result);
             }
         }
+    }
+}
+
+template <class Data>
+std::vector<Data> Octree<Data>::knnSearch(const glm::dvec3& p, size_t k, double max_distance)
+{
+    std::vector<Data> result;
+
+    double max_distance2 = pow2(max_distance);
+    double distance2 = BB.distance2(p);
+
+    if (distance2 > max_distance2)
+    {
+        return result;
+    }
+
+    std::priority_queue<KNNode> to_visit;
+
+    KNNode current(this, distance2);
+
+    while (true)
+    {
+        if (current.octant)
+        {
+            if (current.octant->leaf())
+            {
+                for (const auto &data : current.octant->data_vec)
+                {
+                    double distance2 = glm::distance2(data.pos(), p);
+                    if (distance2 <= max_distance2)
+                    {
+                        to_visit.emplace(std::make_shared<Data>(data), distance2);
+                    }
+                }
+            }
+            else
+            {
+                for (const auto &octant : current.octant->octants)
+                {
+                    double distance2 = octant->BB.distance2(p);
+                    if (distance2 <= max_distance2)
+                    {
+                        to_visit.emplace(octant.get(), distance2);
+                    }
+                }
+            }
+        }
+        else
+        {
+            current.data->distance2 = current.distance2;
+            result.push_back(*current.data);
+
+            if (result.size() == k) return result;
+        }
+
+        if (to_visit.empty()) return result;
+
+        current = to_visit.top();
+        to_visit.pop();
     }
 }

@@ -10,7 +10,7 @@ struct SurfacePoint : public OctreeData
 {
     SurfacePoint(std::shared_ptr<Surface::Base> surface) : surface(surface) { }
 
-    virtual glm::dvec3 pos() const
+    virtual const glm::dvec3& pos() const
     {
         return surface->midPoint();
     }

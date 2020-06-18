@@ -55,6 +55,12 @@ double BoundingBox::area() const
     return std::isfinite(area) && area > 0.0 ? area : 0.0;
 }
 
+double BoundingBox::distance2(const glm::dvec3 &p) const
+{
+    glm::dvec3 d = glm::max(glm::max(min - p, p - max), glm::dvec3(0.0));
+    return glm::dot(d, d);
+}
+
 void BoundingBox::merge(const BoundingBox &BB)
 {
     for (int i = 0; i < 3; i++)
