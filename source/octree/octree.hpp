@@ -10,9 +10,16 @@
 
 struct OctreeData
 {
-    virtual const glm::dvec3& pos() const = 0;
-    double distance2 = std::numeric_limits<double>::max();
-    bool operator< (const OctreeData& d) const { return distance2 < d.distance2; };
+    virtual glm::dvec3 pos() const = 0;
+    virtual ~OctreeData() { }
+};
+
+template <class Data>
+struct SearchResult
+{
+    SearchResult(const Data& data, double distance2) : data(data), distance2(distance2) { }
+    Data data;
+    double distance2;
 };
 
 template <class Data>
@@ -22,31 +29,27 @@ static_assert(std::is_base_of<OctreeData, Data>::value, "Octree Data type must d
 
 public:
     Octree(const glm::dvec3& origin, const glm::dvec3& half_size, size_t max_node_data);
-
     Octree(const BoundingBox& bb, size_t max_node_data);
-
     Octree();
 
     void insert(const Data& data);
-
-    std::vector<Data> boxSearch(const glm::dvec3& min, const glm::dvec3& max) const;
-    std::vector<Data> radiusSearch(const glm::dvec3& point, double radius) const;
 
     bool leaf() const
     {
         return octants.empty();
     }
 
-    std::vector<Data> data_vec;
-    std::vector<std::unique_ptr<Octree>> octants;
+    std::vector<SearchResult<Data>> radiusSearch(const glm::dvec3& point, double radius) const;
+    std::vector<SearchResult<Data>> knnSearch(const glm::dvec3& p, size_t k, double max_distance);
 
-    std::vector<Data> knnSearch(const glm::dvec3& p, size_t k, double max_distance);
+    std::vector<Data> data_vec;
+    BoundingBox BB;
+    std::vector<std::unique_ptr<Octree>> octants;
 
 private:
     void insertInOctant(const Data& data);
 
-    void recursiveBoxSearch(const glm::dvec3& min, const glm::dvec3& max, std::vector<Data>& result) const;
-    void recursiveRadiusSearch(const glm::dvec3& p, double radius2, std::vector<Data>& result) const;
+    void recursiveRadiusSearch(const glm::dvec3& p, double radius2, std::vector<SearchResult<Data>>& result) const;
 
     struct KNNode
     {
@@ -59,8 +62,6 @@ private:
         std::shared_ptr<Data> data;
         double distance2;
     };
-
-    BoundingBox BB;
 
     size_t max_node_data;
 };

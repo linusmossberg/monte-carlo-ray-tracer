@@ -14,16 +14,20 @@ This is a physically based renderer with Path Tracing and Photon Mapping.
   <img src="renders/c1_64sqrtspp_report_4k_flintglass_downscaled.png" alt="Path Traced, Scene IOR 1.75" title="Path Traced, Scene IOR 1.75" />
   <a rel="license" href="https://creativecommons.org/licenses/by/4.0/"></a>
 </div>
+<div about="renders/caustics.jpg">
+  <img src="renders/caustics.jpg" alt="Photon mapped render of caustics, 26 342 158 triangles. Original scene by Benedikt Bitterli." title="Photon mapped render of caustics, 26 342 158 triangles. Original scene by Benedikt Bitterli." />
+  <a rel="license" href="https://creativecommons.org/licenses/by/4.0/"></a>
+</div>
 
 This program was initially developed over a period of about 2 months for the course [Advanced Global Illumination and Rendering (TNCG15)](https://liu.se/studieinfo/kurs/tncg15) at Linköpings Universitet. I have however continued developing it by adding features such as depth of field and quadric surfaces. The program is written in C++ and requires a compiler with C++17 support.
 
 ## Usage
 
-For basic use, just run the program in the directory that contains the *scenes* directory, i.e. the root folder of this repository. The program will then parse all scene files located in the scenes directory and create several rendering options for you to choose from in the terminal. For more advanced use, see [scene format](#scene-format).
+For basic use, just run the program in the directory that contains the *scenes* directory, i.e. the root folder of this repository. The program will then parse all scene files and create several rendering options to choose from in the terminal. For more advanced use, see [scene format](#scene-format).
 
 ## Scene Format
 
-I created a scene file format for this project to simplify scene creation. The format is defined using JSON and I used the library [nlohmann::json](https://github.com/nlohmann/json) for JSON parsing. A complete scenefile example can be seen at [scenes/hexagon_room.json](scenes/hexagon_room.json).
+I created a scene file format for this project to simplify scene creation. The format is defined using JSON and I used the library [nlohmann::json](https://github.com/nlohmann/json) for JSON parsing. Complete scenefile examples can be found in the scenes directory.
 
 The basic outline of the scene format is the following JSON object:
 
@@ -48,21 +52,20 @@ The `naive` field specifies whether or not naive path tracing should be used rat
 
 The `ior` field specifies the scene IOR (index of refraction). This can be used to simulate different types of environment mediums to see the effects this has on the angle of refraction and the Fresnel factor.
 
-The `photon_map`, `bvh`, `cameras`, `materials`, `vertices`, and `surfaces` objects defines different render settings and the scene contents. I go through each of these in the following sections. Click the summaries for more details.
-
-___
+The `photon_map`, `bvh`, `cameras`, `materials`, `vertices`, and `surfaces` objects specifies different render settings and scene contents. I go through each of these in the following sections. Click the summaries for more details.
 
 ### Photon Map
 
-<details><summary>The <code>photon_map</code> object is optional and it defines the photon map properties.</summary><br>
+<details><summary>The <code>photon_map</code> object is optional and it specifies the photon map properties.</summary><br>
 
 Example:
 ```json
 "photon_map": {
   "emissions": 1e6,
   "caustic_factor": 100.0,
-  "radius": 0.1,
-  "caustic_radius": 0.05,
+  "k_nearest_photons": 50,
+  "max_radius": 0.01,
+  "max_caustic_radius": 0.005,
   "max_photons_per_octree_leaf": 190,
   "direct_visualization": false
 }
@@ -72,7 +75,7 @@ The `emissions` field determines the base number of rays that should be emitted 
 
 The `caustic_factor` determines how many times more caustic photons should be generated relative to other photon types. 1 is the "natural" factor, but this results in blurry caustics since the caustic photon map is visualized directly.
 
-The `radius` field determines the radius of the search sphere (in meters) used during the rendering pass. Smaller values results in sharper results and faster evaluation, but too small values results in bad estimates since this reduces the number of photons that contributes to the estimate. `caustic_radius` is the same but is used exclusively for caustic photons.
+The `k_nearest_photons` field determines the number of nearest photons to search for and use in the radiance estimate each time a photon map is evaluated at a point. Larger values creates better but less localized (blurrier) estimates since the search sphere is expanded to cover the target number of photons. The maximum radius of this search sphere is controlled with the `max_radius` field. This is useful to discard large parts of the search space and thereby increase performance. `max_caustic_radius` is the same but is used exclusively for caustic photons.
 
 The `max_photons_per_octree_leaf` field affects both the octree radius-search performance and memory usage of the application. I cover this more in the report and this value can probably be left at 190 in most cases.
 
@@ -83,7 +86,7 @@ ___
 
 ### BVH
 
-<details><summary>The <code>bvh</code> object is optional and it defines the Bounding Volume Hierarchy (BVH) acceleration structure properties.</summary><br>
+<details><summary>The <code>bvh</code> object is optional and it specifies the Bounding Volume Hierarchy acceleration structure properties.</summary><br>
 
 Example:
 ```json
@@ -205,15 +208,15 @@ The key string is used later when assigning a material to a surface. The materia
 
 The material fields are:
 
-| field                | type                    | default value       |
-| -------------------- | ----------------------- | ------------------- |
-| reflectance          | RGB vector / hex string | [0 0 0] / "#000000" |
-| specular_reflectance | RGB vector / hex string | [0 0 0] / "#000000" |
-| emittance            | RGB vector              | [0 0 0]             |
-| ior                  | scalar                  | -1                  |
-| roughness            | scalar                  | 0                   |
-| transparency         | scalar                  | 0                   |
-| perfect_mirror       | boolean                 | false               |
+| field                | type                    | default value |
+| -------------------- | ----------------------- | --------------|
+| reflectance          | RGB vector / hex string | [0 0 0]       |
+| specular_reflectance | RGB vector / hex string | [0 0 0]       |
+| emittance            | RGB vector              | [0 0 0]       |
+| ior                  | scalar                  | -1            |
+| roughness            | scalar                  | 0             |
+| transparency         | scalar                  | 0             |
+| perfect_mirror       | boolean                 | false         |
 
 These fields are all optional and any combination of fields can be used. A material can for example be a combination of diffusely reflecting, specularly reflecting, emissive, transparent (specularly refracting) and rough. If the IOR is specified to be the less than 1, then the material is assumed to be completely diffuse. If set to true, the `perfect_mirror` field overrides most other fields to simulate a perfect mirror with infinite IOR.
 
@@ -259,6 +262,10 @@ ___
 Example:
 ```json
 "surfaces": [
+  {
+      "type": "object",
+      "file": "data/stanford_dragon.obj"
+  },
   {
     "type": "object",
     "material": "light",
@@ -307,17 +314,19 @@ Example:
 ]
 ```
 
-Each surface has a `type` field which can be either `sphere`, `triangle`, `object` or `quadric`. All surfaces also has an optional `material` field, which specifies the material that the surface should use by material key string.
+Each surface has a `type` field which can be either `sphere`, `triangle`, `object` or `quadric`. All surfaces also has an optional `material` field, which specifies the material that the surface should use by material key string. The remaining fields are type-specific.
 
-#### Type-specific fields:
+#### Sphere
+The sphere position is defined by the `origin` field, while the sphere radius is defined by the `radius` field.
 
-**Sphere:** The sphere position is defined by the `origin` field, while the sphere radius is defined by the `radius` field.
+#### Triangle
+The triangle is simply defined by its vertices, which is defined by the 3 vertices in the vertex array `vertices` in xyz-coordinates. The order of the vertices defines the normal direction, but this only matters if the surface has an emissive material.
 
-**Triangle:** The triangle is simply defined by its vertices, which is defined by the 3 vertices in the vertex array `vertices` in xyz-coordinates. The order of the vertices defines the normal direction, but this only matters if the surface has an emissive material.
+#### Object
+The object surface type defines a triangle mesh object that consists of multiple triangles. The `vertex_set` field can be used to specify the key string of the vertex set to pull vertices from, and the `triangles` field then specifies the array of triangles of the object. Each triangle of the array consists of 3 indices that references the corresponding vertex index in the vertex set. Alternatively, the `file` field can be used to specify a path to an OBJ-file to load instead. The path should be relative to the scenes directory.
 
-**Object:** The object surface type defines a triangle mesh object that consists of multiple triangles. The `vertex_set` field specifies the key string of the vertex set to pull vertices from, while the `triangles` field specifies the array of triangles of the object. Each triangle of the array consists of 3 indices that references the corresponding vertex index in the vertex set.
-
-**Quadric:** A quadric surface consists of all points *(x,y,z)* that satisfies the quadric equation<sup>1</sup>:
+#### Quadric
+A quadric surface consists of all points (x,y,z) that satisfies the quadric equation<sup>1</sup>:
 
 <p align="center"><img  src="renders/quadric_eq.svg" height="20" /></p>
 
@@ -340,3 +349,5 @@ Quadric surfaces currently does not support emissive materials (the emissive par
 ___
 <sup>1</sup> The usual quadric equation looks slightly different when it's derived from the quadric matrix representation *p<sup>T</sup>Qp* since this results in some constants being doubled. The program uses this representation internally but I've eliminated this in the scene format since it's easier to not have to think about whether or not some constants will be doubled when creating a surface.
 </details>
+
+___

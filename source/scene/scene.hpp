@@ -21,21 +21,26 @@ public:
 
     void generateEmissives();
 
-    BoundingBox boundingBox(bool recompute);
-
     glm::dvec3 skyColor(const Ray& ray) const;
 
     std::vector<std::shared_ptr<Surface::Base>> surfaces;
     std::vector<std::shared_ptr<Surface::Base>> emissives; // subset of surfaces
 
+    BoundingBox BB() const
+    {
+        return BB_;
+    }
+
     std::unique_ptr<BVH> bvh;
 
     double ior;
 
-protected:
-    std::unique_ptr<BoundingBox> bounding_box;
+private:
+    BoundingBox BB_;
+
+    void computeBoundingBox();
 
     void parseOBJ(const std::filesystem::path &path, 
-                  std::vector<glm::dvec3> &vertices, 
+                  std::vector<glm::dvec3> &vertices,
                   std::vector<std::vector<size_t>> &triangles) const;
 };

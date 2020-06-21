@@ -58,17 +58,21 @@ Scene::Scene(const nlohmann::json& j)
             {
                 // Entire object emits the flux of assigned material emittance in scene file.
                 // The flux of the material therefore needs to be distributed amongst all object triangles.
+                std::shared_ptr<Material> mat;
                 if (is_emissive && total_area > C::EPSILON)
                 {
                     double area = Surface::Triangle(v.at(t.at(0)), v.at(t.at(1)), v.at(t.at(2)), material).area();
-                    auto new_mat = std::make_shared<Material>(*material);
-                    new_mat->emittance *= area / total_area;
-                    surfaces.push_back(std::make_shared<Surface::Triangle>(v.at(t.at(0)), v.at(t.at(1)), v.at(t.at(2)), new_mat));
+                    mat = std::make_shared<Material>(*material);
+                    mat->emittance *= area / total_area;
                 }
                 else
                 {
-                    surfaces.push_back(std::make_shared<Surface::Triangle>(v.at(t.at(0)), v.at(t.at(1)), v.at(t.at(2)), material));
+                    mat = material;
                 }
+
+                surfaces.push_back(std::make_shared<Surface::Triangle>(
+                    v.at(t.at(0)), v.at(t.at(1)), v.at(t.at(2)), mat)
+                );
             }
         }
         else if (type == "triangle")
@@ -94,11 +98,13 @@ Scene::Scene(const nlohmann::json& j)
         }
     }
 
+    computeBoundingBox();
+
     std::cout << "\nNumber of primitives: " << Format::largeNumber(surfaces.size()) << std::endl;
 
     if (j.find("bvh") != j.end())
     {
-        bvh = std::make_unique<BVH>(boundingBox(true), surfaces, j.at("bvh"));
+        bvh = std::make_unique<BVH>(BB_, surfaces, j.at("bvh"));
     }
 
     generateEmissives();
@@ -150,37 +156,23 @@ void Scene::generateEmissives()
     }
 }
 
-BoundingBox Scene::boundingBox(bool recompute)
+void Scene::computeBoundingBox()
 {
-    if (surfaces.empty()) return BoundingBox();
-
-    if (recompute || !bounding_box)
+    for (const auto& surface : surfaces)
     {
-        BoundingBox bb = surfaces.front()->boundingBox();
-        for (const auto& surface : surfaces)
-        {
-            auto s_bb = surface->boundingBox();
-            for (uint8_t c = 0; c < 3; c++)
-            {
-                bb.min[c] = std::min(bb.min[c], s_bb.min[c]);
-                bb.max[c] = std::max(bb.max[c], s_bb.max[c]);
-            }
-        }
-        bounding_box = std::make_unique<BoundingBox>(bb);
+        BB_.merge(surface->BB());
     }
-
-    return *bounding_box;
 }
 
 glm::dvec3 Scene::skyColor(const Ray& ray) const
 {
     double f = (1.0 + glm::dot(glm::dvec3(0.0, 1.0, 0.0), ray.direction)) / 2.0;
-    if (f < 0.2) return glm::dvec3(0.1);
+    //if (f < 0.2) return glm::dvec3(0.1);
     return glm::mix(glm::dvec3(1.0, 0.5, 0.0), glm::dvec3(0.0, 0.5, 1.0), f);
 }
 
 void Scene::parseOBJ(const std::filesystem::path &path, 
-                     std::vector<glm::dvec3> &vertices, 
+                     std::vector<glm::dvec3> &vertices,
                      std::vector<std::vector<size_t>> &triangles) const
 {
     std::ifstream file(path);

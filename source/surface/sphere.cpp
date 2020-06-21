@@ -53,11 +53,6 @@ glm::dvec3 Surface::Sphere::normal(const glm::dvec3& pos) const
     return (pos - origin) / radius;
 }
 
-glm::dvec3 Surface::Sphere::midPoint() const
-{
-    return origin;
-}
-
 void Surface::Sphere::computeArea()
 {
     area_ = 2.0 * C::TWO_PI * pow2(radius);
@@ -65,7 +60,7 @@ void Surface::Sphere::computeArea()
 
 void Surface::Sphere::computeBoundingBox()
 {
-    BB = BoundingBox(
+    BB_ = BoundingBox(
         glm::dvec3(origin - glm::dvec3(radius)),
         glm::dvec3(origin + glm::dvec3(radius))
     );

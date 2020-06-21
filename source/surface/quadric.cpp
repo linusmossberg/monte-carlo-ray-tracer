@@ -44,7 +44,7 @@ Surface::Quadric::Quadric(const nlohmann::json &j, std::shared_ptr<Material> mat
         double bound_width = getOptional(j, "bound_size", 1.0);
         bound_dimensions = glm::dvec3(bound_width);
     }
-    BB = BoundingBox(origin - bound_dimensions / 2.0, origin + bound_dimensions / 2.0);
+    BB_ = BoundingBox(origin - bound_dimensions / 2.0, origin + bound_dimensions / 2.0);
 
     glm::dmat4 scale = glm::scale(glm::dmat4(1.0), glm::dvec3(getOptional(j, "scale", 1.0)));
     glm::dmat4 translate = glm::translate(glm::dmat4(1.0), origin);
@@ -98,7 +98,7 @@ bool Surface::Quadric::intersect(const Ray& ray, Intersection& intersection) con
     // Intersect with bounding box and start at this 
     // intersection to render the sliced quadric correctly.
     double t_bb = 0.0;
-    if (!BB.intersect(ray, t_bb))
+    if (!BB_.intersect(ray, t_bb))
     {
         return false;
     }
@@ -145,7 +145,7 @@ bool Surface::Quadric::intersect(const Ray& ray, Intersection& intersection) con
 
     glm::dvec3 pos = ray(t);
 
-    if (!BB.contains(pos))
+    if (!BB_.contains(pos))
     {
         return false;
     }
@@ -163,11 +163,6 @@ glm::dvec3 Surface::Quadric::operator()(double u, double v) const
 glm::dvec3 Surface::Quadric::normal(const glm::dvec3& pos) const
 {
     return glm::normalize(G * glm::dvec4(pos, 1.0));
-}
-
-glm::dvec3 Surface::Quadric::midPoint() const
-{
-    return (BB.max + BB.min) / 2.0;
 }
 
 void Surface::Quadric::computeArea()

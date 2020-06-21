@@ -14,6 +14,7 @@
 #include "../../common/format.hpp"
 
 #include "../../octree/octree.cpp"
+#include "../../octree/linear-octree.cpp"
 
 PhotonMapper::PhotonMapper(const nlohmann::json& j) : Integrator(j)
 {
@@ -24,18 +25,19 @@ PhotonMapper::PhotonMapper(const nlohmann::json& j) : Integrator(j)
     double caustic_factor = pm.at("caustic_factor");
     size_t photon_emissions = pm.at("emissions");
 
+    k_nearest_photons = getOptional(pm, "k_nearest_photons", 50);
     non_caustic_reject = 1.0 / caustic_factor;
-    radius = pm.at("radius");
-    caustic_radius = pm.at("caustic_radius");
+    max_radius = pm.at("max_radius");
+    max_caustic_radius = pm.at("max_caustic_radius");
     max_node_data = pm.at("max_photons_per_octree_leaf");
     direct_visualization = getOptional(pm, "direct_visualization", false);
     
-    BoundingBox BB = scene.boundingBox(true);
+    BoundingBox BB = scene.BB();
 
-    indirect_map = Octree<Photon>(BB, max_node_data);
-    direct_map   = Octree<Photon>(BB, max_node_data);
-    caustic_map  = Octree<Photon>(BB, max_node_data);
-    shadow_map   = Octree<ShadowPhoton>(BB, max_node_data);
+    Octree<Photon> caustic_map(BB, max_node_data);
+    Octree<Photon> direct_map(BB, max_node_data);
+    Octree<Photon> indirect_map(BB, max_node_data);
+    Octree<ShadowPhoton> shadow_map(BB, max_node_data);
 
     photon_emissions = static_cast<size_t>(photon_emissions * caustic_factor);
 
@@ -192,6 +194,12 @@ PhotonMapper::PhotonMapper(const nlohmann::json& j) : Integrator(j)
         num_shadow_photons += shadow_vecs[thread].size();
         insertAndPop(shadow_vecs[thread], shadow_map);
     }
+
+    // Convert octrees to linear array representation
+    linear_caustic_map = LinearOctree<Photon>(caustic_map);
+    linear_direct_map = LinearOctree<Photon>(direct_map);
+    linear_indirect_map = LinearOctree<Photon>(indirect_map);
+    linear_shadow_map = LinearOctree<ShadowPhoton>(shadow_map);
 
     done_constructing_octrees = true;
 
@@ -376,8 +384,8 @@ glm::dvec3 PhotonMapper::sampleRay(Ray ray, size_t ray_depth)
             }
             else
             {
-                direct = estimateRadiance(direct_map, intersect, -ray.direction, cs, radius);
-                indirect = estimateRadiance(indirect_map, intersect, -ray.direction, cs, radius);
+                direct = estimateRadiance(linear_direct_map, intersect, -ray.direction, cs, max_radius);
+                indirect = estimateRadiance(linear_indirect_map, intersect, -ray.direction, cs, max_radius);
                 global_contribution_evaluated = true;
             }
             break;
@@ -395,18 +403,18 @@ glm::dvec3 PhotonMapper::sampleRay(Ray ray, size_t ray_depth)
     return (emittance + caustics + (indirect + direct) * BRDF) / (1.0 - absorb);
 }
 
-glm::dvec3 PhotonMapper::estimateRadiance(Octree<Photon>& map, const Intersection& intersect,
+glm::dvec3 PhotonMapper::estimateRadiance(LinearOctree<Photon>& map, const Intersection& intersect,
                                        const glm::dvec3& direction, const CoordinateSystem& cs, double r) const
 {
     glm::dvec3 radiance(0.0);
-    auto photons = map.knnSearch(intersect.position, target_photons, r);
+    auto photons = map.knnSearch(intersect.position, k_nearest_photons, r);
     if (photons.empty()) return radiance;
 
     for (const auto& p : photons)
     {
-        if (glm::dot(p.direction, cs.normal) >= 0.0) continue;
-        glm::dvec3 BRDF = intersect.material->DiffuseBRDF(cs.globalToLocal(p.direction), cs.globalToLocal(direction));
-        radiance += p.flux * BRDF;
+        if (glm::dot(p.data.direction, cs.normal) >= 0.0) continue;
+        glm::dvec3 BRDF = intersect.material->DiffuseBRDF(cs.globalToLocal(p.data.direction), cs.globalToLocal(direction));
+        radiance += p.data.flux * BRDF;
     }
     return radiance / photons.back().distance2;
 }
@@ -417,17 +425,17 @@ Cone filtering method that can be used for sharper caustics. Simplified for k = 
 glm::dvec3 PhotonMapper::estimateCausticRadiance(const Intersection& intersect, const glm::dvec3& direction, const CoordinateSystem& cs)
 {
     glm::dvec3 radiance(0.0);
-    auto photons = caustic_map.knnSearch(intersect.position, target_photons, caustic_radius);
+    auto photons = linear_caustic_map.knnSearch(intersect.position, k_nearest_photons, max_caustic_radius);
     if (photons.empty()) return radiance;
 
     double max_squared_radius = photons.back().distance2;
 
     for (const auto& p : photons)
     {
-        if (glm::dot(p.direction, cs.normal) >= 0.0) continue;
+        if (glm::dot(p.data.direction, cs.normal) >= 0.0) continue;
         double wp = std::max(0.0, 1.0 - std::sqrt(p.distance2 / max_squared_radius));
-        glm::dvec3 BRDF = intersect.material->DiffuseBRDF(cs.globalToLocal(p.direction), cs.globalToLocal(direction));
-        radiance += p.flux * BRDF * wp;
+        glm::dvec3 BRDF = intersect.material->DiffuseBRDF(cs.globalToLocal(p.data.direction), cs.globalToLocal(direction));
+        radiance += p.data.flux * BRDF * wp;
     }
     return radiance / (max_squared_radius / 3.0);
 }
@@ -439,7 +447,7 @@ glm::dvec3 PhotonMapper::sampleDirect(const Intersection& intersect, bool has_sh
     introducing much artifacts. Doing a radius search in the octree is about as fast as sampling a shadow ray in my testing
     however, but this might not be the case when using several light sources or with a faster radius empty query method.
     **************************************************************************************************************************/
-    if (use_direct_map && has_shadow_photons && direct_map.radiusSearch(intersect.position, radius).empty())
+    if (use_direct_map && has_shadow_photons && linear_direct_map.knnSearch(intersect.position, k_nearest_photons, max_radius).empty())
     {
         return glm::dvec3(0.0);
     }

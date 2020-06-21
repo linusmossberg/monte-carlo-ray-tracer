@@ -31,10 +31,10 @@ void PhotonMapper::test(std::ostream& log, size_t num_iterations) const
             const auto& surface = scene.surfaces[Random::uirange(0, scene.surfaces.size() - 1)]; // random surface
             glm::dvec3 point = surface->operator()(Random::range(0, 1), Random::range(0, 1)); // random point on surface
 
-            auto caustic_photons = caustic_map.radiusSearch(point, caustic_radius);
-            auto direct_photons = direct_map.radiusSearch(point, radius);
-            auto indirect_photons = indirect_map.radiusSearch(point, radius);
-            auto shadow_photons = shadow_map.radiusSearch(point, radius);
+            auto caustic_photons = linear_caustic_map.knnSearch(point, k_nearest_photons, max_caustic_radius);
+            auto direct_photons = linear_direct_map.knnSearch(point, k_nearest_photons, max_radius);
+            auto indirect_photons = linear_indirect_map.knnSearch(point, k_nearest_photons, max_radius);
+            auto shadow_photons = linear_shadow_map.knnSearch(point, k_nearest_photons, max_radius);
         }
     }
     auto end = std::chrono::high_resolution_clock::now();

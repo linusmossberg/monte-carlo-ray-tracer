@@ -68,17 +68,9 @@ void Octree<Data>::insert(const Data& data)
 }
 
 template <class Data>
-std::vector<Data> Octree<Data>::boxSearch(const glm::dvec3& min, const glm::dvec3& max) const
+std::vector<SearchResult<Data>> Octree<Data>::radiusSearch(const glm::dvec3& point, double radius) const
 {
-    std::vector<Data> result;
-    recursiveBoxSearch(min, max, result);
-    return result;
-}
-
-template <class Data>
-std::vector<Data> Octree<Data>::radiusSearch(const glm::dvec3& point, double radius) const
-{
-    std::vector<Data> result;
+    std::vector<SearchResult<Data>> result;
     recursiveRadiusSearch(point, pow2(radius), result);
     return result;
 }
@@ -95,38 +87,9 @@ void Octree<Data>::insertInOctant(const Data& data)
     octants[octant]->insert(data);
 }
 
-template <class Data>
-void Octree<Data>::recursiveBoxSearch(const glm::dvec3& min, const glm::dvec3& max, std::vector<Data>& result) const
-{
-    if (leaf())
-    {
-        for (const auto& d : data_vec)
-        {
-            if (BB.contains(d.pos()))
-            {
-                result.push_back(d);
-            }
-        }
-    }
-    else
-    {
-        for (const auto& octant : octants)
-        {
-            const auto &min_c = octant->BB.min;
-            const auto &max_c = octant->BB.max;
-
-            if (max_c.x > min.x && max_c.y > min.y && max_c.z > min.z &&
-                min_c.x < max.x && min_c.y < max.y && min_c.z < max.z)
-            {
-                octant->recursiveBoxSearch(min, max, result);
-            }
-        }
-    }
-}
-
 // Squared distances/radius to avoid sqrt
 template <class Data>
-void Octree<Data>::recursiveRadiusSearch(const glm::dvec3& p, double radius2, std::vector<Data>& result) const
+void Octree<Data>::recursiveRadiusSearch(const glm::dvec3& p, double radius2, std::vector<SearchResult<Data>>& result) const
 {
     if (leaf())
     {
@@ -135,8 +98,7 @@ void Octree<Data>::recursiveRadiusSearch(const glm::dvec3& p, double radius2, st
             double distance2 = glm::distance2(data.pos(), p);
             if (distance2 <= radius2)
             {
-                result.push_back(data);
-                result.back().distance2 = distance2;
+                result.emplace_back(data, distance2);
             }
         }
     }
@@ -154,9 +116,9 @@ void Octree<Data>::recursiveRadiusSearch(const glm::dvec3& p, double radius2, st
 }
 
 template <class Data>
-std::vector<Data> Octree<Data>::knnSearch(const glm::dvec3& p, size_t k, double max_distance)
+std::vector<SearchResult<Data>> Octree<Data>::knnSearch(const glm::dvec3& p, size_t k, double max_distance)
 {
-    std::vector<Data> result;
+    std::vector<SearchResult<Data>> result;
 
     double max_distance2 = pow2(max_distance);
     double distance2 = BB.distance2(p);
@@ -199,9 +161,7 @@ std::vector<Data> Octree<Data>::knnSearch(const glm::dvec3& p, size_t k, double 
         }
         else
         {
-            current.data->distance2 = current.distance2;
-            result.push_back(*current.data);
-
+            result.emplace_back(*current.data, distance2);
             if (result.size() == k) return result;
         }
 

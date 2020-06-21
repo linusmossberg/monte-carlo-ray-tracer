@@ -102,7 +102,6 @@ Option getOption(std::vector<Option>& options)
             if (a == 'y' || a == 'Y' || a == 'n' || a == 'N') break;
             std::cout << "Answer with the letters y or n: ";
         }
-        std::cout << std::endl;
         if (a == 'n' || a == 'N')
         {
             options[option].photon_map = false;

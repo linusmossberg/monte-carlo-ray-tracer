@@ -28,11 +28,11 @@ BVH::BVH(const BoundingBox &BB,
         double half_max = glm::compMax(root->BB.dimensions()) / 2.0;
         BoundingBox cube_BB(root->BB.centroid() - half_max, root->BB.centroid() + half_max);
 
-        Octree<SurfacePoint> hierarchy(cube_BB, leaf_surfaces);
+        Octree<SurfaceCentroid> hierarchy(cube_BB, leaf_surfaces);
 
         for (const auto &s : surfaces)
         {
-            hierarchy.insert(SurfacePoint(s));
+            hierarchy.insert(SurfaceCentroid(s));
         }
 
         recursiveBuildFromOctree(hierarchy, root);
@@ -127,7 +127,7 @@ Intersection BVH::intersect(const Ray& ray)
     return intersect;
 }
 
-void BVH::recursiveBuildFromOctree(const Octree<SurfacePoint> &octree_node, std::shared_ptr<BuildNode> bvh_node)
+void BVH::recursiveBuildFromOctree(const Octree<SurfaceCentroid> &octree_node, std::shared_ptr<BuildNode> bvh_node)
 {
     bvh_node->df_idx = df_idx++;
 
@@ -139,7 +139,7 @@ void BVH::recursiveBuildFromOctree(const Octree<SurfacePoint> &octree_node, std:
         for (size_t i = 0; i < bvh_node->surfaces.size(); i++)
         {
             bvh_node->surfaces[i] = octree_node.data_vec[i].surface;
-            BB.merge(bvh_node->surfaces[i]->BB);
+            BB.merge(bvh_node->surfaces[i]->BB());
         }
     }
     else
@@ -175,7 +175,7 @@ void BVH::recursiveBuildBinarySAH(std::shared_ptr<BuildNode> bvh_node)
     BoundingBox centroid_extent;
     for (const auto &s : S)
     {
-        centroid_extent.merge(s->midPoint());
+        centroid_extent.merge(s->BB().centroid());
     }
     glm::dvec3 extent_dims = centroid_extent.dimensions();
 
@@ -199,9 +199,9 @@ void BVH::recursiveBuildBinarySAH(std::shared_ptr<BuildNode> bvh_node)
     std::vector<std::pair<size_t, BoundingBox>> bins(bins_per_axis, { 0, BoundingBox() });
     for (const auto &s : S)
     {
-        int idx = getIdx(s->midPoint());
+        int idx = getIdx(s->BB().centroid());
         bins[idx].first++;
-        bins[idx].second.merge(s->BB);
+        bins[idx].second.merge(s->BB());
     }
 
     std::shared_ptr<BuildNode> A = std::make_shared<BuildNode>();
@@ -244,16 +244,16 @@ void BVH::recursiveBuildBinarySAH(std::shared_ptr<BuildNode> bvh_node)
 
     for (const auto &s : S)
     {
-        int idx = getIdx(s->midPoint());
+        int idx = getIdx(s->BB().centroid());
         if (idx <= split_bin)
         {
             A->surfaces.push_back(s);
-            A->BB.merge(s->BB);
+            A->BB.merge(s->BB());
         }
         else
         {
             B->surfaces.push_back(s);
-            B->BB.merge(s->BB);
+            B->BB.merge(s->BB());
         }
     }
 
@@ -293,7 +293,7 @@ void BVH::recursiveBuildQuaternarySAH(std::shared_ptr<BuildNode> bvh_node)
     BoundingBox centroid_extent;
     for (const auto &s : S)
     {
-        centroid_extent.merge(s->midPoint());
+        centroid_extent.merge(s->BB().centroid());
     }
     glm::dvec3 extent_dims = centroid_extent.dimensions();
 
@@ -323,9 +323,9 @@ void BVH::recursiveBuildQuaternarySAH(std::shared_ptr<BuildNode> bvh_node)
 
     for (const auto &s : S)
     {
-        glm::ivec2 idx = getIdx(s->midPoint());
+        glm::ivec2 idx = getIdx(s->BB().centroid());
         bins[idx.x][idx.y].first++;
-        bins[idx.x][idx.y].second.merge(s->BB);
+        bins[idx.x][idx.y].second.merge(s->BB());
     }
 
     double min_cost = std::numeric_limits<double>::max();
@@ -379,7 +379,7 @@ void BVH::recursiveBuildQuaternarySAH(std::shared_ptr<BuildNode> bvh_node)
 
     for (const auto &s : S)
     {
-        glm::ivec2 idx = getIdx(s->midPoint());
+        glm::ivec2 idx = getIdx(s->BB().centroid());
 
         uint8_t child_idx = 0b00;
         if (idx.x > split_bin.x) child_idx |= 0b01;
@@ -391,7 +391,7 @@ void BVH::recursiveBuildQuaternarySAH(std::shared_ptr<BuildNode> bvh_node)
         }
 
         new_nodes[child_idx]->surfaces.push_back(s);
-        new_nodes[child_idx]->BB.merge(s->BB);
+        new_nodes[child_idx]->BB.merge(s->BB());
     }
 
     S.clear();
@@ -415,7 +415,7 @@ void BVH::compact(std::shared_ptr<BuildNode> bvh_node, int32_t next_sibling, uin
     linear_tree[bvh_node->df_idx].BB = bvh_node->BB;
     linear_tree[bvh_node->df_idx].next_sibling = next_sibling;
     linear_tree[bvh_node->df_idx].start_surface = surface_idx;
-    linear_tree[bvh_node->df_idx].num_surfaces = bvh_node->surfaces.size();
+    linear_tree[bvh_node->df_idx].num_surfaces = (uint8_t)bvh_node->surfaces.size();
 
     for (const auto &surface : bvh_node->surfaces)
     {
