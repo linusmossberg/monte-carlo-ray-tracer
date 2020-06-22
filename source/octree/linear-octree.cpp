@@ -1,5 +1,9 @@
 #include "linear-octree.hpp"
 
+#include <glm/gtx/norm.hpp>
+
+#include "../common/util.hpp"
+
 template <class Data>
 LinearOctree<Data>::LinearOctree(Octree<Data> &octree_root)
 {
