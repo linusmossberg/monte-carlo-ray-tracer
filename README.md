@@ -10,12 +10,8 @@ This is a physically based renderer with Path Tracing and Photon Mapping.
   <img src="renders/quadric.jpg" alt="Path traced render of scene with only quadric surfaces" title="Path traced render of scene with only quadric surfaces" />
   <a rel="license" href="https://creativecommons.org/licenses/by/4.0/"></a>
 </div>
-<div about="renders/c1_64sqrtspp_report_4k_flintglass_downscaled.png">
-  <img src="renders/c1_64sqrtspp_report_4k_flintglass_downscaled.png" alt="Path Traced, Scene IOR 1.75" title="Path Traced, Scene IOR 1.75" />
-  <a rel="license" href="https://creativecommons.org/licenses/by/4.0/"></a>
-</div>
 <div about="renders/caustics.jpg">
-  <img src="renders/caustics.jpg" alt="Photon mapped render of caustics, 26 342 158 triangles. Original scene by Benedikt Bitterli." title="Photon mapped render of caustics, 26 342 158 triangles. Original scene by Benedikt Bitterli." />
+  <img src="renders/caustics.jpg" alt="Photon mapped render of caustics, 6 583 508 triangles. Original scene by Benedikt Bitterli." title="Photon mapped render of caustics, 6 583 508 triangles. Original scene by Benedikt Bitterli." />
   <a rel="license" href="https://creativecommons.org/licenses/by/4.0/"></a>
 </div>
 
