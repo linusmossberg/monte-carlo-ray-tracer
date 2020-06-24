@@ -78,9 +78,10 @@ Surface::Quadric::Quadric(const nlohmann::json &j, std::shared_ptr<Material> mat
 
 /**********************************************************************
  Ray equation: r = o + d*t
+ Quadric equation: transpose(p)*Q*p = 0
  Ray quadric intersection: transpose(r)*Q*r = 0
  
-   transpose(r)*Q*r = dot(r,A*r) =
+   transpose(r)*Q*r = dot(r,Q*r) =
  = dot(o + d*t, Q * ((o + d*t))) = 
  = dot(d, Q*d) * t^2 + (dot(o, Q*d) + dot(d, Q*o)) * t + dot(o, Q*o) =
  = dot(d, Q*d) * t^2 + 2*dot(d, Q*o) * t + dot(o, Q*o) = 0
@@ -109,7 +110,7 @@ bool Surface::Quadric::intersect(const Ray& ray, Intersection& intersection) con
     glm::dvec4 Qo = Q * o;
 
     double a = glm::dot(d, Q * d);
-    double b = 2.0 * glm::dot(d, Qo);
+    double b = glm::dot(d, Qo) * 2.0;
     double c = glm::dot(o, Qo);
 
     double t;

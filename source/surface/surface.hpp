@@ -65,6 +65,9 @@ namespace Surface
     public:
         Triangle(const glm::dvec3& v0, const glm::dvec3& v1, const glm::dvec3& v2, std::shared_ptr<Material> material);
 
+        Triangle(const glm::dvec3& v0, const glm::dvec3& v1, const glm::dvec3& v2,
+                 const glm::dvec3& n0, const glm::dvec3& n1, const glm::dvec3& n2, std::shared_ptr<Material> material);
+
         virtual bool intersect(const Ray& ray, Intersection& intersection) const;
         virtual glm::dvec3 operator()(double u, double v) const;
         virtual glm::dvec3 normal(const glm::dvec3& pos) const;
@@ -73,10 +76,11 @@ namespace Surface
         virtual void computeArea();
         virtual void computeBoundingBox();
 
-        glm::dvec3 v0, v1, v2;
+        const glm::dvec3 v0, v1, v2;
+        const std::vector<glm::dvec3> N;
 
         // Pre-computed edges and normal
-        glm::dvec3 E1, E2, normal_;
+        const glm::dvec3 E1, E2, normal_;
     };
 
     class Quadric : public Base

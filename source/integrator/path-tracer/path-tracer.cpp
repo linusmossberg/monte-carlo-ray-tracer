@@ -17,49 +17,49 @@ glm::dvec3 PathTracer::sampleRay(Ray ray, size_t ray_depth)
         return glm::dvec3(0.0);
     }
 
-    Intersection intersection = scene.intersect(ray, true);
+    Intersection intersect = scene.intersect(ray);
 
-    if (!intersection)
+    if (!intersect)
     {
         return scene.skyColor(ray);
     }
 
-    double absorb = ray_depth > Integrator::min_ray_depth ? 1.0 - intersection.material->reflect_probability : 0.0;
+    double absorb = ray_depth > Integrator::min_ray_depth ? 1.0 - intersect.material->reflect_probability : 0.0;
 
     if (Random::trial(absorb))
     {
         return glm::dvec3(0.0);
     }
 
-    Ray new_ray(intersection.position);
+    Ray new_ray(intersect.position);
 
     glm::dvec3 BRDF;
     glm::dvec3 direct(0);
-    glm::dvec3 emittance = (ray_depth == 0 || ray.specular || naive) ? intersection.material->emittance : glm::dvec3(0);
+    glm::dvec3 emittance = (ray_depth == 0 || ray.specular || naive) ? intersect.material->emittance : glm::dvec3(0);
 
     double n1 = ray.medium_ior;
-    double n2 = std::abs(ray.medium_ior - scene.ior) < C::EPSILON ? intersection.material->ior : scene.ior;
+    double n2 = std::abs(ray.medium_ior - scene.ior) < C::EPSILON ? intersect.material->ior : scene.ior;
 
-    switch (intersection.selectNewPath(n1, n2, -ray.direction))
+    switch (intersect.selectNewPath(n1, n2, -ray.direction))
     {
         case Path::REFLECT:
         {
-            BRDF = intersection.material->SpecularBRDF();
-            new_ray.reflectSpecular(ray.direction, intersection.normal, n1);
+            BRDF = intersect.material->SpecularBRDF();
+            new_ray.reflectSpecular(ray.direction, intersect, n1);
             break;
         }
         case Path::REFRACT:
         {
-            BRDF = intersection.material->SpecularBRDF();
-            new_ray.refractSpecular(ray.direction, intersection.normal, n1, n2);
+            BRDF = intersect.material->SpecularBRDF();
+            new_ray.refractSpecular(ray.direction, intersect, n1, n2);
             break;
         }
         case Path::DIFFUSE:
         {
-            CoordinateSystem cs(intersection.normal);
-            new_ray.reflectDiffuse(cs, n1);
-            BRDF = intersection.material->DiffuseBRDF(cs.globalToLocal(new_ray.direction), cs.globalToLocal(-ray.direction)) * C::PI;
-            if (!naive) direct = Integrator::sampleDirect(intersection);
+            CoordinateSystem cs(intersect.shadingNormal());
+            new_ray.reflectDiffuse(cs, intersect, n1);
+            BRDF = intersect.material->DiffuseBRDF(cs.globalToLocal(new_ray.direction), cs.globalToLocal(-ray.direction)) * C::PI;
+            if (!naive) direct = Integrator::sampleDirect(intersect);
             break;
         }
     }

@@ -423,15 +423,12 @@ void BVH::compact(std::shared_ptr<BuildNode> bvh_node, int32_t next_sibling, uin
         surface_idx++;
     }
 
-    for (size_t i = 0; i < bvh_node->children.size(); i++)
+    if (!bvh_node->children.empty())
     {
-        if (i == bvh_node->children.size() - 1)
-        {
-            compact(bvh_node->children[i], -1, surface_idx);
-        }
-        else
+        for (size_t i = 0; i < bvh_node->children.size() - 1; i++)
         {
             compact(bvh_node->children[i], bvh_node->children[i + 1]->df_idx, surface_idx);
         }
+        compact(bvh_node->children.back(), -1, surface_idx);
     }
 }

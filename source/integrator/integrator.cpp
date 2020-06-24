@@ -40,9 +40,7 @@ glm::dvec3 Integrator::sampleDirect(const Intersection& intersection) const
             return glm::dvec3(0.0);
         }    
 
-        double min_distance = glm::distance(light_pos, intersection.position) - C::EPSILON;
-
-        Intersection shadow_intersection = scene.intersect(shadow_ray, false, min_distance);
+        Intersection shadow_intersection = scene.intersect(shadow_ray, true);
 
         if (shadow_intersection)
         {

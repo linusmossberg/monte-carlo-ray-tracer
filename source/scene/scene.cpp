@@ -30,32 +30,35 @@ Scene::Scene(const nlohmann::json& j)
         std::string type = s.at("type");
         if (type == "object")
         {
-            std::vector<glm::dvec3> v;
-            std::vector<std::vector<size_t>> triangles;
+            std::vector<glm::dvec3> v, n;
+            std::vector<std::vector<size_t>> triangles_v, triangles_vt, triangles_vn;
             if (s.find("file") != s.end())
             {
                 auto path = std::filesystem::current_path() / "scenes";
                 path /= s.at("file").get<std::string>();
-                parseOBJ(path, v, triangles);
+                parseOBJ(path, v, n, triangles_v, triangles_vt, triangles_vn);
             }
             else
             {
                 v = vertices.at(s.at("vertex_set"));
-                triangles = s.at("triangles").get<std::vector<std::vector<size_t>>>();
+                triangles_v = s.at("triangles").get<std::vector<std::vector<size_t>>>();
             }
 
             bool is_emissive = glm::compMax(material->emittance) > C::EPSILON;
             double total_area = 0.0;
             if (is_emissive)
             {
-                for (const auto& t : triangles)
+                for (const auto& t : triangles_v)
                 {
                     total_area += Surface::Triangle(v.at(t.at(0)), v.at(t.at(1)), v.at(t.at(2)), material).area();
                 }
             }
 
-            for (const auto& t : triangles)
+            bool vertex_normals = (triangles_vn.size() == triangles_v.size()) && !n.empty();
+
+            for (size_t i = 0; i < triangles_v.size(); i++)
             {
+                const auto &t = triangles_v[i];
                 // Entire object emits the flux of assigned material emittance in scene file.
                 // The flux of the material therefore needs to be distributed amongst all object triangles.
                 std::shared_ptr<Material> mat;
@@ -70,9 +73,20 @@ Scene::Scene(const nlohmann::json& j)
                     mat = material;
                 }
 
-                surfaces.push_back(std::make_shared<Surface::Triangle>(
-                    v.at(t.at(0)), v.at(t.at(1)), v.at(t.at(2)), mat)
-                );
+                if (vertex_normals)
+                {
+                    const auto &tn = triangles_vn[i];
+                    surfaces.push_back(std::make_shared<Surface::Triangle>(
+                        v.at(t.at(0)), v.at(t.at(1)), v.at(t.at(2)),
+                        n.at(tn.at(0)), n.at(tn.at(1)), n.at(tn.at(2)), mat)
+                    );
+                }
+                else
+                {
+                    surfaces.push_back(std::make_shared<Surface::Triangle>(
+                        v.at(t.at(0)), v.at(t.at(1)), v.at(t.at(2)), mat)
+                    );
+                }
             }
         }
         else if (type == "triangle")
@@ -110,7 +124,7 @@ Scene::Scene(const nlohmann::json& j)
     generateEmissives();
 }
 
-Intersection Scene::intersect(const Ray& ray, bool align_normal, double min_distance) const
+Intersection Scene::intersect(const Ray& ray, bool shadow_ray) const
 {
     Intersection intersect;
 
@@ -120,25 +134,37 @@ Intersection Scene::intersect(const Ray& ray, bool align_normal, double min_dist
     }
     else
     {
-        bool use_stop_condition = min_distance > 0.0;
-
         for (const auto& surface : surfaces)
         {
             Intersection t_intersect;
             if (surface->intersect(ray, t_intersect))
             {
-                if (use_stop_condition && t_intersect.t < min_distance)
-                    return Intersection();
-
                 if (t_intersect.t < intersect.t)
                     intersect = t_intersect;
             }
         }
     }
 
-    if (align_normal && intersect && glm::dot(ray.direction, intersect.normal) > 0.0)
+    if (intersect && !shadow_ray)
     {
-        intersect.normal = -intersect.normal;
+        double cos_theta = glm::dot(ray.direction, intersect.normal);
+
+        if (intersect.use_interpolated)
+        {
+            if (cos_theta < 0.0 != glm::dot(ray.direction, intersect.interpolated_normal) < 0.0)
+            {
+                intersect.use_interpolated = false;
+            }
+        }
+
+        if (cos_theta > 0.0)
+        {
+            intersect.normal = -intersect.normal;
+            if (intersect.use_interpolated)
+            {
+                intersect.interpolated_normal = -intersect.interpolated_normal;
+            }
+        }
     }
 
     return intersect;
@@ -173,9 +199,17 @@ glm::dvec3 Scene::skyColor(const Ray& ray) const
 
 void Scene::parseOBJ(const std::filesystem::path &path, 
                      std::vector<glm::dvec3> &vertices,
-                     std::vector<std::vector<size_t>> &triangles) const
+                     std::vector<glm::dvec3> &normals,
+                     std::vector<std::vector<size_t>> &triangles_v,
+                     std::vector<std::vector<size_t>> &triangles_vt,
+                     std::vector<std::vector<size_t>> &triangles_vn) const
 {
     std::ifstream file(path);
+
+    auto isNumber = [](const std::string &s) 
+    {
+        return !s.empty() && std::all_of(s.begin(), s.end(), ::isdigit);
+    };
 
     std::string line;
     while (std::getline(file, line))
@@ -191,20 +225,53 @@ void Scene::parseOBJ(const std::filesystem::path &path,
 
             vertices.push_back(v);
         }
+        if (line_type == "vn")
+        {
+            glm::dvec3 vn;
+            ss >> vn.x >> vn.y >> vn.z;
+
+            normals.push_back(vn);
+        }
         else if (line_type == "f")
         {
-            std::vector<size_t> triangle(3);
+            std::vector<size_t> triangle_v, triangle_vt, triangle_vn;
             for (int i = 0; i < 3; i++)
             {
                 std::string element;
                 ss >> element;
-                if (ss.peek() == '-')
+                std::stringstream ss_f(element);
+
+                std::vector<size_t> idxs;
+                while (ss_f.good())
                 {
-                    throw std::runtime_error("OBJ files with negative vertex offsets are not supported.");
+                    if (ss_f.peek() == '-')
+                    {
+                        throw std::runtime_error("OBJ files with negative offsets are not supported.");
+                    }
+                    std::string idx;
+                    std::getline(ss_f, idx, '/');
+                    idxs.push_back(isNumber(idx) ? std::stoull(idx) : 0);
                 }
-                triangle[i] = std::stoull(element.substr(0, element.find("/", 0))) - 1;
+
+                if (idxs.size() == 1)
+                {
+                    triangle_v.push_back(idxs[0] - 1);
+                }
+                else if (idxs.size() == 2)
+                {
+                    triangle_v.push_back(idxs[0] - 1);
+                    triangle_vt.push_back(idxs[1] - 1);
+                }
+                else if (idxs.size() == 3)
+                {
+                    triangle_v.push_back(idxs[0] - 1);
+                    if (idxs[1]) triangle_vt.push_back(idxs[1] - 1);
+                    triangle_vn.push_back(idxs[2] - 1);
+                }
             }
-            triangles.push_back(triangle);
+            if (triangle_v.size() == 3) triangles_v.push_back(triangle_v);
+            if (triangle_vt.size() == 3) triangles_vt.push_back(triangle_vt);
+            if (triangle_vn.size() == 3) triangles_vn.push_back(triangle_vn);
         }
     }
 

@@ -15,10 +15,18 @@ struct Intersection
 
     size_t selectNewPath(double n1, double n2, const glm::dvec3& direction) const;
 
+    const glm::dvec3& shadingNormal() const 
+    { 
+        return use_interpolated ? interpolated_normal : normal;
+    }
+
     glm::dvec3 position;
     glm::dvec3 normal;
     double t = std::numeric_limits<double>::max();
     std::shared_ptr<Material> material;
+
+    glm::dvec3 interpolated_normal;
+    bool use_interpolated = false;
 
     explicit operator bool() const
     {

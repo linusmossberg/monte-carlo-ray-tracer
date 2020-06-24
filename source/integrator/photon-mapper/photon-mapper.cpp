@@ -31,6 +31,7 @@ PhotonMapper::PhotonMapper(const nlohmann::json& j) : Integrator(j)
     max_caustic_radius = pm.at("max_caustic_radius");
     max_node_data = pm.at("max_photons_per_octree_leaf");
     direct_visualization = getOptional(pm, "direct_visualization", false);
+    use_shadow_photons = getOptional(pm, "use_shadow_photons", true);
     
     BoundingBox BB = scene.BB();
 
@@ -196,10 +197,10 @@ PhotonMapper::PhotonMapper(const nlohmann::json& j) : Integrator(j)
     }
 
     // Convert octrees to linear array representation
-    linear_caustic_map = LinearOctree<Photon>(caustic_map);
-    linear_direct_map = LinearOctree<Photon>(direct_map);
+    linear_caustic_map  = LinearOctree<Photon>(caustic_map);
+    linear_direct_map   = LinearOctree<Photon>(direct_map);
     linear_indirect_map = LinearOctree<Photon>(indirect_map);
-    linear_shadow_map = LinearOctree<ShadowPhoton>(shadow_map);
+    linear_shadow_map   = LinearOctree<ShadowPhoton>(shadow_map);
 
     done_constructing_octrees = true;
 
@@ -227,7 +228,7 @@ void PhotonMapper::emitPhoton(const Ray& ray, const glm::dvec3& flux, size_t thr
         return;
     }
 
-    Intersection intersect = scene.intersect(ray, true);
+    Intersection intersect = scene.intersect(ray);
 
     if (!intersect)
     {
@@ -251,13 +252,13 @@ void PhotonMapper::emitPhoton(const Ray& ray, const glm::dvec3& flux, size_t thr
             }
 
             BRDF = intersect.material->SpecularBRDF();
-            new_ray.reflectSpecular(ray.direction, intersect.normal, n1);
+            new_ray.reflectSpecular(ray.direction, intersect, n1);
             break;
         }
         case Path::REFRACT:
         {
             BRDF = intersect.material->SpecularBRDF();
-            new_ray.refractSpecular(ray.direction, intersect.normal, n1, n2);
+            new_ray.refractSpecular(ray.direction, intersect, n1, n2);
             break;
         }
         case Path::DIFFUSE:
@@ -281,9 +282,10 @@ void PhotonMapper::emitPhoton(const Ray& ray, const glm::dvec3& flux, size_t thr
                     indirect_vecs[thread].emplace_back(flux / non_caustic_reject, intersect.position, ray.direction);
                 }
             }
+            
+            CoordinateSystem cs(intersect.shadingNormal());
+            new_ray.reflectDiffuse(cs, intersect, n1);
 
-            CoordinateSystem cs(intersect.normal);
-            new_ray.reflectDiffuse(cs, n1);
             BRDF = C::PI * intersect.material->DiffuseBRDF(cs.globalToLocal(new_ray.direction), cs.globalToLocal(-ray.direction));
         }
     }
@@ -291,7 +293,7 @@ void PhotonMapper::emitPhoton(const Ray& ray, const glm::dvec3& flux, size_t thr
     glm::dvec3 new_flux = flux * BRDF;
 
     // Based on slide 13 of https://cgg.mff.cuni.cz/~jaroslav/teaching/2015-npgr010/slides/11%20-%20npgr010-2015%20-%20PM.pdf
-    double survive = std::min(1.0, glm::compMax(new_flux) / glm::compMax(flux));
+    double survive = std::min(ray_depth > min_ray_depth ? 0.9 : 1.0, glm::compMax(new_flux) / glm::compMax(flux));
 
     if (Random::trial(survive))
     {
@@ -301,9 +303,19 @@ void PhotonMapper::emitPhoton(const Ray& ray, const glm::dvec3& flux, size_t thr
     return;
 }
 
-void PhotonMapper::createShadowPhotons(const Ray& ray, size_t thread)
+void PhotonMapper::createShadowPhotons(const Ray& ray, size_t thread, size_t depth)
 {
-    Intersection intersect = scene.intersect(ray, true);
+    if (!use_shadow_photons)
+    {
+        return;
+    }
+
+    if (depth > max_ray_depth)
+    {
+        return;
+    }
+
+    Intersection intersect = scene.intersect(ray);
 
     if (!intersect)
     {
@@ -316,7 +328,7 @@ void PhotonMapper::createShadowPhotons(const Ray& ray, size_t thread)
     }
 
     glm::dvec3 pos(intersect.position - intersect.normal * C::EPSILON);
-    createShadowPhotons(Ray(pos, pos + ray.direction), thread);
+    createShadowPhotons(Ray(pos, pos + ray.direction), thread, depth + 1);
 }
 
 glm::dvec3 PhotonMapper::sampleRay(Ray ray, size_t ray_depth)
@@ -327,7 +339,7 @@ glm::dvec3 PhotonMapper::sampleRay(Ray ray, size_t ray_depth)
         return glm::dvec3(0.0);
     }
 
-    Intersection intersect = scene.intersect(ray, true);
+    Intersection intersect = scene.intersect(ray);
 
     if (!intersect)
     {
@@ -358,19 +370,19 @@ glm::dvec3 PhotonMapper::sampleRay(Ray ray, size_t ray_depth)
         {
             if (diffuse) return glm::dvec3(0.0);
             BRDF = intersect.material->SpecularBRDF();
-            new_ray.reflectSpecular(ray.direction, intersect.normal, n1);
+            new_ray.reflectSpecular(ray.direction, intersect, n1);
             break;
         }
         case Path::REFRACT:
         {
             if (diffuse) return glm::dvec3(0.0);
             BRDF = intersect.material->SpecularBRDF();
-            new_ray.refractSpecular(ray.direction, intersect.normal, n1, n2);
+            new_ray.refractSpecular(ray.direction, intersect, n1, n2);
             break;
         }
         case Path::DIFFUSE:
         {
-            CoordinateSystem cs(intersect.normal);
+            CoordinateSystem cs(intersect.shadingNormal());
 
             caustics = estimateCausticRadiance(intersect, -ray.direction, cs);
 
@@ -378,9 +390,9 @@ glm::dvec3 PhotonMapper::sampleRay(Ray ray, size_t ray_depth)
             if (!direct_visualization && (ray_depth == 0 || ray.specular || has_shadow_photons))
             {
                 double n1 = ray.medium_ior;
-                new_ray.reflectDiffuse(cs, n1);
+                new_ray.reflectDiffuse(cs, intersect, n1);
                 BRDF = intersect.material->DiffuseBRDF(cs.globalToLocal(new_ray.direction), cs.globalToLocal(-ray.direction)) * C::PI;
-                direct = sampleDirect(intersect, has_shadow_photons, false);
+                direct = sampleDirect(intersect);
             }
             else
             {
@@ -440,16 +452,7 @@ glm::dvec3 PhotonMapper::estimateCausticRadiance(const Intersection& intersect, 
     return radiance / (max_squared_radius / 3.0);
 }
 
-glm::dvec3 PhotonMapper::sampleDirect(const Intersection& intersect, bool has_shadow_photons, bool use_direct_map) const
+bool PhotonMapper::hasShadowPhoton(const Intersection& intersect) const
 {
-    /**************************************************************************************************************************
-    If enabled, this reduces the number of shadow rays used at points that most likely aren't under direct illumination without
-    introducing much artifacts. Doing a radius search in the octree is about as fast as sampling a shadow ray in my testing
-    however, but this might not be the case when using several light sources or with a faster radius empty query method.
-    **************************************************************************************************************************/
-    if (use_direct_map && has_shadow_photons && linear_direct_map.knnSearch(intersect.position, k_nearest_photons, max_radius).empty())
-    {
-        return glm::dvec3(0.0);
-    }
-    return Integrator::sampleDirect(intersect);
+    return use_shadow_photons && !linear_shadow_map.knnSearch(intersect.position, k_nearest_photons, max_radius).empty();
 }

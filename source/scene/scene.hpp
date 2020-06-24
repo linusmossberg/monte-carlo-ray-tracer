@@ -17,7 +17,7 @@ class Scene
 public:
     Scene(const nlohmann::json& j);
 
-    Intersection intersect(const Ray& ray, bool align_normal = false, double min_distance = -1) const;
+    Intersection intersect(const Ray& ray, bool shadow_ray = false) const;
 
     void generateEmissives();
 
@@ -40,7 +40,10 @@ private:
 
     void computeBoundingBox();
 
-    void parseOBJ(const std::filesystem::path &path, 
+    void parseOBJ(const std::filesystem::path &path,
                   std::vector<glm::dvec3> &vertices,
-                  std::vector<std::vector<size_t>> &triangles) const;
+                  std::vector<glm::dvec3> &normals,
+                  std::vector<std::vector<size_t>> &triangles_v,
+                  std::vector<std::vector<size_t>> &triangles_vt,
+                  std::vector<std::vector<size_t>> &triangles_vn) const;
 };

@@ -9,6 +9,15 @@ Surface::Triangle::Triangle(const glm::dvec3& v0, const glm::dvec3& v1, const gl
     computeBoundingBox();
 }
 
+Surface::Triangle::Triangle(const glm::dvec3& v0, const glm::dvec3& v1, const glm::dvec3& v2,
+                            const glm::dvec3& n0, const glm::dvec3& n1, const glm::dvec3& n2, std::shared_ptr<Material> material)
+    : Base(material), v0(v0), v1(v1), v2(v2), E1(v1 - v0), E2(v2 - v0), normal_(glm::normalize(glm::cross(E1, E2))), 
+      N({ glm::normalize(n0), glm::normalize(n1), glm::normalize(n2) })
+{
+    computeArea();
+    computeBoundingBox();
+}
+
 bool Surface::Triangle::intersect(const Ray& ray, Intersection& intersection) const
 {
     glm::dvec3 P = glm::cross(ray.direction, E2);
@@ -41,6 +50,12 @@ bool Surface::Triangle::intersect(const Ray& ray, Intersection& intersection) co
     }
 
     intersection = Intersection(ray(t), normal_, t, material);
+
+    if (!N.empty())
+    {
+        intersection.interpolated_normal = glm::normalize((1.0 - u - v) * N[0] + u * N[1] + v * N[2]);
+        intersection.use_interpolated = true;
+    }
 
     return true;
 }

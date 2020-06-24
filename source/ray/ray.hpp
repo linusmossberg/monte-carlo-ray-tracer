@@ -2,6 +2,7 @@
 
 #include <glm/vec3.hpp>
 
+#include "intersection.hpp"
 #include "../common/coordinate-system.hpp"
 
 class Ray
@@ -13,9 +14,9 @@ public:
 
     glm::dvec3 operator()(double t) const;
 
-    void reflectDiffuse(const CoordinateSystem& cs, double n1);
-    void reflectSpecular(const glm::dvec3 &in, const glm::dvec3 &normal, double n1);
-    void refractSpecular(const glm::dvec3 &in, const glm::dvec3 &normal, double n1, double n2);
+    void reflectDiffuse(const CoordinateSystem &cs, const Intersection &intersect, double n1);
+    void reflectSpecular(const glm::dvec3 &in, const Intersection &intersect, double n1);
+    void refractSpecular(const glm::dvec3 &in, const Intersection &intersect, double n1, double n2);
     
     // Normalized direction -> t corresponds to euclidian distance in metric units
     glm::dvec3 start, direction;

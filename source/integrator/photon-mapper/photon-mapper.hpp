@@ -7,8 +7,8 @@
 
 #include "../integrator.hpp"
 
-#include "../../octree/octree.hpp"
 #include "../../octree/linear-octree.hpp"
+
 #include "photon.hpp"
 
 class PhotonMapper : public Integrator
@@ -18,7 +18,7 @@ public:
 
     void emitPhoton(const Ray& ray, const glm::dvec3& flux, size_t thread, size_t ray_depth = 0);
 
-    void createShadowPhotons(const Ray& ray, size_t thread);
+    void createShadowPhotons(const Ray& ray, size_t thread, size_t depth = 0);
 
     virtual glm::dvec3 sampleRay(Ray ray, size_t ray_depth = 0);
 
@@ -27,12 +27,7 @@ public:
     
     glm::dvec3 estimateCausticRadiance(const Intersection& intersect, const glm::dvec3& direction, const CoordinateSystem& cs);
 
-    bool hasShadowPhoton(const Intersection& intersect) const
-    {
-        return !linear_shadow_map.knnSearch(intersect.position, k_nearest_photons, max_radius).empty();
-    }
-
-    virtual glm::dvec3 sampleDirect(const Intersection& intersect, bool has_shadow_photons, bool use_direct_map) const;
+    bool hasShadowPhoton(const Intersection& intersect) const;
 
     // Implemented in Tests.cpp
     void test(std::ostream& log, size_t num_iterations) const;
@@ -56,6 +51,7 @@ private:
     double non_caustic_reject;
 
     bool direct_visualization;
+    bool use_shadow_photons;
 
     uint16_t max_node_data;
     

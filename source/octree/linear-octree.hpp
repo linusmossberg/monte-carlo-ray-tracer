@@ -26,7 +26,7 @@ public:
     std::vector<Data> ordered_data;
 
 private:
-    void compact(Octree<Data> &node, int32_t &df_idx, uint64_t &data_idx, bool last = false);
+    void compact(Octree<Data> *node, int32_t &df_idx, uint64_t &data_idx, bool last = false);
 
     void octreeSize(const Octree<Data> &octree_root, size_t &size, size_t &data_size) const;
 

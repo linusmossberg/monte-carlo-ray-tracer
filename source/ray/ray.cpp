@@ -16,41 +16,43 @@ glm::dvec3 Ray:: operator()(double t) const
     return start + direction * t;
 }
 
-void Ray::reflectDiffuse(const CoordinateSystem& cs, double n1)
+void Ray::reflectDiffuse(const CoordinateSystem &cs, const Intersection &intersect, double n1)
 {
     direction = cs.localToGlobal(Random::CosWeightedHemiSample());
-    start += cs.normal * C::EPSILON;
+    start += intersect.normal * C::EPSILON;
     specular = false;
     medium_ior = n1;
 }
 
-void Ray::reflectSpecular(const glm::dvec3 &in, const glm::dvec3 &normal, double n1)
+void Ray::reflectSpecular(const glm::dvec3 &in, const Intersection &intersect, double n1)
 {
-    direction = glm::reflect(in, normal);
-    start += normal * C::EPSILON;
+    direction = glm::reflect(in, intersect.shadingNormal());
+    start += intersect.normal * C::EPSILON;
     specular = true;
     medium_ior = n1;
 }
 
-void Ray::refractSpecular(const glm::dvec3 &in, const glm::dvec3 &normal, double n1, double n2)
+void Ray::refractSpecular(const glm::dvec3 &in, const Intersection &intersect, double n1, double n2)
 {
     specular = true;
 
+    const auto &shading_normal = intersect.shadingNormal();
+
     double ior_quotient = n1 / n2;
-    double cos_theta = glm::dot(normal, in);
+    double cos_theta = glm::dot(shading_normal, in);
     double k = 1.0 - pow2(ior_quotient) * (1.0 - pow2(cos_theta)); // 1 - (n1/n2 * sin(theta))^2
     if(k >= 0)
     {
         /* SPECULAR REFRACTION */
-        direction = ior_quotient * in - (ior_quotient * cos_theta + std::sqrt(k)) * normal;
-        start -= normal * C::EPSILON;
+        direction = ior_quotient * in - (ior_quotient * cos_theta + std::sqrt(k)) * shading_normal;
+        start -= intersect.normal * C::EPSILON;
         medium_ior = n2;
     }
     else
     {
         /* CRITICAL ANGLE, SPECULAR REFLECTION */
-        direction = in - normal * cos_theta * 2.0;
-        start += normal * C::EPSILON;
+        direction = in - shading_normal * cos_theta * 2.0;
+        start += intersect.normal * C::EPSILON;
         medium_ior = n1;
     }
 }

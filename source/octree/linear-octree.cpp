@@ -17,7 +17,7 @@ LinearOctree<Data>::LinearOctree(Octree<Data> &octree_root)
 
     int32_t df_idx = 0;
     uint64_t data_idx = 0;
-    compact(octree_root, df_idx, data_idx, true);
+    compact(&octree_root, df_idx, data_idx, true);
 
     octree_root.octants.clear(); 
 }
@@ -103,37 +103,38 @@ void LinearOctree<Data>::octreeSize(const Octree<Data> &octree_root, size_t &siz
 }
 
 template <class Data>
-void LinearOctree<Data>::compact(Octree<Data> &node, int32_t &df_idx, uint64_t &data_idx, bool last)
+void LinearOctree<Data>::compact(Octree<Data> *node, int32_t &df_idx, uint64_t &data_idx, bool last)
 {
     int32_t idx = df_idx++;
 
-    linear_tree[idx].BB = node.BB;
-    linear_tree[idx].leaf = (uint8_t)node.leaf();
+    linear_tree[idx].BB = node->BB;
+    linear_tree[idx].leaf = (uint8_t)node->leaf();
     linear_tree[idx].start_data = data_idx;
-    linear_tree[idx].num_data = (uint16_t)node.data_vec.size();
+    linear_tree[idx].num_data = (uint16_t)node->data_vec.size();
 
-    for (const auto &data : node.data_vec)
+    for (const auto &data : node->data_vec)
     {
         ordered_data.push_back(data);
         data_idx++;
     }
 
-    node.data_vec.clear();
+    node->data_vec.clear();
 
-    if (!node.leaf())
+    if (!node->leaf())
     {
         std::vector<size_t> use;
-        for (size_t i = 0; i < node.octants.size(); i++)
+        for (size_t i = 0; i < node->octants.size(); i++)
         {
-            if (!(node.octants[i]->leaf() && node.octants[i]->data_vec.empty()))
+            if (!(node->octants[i]->leaf() && node->octants[i]->data_vec.empty()))
             {
                 use.push_back(i);
             }
         }
         for (const auto &i : use)
         {
-            compact(*node.octants[i], df_idx, data_idx, i == use.back());
+            compact(node->octants[i].get(), df_idx, data_idx, i == use.back());
         }
     }
+
     linear_tree[idx].next_sibling = last ? -1 : df_idx;
 }
