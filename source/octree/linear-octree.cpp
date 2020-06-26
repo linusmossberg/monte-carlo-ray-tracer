@@ -113,7 +113,7 @@ void LinearOctree<Data>::recursiveRadiusSearch(const uint32_t current, const glm
             double distance2 = glm::distance2(ordered_data[i].pos(), p);
             if (distance2 <= radius2)
             {
-                to_visit.emplace(ordered_data[i], distance2);
+                result.emplace_back(ordered_data[i], distance2);
             }
         }
     }

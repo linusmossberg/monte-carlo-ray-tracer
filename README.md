@@ -73,7 +73,7 @@ The `k_nearest_photons` field specifies the number of nearest photons to search 
 
 The `max_photons_per_octree_leaf` field affects both the octree search performance and memory usage of the application. I cover this more in the report and this value can probably be left at 190 in most cases.
 
-The `use_shadow_photons` field specifies whether to use shadow photons. Shadow photons are used to determine if it's necessary to cast shadow rays or delay the global radiance evaluation in certain situations. This can improve performance and reduce artifacts in some scenes and do the opposite in other others.
+The `use_shadow_photons` field specifies whether to use shadow photons. Shadow photons are used to determine if it's necessary to cast shadow rays or delay the global radiance evaluation in certain situations. This can improve performance and reduce artifacts in some scenes and do the opposite in other.
 
 The `direct_visualization` field can be used to visualize the photon maps directly. Setting this to true will make the program evaluate the global radiance from all photon maps at the first diffuse reflection. An example of this is in the report.
 </details>
@@ -162,13 +162,13 @@ The `savename` property defines the name of the resulting saved image file. Imag
 
 The `image` object specifies the image properties of the camera. The `width` and `height` ´fields specifies the image resolution in pixels.
 
-The `tonemapper` field of the image object specifies which tonemapper to use. The available ones are `Hable` (filmic tonemapper by [John Hable](http://filmicworlds.com/blog/filmic-tonemapping-operators/)) and `ACES` (fitted by [Krzysztof Narkowicz](https://knarkowicz.wordpress.com/2016/01/06/aces-filmic-tone-mapping-curve/)). The default tonemapper is `Hable`.
+The `tonemapper` field specifies which tonemapper to use. The available ones are `Hable` ([filmic tonemapper by John Hable](http://filmicworlds.com/blog/filmic-tonemapping-operators/)) and `ACES` ([fitted by Krzysztof Narkowicz](https://knarkowicz.wordpress.com/2016/01/06/aces-filmic-tone-mapping-curve/)). The default tonemapper is `Hable`.
 
-The program has histogram-based auto-exposure which centers the histogram around the 0.5 intensity level before applying tone mapping (i.e. it corresponds to controlling the amount of light that reaches the film/sensor). This can be offset with the optional `exposure_compensation` field of the `image` object, which specifies the [exposure compensation](https://en.wikipedia.org/wiki/Exposure_compensation) in EV units (stops). 
+The program has histogram-based auto-exposure which centers the histogram around the 0.5 intensity level before applying tone mapping (corresponding to controlling the amount of light that reaches the film/sensor). This can be offset with the optional `exposure_compensation` field, which specifies the [exposure compensation](https://en.wikipedia.org/wiki/Exposure_compensation) in EV units (stops). 
 
 The program also has a histogram-based auto-gain method which is applied after auto-exposure and tone-mapping, which instead tries to position the histogram of the resulting image to the right. This can similarly be offset with the optional `gain_compensation` field, which is also specified in EV units.
 
-The reason for separating these steps is that the tone-mapping/camera response is non-linear, and as a result `exposure_compensation` mostly controls the camera response (contrast, dynamic range etc.) while `gain_compensation` controls the overall image intensity. The tone mapping operator used by the program is the [filmic tonemapper](http://filmicworlds.com/blog/filmic-tonemapping-operators/) developed by John Hable.
+The reason for separating these steps is that the tone-mapping/camera response is non-linear, and as a result `exposure_compensation` mostly controls the camera response (contrast, dynamic range etc.) while `gain_compensation` controls the overall image intensity.
 </details>
 
 ___
