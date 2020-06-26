@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <glm/gtx/component_wise.hpp>
 
+#include "../ray/ray.hpp"
+
 bool BoundingBox::intersect(const Ray &ray, double &t) const
 {
     t = 0.0;
@@ -50,11 +52,12 @@ glm::dvec3 BoundingBox::centroid() const
 
 double BoundingBox::area() const
 {
+    if (!valid()) return 0.0;
     glm::dvec3 d = dimensions();
-    double area = 2.0 * (d.x * d.y + d.x * d.z + d.y * d.z);
-    return std::isfinite(area) && area > 0.0 ? area : 0.0;
+    return 2.0 * (d.x * d.y + d.x * d.z + d.y * d.z);
 }
 
+// Smallest possible squared distance to a point in the bounding box
 double BoundingBox::distance2(const glm::dvec3 &p) const
 {
     glm::dvec3 d = glm::max(glm::max(min - p, p - max), glm::dvec3(0.0));
@@ -77,4 +80,13 @@ void BoundingBox::merge(const glm::dvec3 &p)
         if (min[i] > p[i]) min[i] = p[i];
         if (max[i] < p[i]) max[i] = p[i];
     }
+}
+
+bool BoundingBox::valid() const
+{
+    for (int i = 0; i < 3; i++)
+    {
+        if (min[i] > max[i]) return false;
+    }
+    return true;
 }

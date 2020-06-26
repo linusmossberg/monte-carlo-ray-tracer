@@ -6,18 +6,19 @@
 
 #include <nlohmann/json.hpp>
 
-#include "../surface/surface.hpp"
 #include "../ray/ray.hpp"
+#include "../ray/interaction.hpp"
 #include "../common/bounding-box.hpp"
 
-#include "../bvh/bvh.hpp"
+class BVH;
+namespace Surface { class Base; }
 
 class Scene
 {
 public:
     Scene(const nlohmann::json& j);
 
-    Intersection intersect(const Ray& ray, bool shadow_ray = false) const;
+    Interaction interact(const Ray& ray, bool shadow_ray = false) const;
 
     void generateEmissives();
 
@@ -31,7 +32,7 @@ public:
         return BB_;
     }
 
-    std::unique_ptr<BVH> bvh;
+    std::shared_ptr<BVH> bvh;
 
     double ior;
 
@@ -46,4 +47,8 @@ private:
                   std::vector<std::vector<size_t>> &triangles_v,
                   std::vector<std::vector<size_t>> &triangles_vt,
                   std::vector<std::vector<size_t>> &triangles_vn) const;
+
+    void generateVertexNormals(std::vector<glm::dvec3> &normals,
+                               const std::vector<glm::dvec3> &vertices, 
+                               const std::vector<std::vector<size_t>> &triangles) const;
 };

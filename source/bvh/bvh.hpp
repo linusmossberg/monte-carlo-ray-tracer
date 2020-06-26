@@ -2,21 +2,23 @@
 
 #include <nlohmann/json.hpp>
 
-#include "../surface/surface.hpp"
-#include "../octree/octree.hpp"
 #include "../ray/intersection.hpp"
+#include "../octree/octree.hpp"
+
+namespace Surface { class Base; }
 
 class BVH
 {
     struct SurfaceCentroid : public OctreeData
     {
-        SurfaceCentroid(std::shared_ptr<Surface::Base> surface) : surface(surface) { }
+        SurfaceCentroid(std::shared_ptr<Surface::Base> surface);
 
-        virtual glm::dvec3 pos() const
+        virtual const glm::dvec3& pos() const
         {
-            return surface->BB().centroid();
+            return centroid;
         }
 
+        glm::dvec3 centroid;
         std::shared_ptr<Surface::Base> surface;
     };
 
@@ -32,7 +34,7 @@ class BVH
         BoundingBox BB;
         std::vector<std::shared_ptr<BuildNode>> children;
         std::vector<std::shared_ptr<Surface::Base>> surfaces;
-        int32_t df_idx; // depth-first index in tree
+        uint32_t df_idx; // depth-first index in tree
     };
 
     /********************************************************************************
@@ -68,15 +70,15 @@ class BVH
         BoundingBox BB;
         uint32_t start_surface;
         uint8_t num_surfaces;
-        int32_t next_sibling; // -1 if there is none
+        uint32_t next_sibling; // 0 if there is none
 
         // Used for priority queue
         struct NodeIntersection
         {
-            NodeIntersection(int32_t node, double t) : t(t), node(node) { }
+            NodeIntersection(uint32_t node, double t) : t(t), node(node) { }
             bool operator< (const NodeIntersection& i) const { return i.t < t; };
             double t;
-            int32_t node;
+            uint32_t node;
         };
     };
 
@@ -97,7 +99,7 @@ private:
     void recursiveBuildFromOctree(const Octree<SurfaceCentroid> &octree_node, std::shared_ptr<BuildNode> bvh_node);
     void recursiveBuildBinarySAH(std::shared_ptr<BuildNode> bvh_node);
     void recursiveBuildQuaternarySAH(std::shared_ptr<BuildNode> bvh_node);
-    void compact(std::shared_ptr<BuildNode> bvh_node, int32_t next_sibling, uint32_t &surface_idx);
+    void compact(std::shared_ptr<BuildNode> bvh_node, uint32_t next_sibling, uint32_t &surface_idx);
 
     // Nodes stored in depth-first order
     std::vector<LinearNode> linear_tree;
@@ -105,5 +107,5 @@ private:
     std::vector<std::shared_ptr<Surface::Base>> ordered_surfaces;
 
     // Depth first index used during construction
-    int32_t df_idx;
+    uint32_t df_idx;
 };

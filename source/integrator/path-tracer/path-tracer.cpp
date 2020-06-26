@@ -3,6 +3,7 @@
 #include "../../common/util.hpp"
 #include "../../random/random.hpp"
 #include "../../common/constants.hpp"
+#include "../../material/material.hpp"
 
 /*************************************************************************************************************
 A material can be any combination of reflective, transparent and diffuse, but instead of branching into several
@@ -17,49 +18,49 @@ glm::dvec3 PathTracer::sampleRay(Ray ray, size_t ray_depth)
         return glm::dvec3(0.0);
     }
 
-    Intersection intersect = scene.intersect(ray);
+    Interaction interaction = scene.interact(ray);
 
-    if (!intersect)
+    if (!interaction)
     {
         return scene.skyColor(ray);
     }
 
-    double absorb = ray_depth > Integrator::min_ray_depth ? 1.0 - intersect.material->reflect_probability : 0.0;
+    double absorb = ray_depth > Integrator::min_ray_depth ? 1.0 - interaction.material->reflect_probability : 0.0;
 
     if (Random::trial(absorb))
     {
         return glm::dvec3(0.0);
     }
 
-    Ray new_ray(intersect.position);
+    Ray new_ray(interaction.position);
 
     glm::dvec3 BRDF;
     glm::dvec3 direct(0);
-    glm::dvec3 emittance = (ray_depth == 0 || ray.specular || naive) ? intersect.material->emittance : glm::dvec3(0);
+    glm::dvec3 emittance = (ray_depth == 0 || ray.specular || naive) ? interaction.material->emittance : glm::dvec3(0);
 
     double n1 = ray.medium_ior;
-    double n2 = std::abs(ray.medium_ior - scene.ior) < C::EPSILON ? intersect.material->ior : scene.ior;
+    double n2 = std::abs(ray.medium_ior - scene.ior) < C::EPSILON ? interaction.material->ior : scene.ior;
 
-    switch (intersect.selectNewPath(n1, n2, -ray.direction))
+    switch (interaction.type(n1, n2, -ray.direction))
     {
-        case Path::REFLECT:
+        case Interaction::Type::REFLECT:
         {
-            BRDF = intersect.material->SpecularBRDF();
-            new_ray.reflectSpecular(ray.direction, intersect, n1);
+            BRDF = interaction.material->SpecularBRDF();
+            new_ray.reflectSpecular(ray.direction, interaction, n1);
             break;
         }
-        case Path::REFRACT:
+        case Interaction::Type::REFRACT:
         {
-            BRDF = intersect.material->SpecularBRDF();
-            new_ray.refractSpecular(ray.direction, intersect, n1, n2);
+            BRDF = interaction.material->SpecularBRDF();
+            new_ray.refractSpecular(ray.direction, interaction, n1, n2);
             break;
         }
-        case Path::DIFFUSE:
+        case Interaction::Type::DIFFUSE:
         {
-            CoordinateSystem cs(intersect.shadingNormal());
-            new_ray.reflectDiffuse(cs, intersect, n1);
-            BRDF = intersect.material->DiffuseBRDF(cs.globalToLocal(new_ray.direction), cs.globalToLocal(-ray.direction)) * C::PI;
-            if (!naive) direct = Integrator::sampleDirect(intersect);
+            CoordinateSystem cs(interaction.shading_normal);
+            new_ray.reflectDiffuse(cs, interaction, n1);
+            BRDF = interaction.material->DiffuseBRDF(cs.globalToLocal(new_ray.direction), cs.globalToLocal(-ray.direction)) * C::PI;
+            if (!naive) direct = Integrator::sampleDirect(interaction);
             break;
         }
     }

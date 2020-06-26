@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <cstdint>
+#include <functional>
 
 #include <glm/vec3.hpp>
 
@@ -25,6 +26,8 @@ private:
 
     std::vector<glm::dvec3> blob;
     double exposure_scale, gain_scale;
+
+    std::function<glm::dvec3(const glm::dvec3&)> tonemap;
 
     /**************************************************************************
     Hard coded (except for dimensions) uncompressed 24bpp true-color TGA header.

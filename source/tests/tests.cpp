@@ -8,8 +8,10 @@
     #include "psapi.h"
 #endif
 
+#include "../octree/linear-octree.cpp"
 #include "../integrator/photon-mapper/photon-mapper.hpp"
 #include "../random/random.hpp"
+#include "../surface/surface.hpp"
 
 void PhotonMapper::test(std::ostream& log, size_t num_iterations) const
 {

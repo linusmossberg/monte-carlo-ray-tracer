@@ -12,13 +12,10 @@ public:
     virtual ~Integrator() { }
 
     virtual glm::dvec3 sampleRay(Ray ray, size_t ray_depth = 0) = 0;
-
-    virtual glm::dvec3 sampleDirect(const Intersection& intersection) const;
+    virtual glm::dvec3 sampleDirect(const Interaction& interaction) const;
 
     bool naive;
-
     size_t num_threads;
-
     Scene scene;
 
     const size_t min_ray_depth = 3;

@@ -17,6 +17,14 @@ Image::Image(const nlohmann::json &j)
 
     exposure_scale = std::pow(2, exposure_EV);
     gain_scale = std::pow(2, gain_EV);
+
+    std::string tonemapper = getOptional<std::string>(j, "tonemapper", "HABLE");
+    std::transform(tonemapper.begin(), tonemapper.end(), tonemapper.begin(), toupper);
+
+    if (tonemapper == "ACES") 
+        tonemap = filmicACES;
+    else 
+        tonemap = filmicHable;
 }
 
 void Image::save(const std::string& filename) const
@@ -29,7 +37,7 @@ void Image::save(const std::string& filename) const
     out_tonemapped.write(reinterpret_cast<char*>(&header), sizeof(header));
     for (const auto& p : blob)
     {
-        std::vector<uint8_t> fp = truncate(gammaCorrect(filmic(p * exposure_factor) * gain_factor));
+        std::vector<uint8_t> fp = truncate(gammaCorrect(tonemap(p * exposure_factor) * gain_factor));
         out_tonemapped.write(reinterpret_cast<char*>(fp.data()), fp.size() * sizeof(uint8_t));
     }
     out_tonemapped.close();
@@ -94,7 +102,7 @@ double Image::getGain(double exposure_factor) const
 {
     auto get_t = [&](const glm::dvec3 &p)
     {
-        return glm::compAdd(filmic(p * exposure_factor)) / 3.0;
+        return glm::compAdd(tonemap(p * exposure_factor)) / 3.0;
     };
 
     double max = 0.0;

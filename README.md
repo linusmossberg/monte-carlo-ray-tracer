@@ -30,7 +30,6 @@ The basic outline of the scene format is the following JSON object:
 ```json
 {
   "num_render_threads": -1,
-  "naive": false,
   "ior": 1.75,
 
   "photon_map": { },
@@ -43,8 +42,6 @@ The basic outline of the scene format is the following JSON object:
 ```
 
 The `num_render_threads` field specifies the number of rendering threads to use. This is limited between 1 and the number of concurrent threads available on the system. All concurrent threads are used if the specified value is outside of this range.
-
-The `naive` field specifies whether naive path tracing should be used rather than using explicit direct light sampling.
 
 The `ior` field specifies the scene IOR (index of refraction). This can be used to simulate different types of environment mediums to see the effects this has on the angle of refraction and the Fresnel factor.
 
@@ -72,13 +69,13 @@ The `emissions` field determines the base number of rays that should be emitted 
 
 The `caustic_factor` determines how many times more caustic photons should be generated relative to other photon types. 1 is the "natural" factor, but this results in blurry caustics since the caustic photon map is visualized directly.
 
-The `k_nearest_photons` field specifies the number of nearest photons to search for and use in the radiance estimate each time a photon map is evaluated at a point. Larger values create better but less localized (blurrier) estimates since the search sphere is expanded to cover the target number of photons. The maximum radius of this search sphere is controlled with the `max_radius` field. This is useful to discard large parts of the search space and thereby increase performance. `max_caustic_radius` is the same but is used exclusively for caustic photons.
+The `k_nearest_photons` field specifies the number of nearest photons to search for and use in the radiance estimate each time a photon map is evaluated at a point. Larger values create better but less localized (blurrier) estimates since the search sphere is expanded to cover the target number of photons. The maximum radius of this search sphere is controlled with the `max_radius` field. This is useful to discard large parts of the search space and thereby increase performance. The global radiance evaluation is however delayed if the target number of photons doesn't fit in the search sphere to prevent bad estimates, so this should be set to a reasonable value. `max_caustic_radius` is the same but is used exclusively for caustic photons.
 
-The `max_photons_per_octree_leaf` field affects both the octree radius-search performance and memory usage of the application. I cover this more in the report and this value can probably be left at 190 in most cases.
+The `max_photons_per_octree_leaf` field affects both the octree search performance and memory usage of the application. I cover this more in the report and this value can probably be left at 190 in most cases.
 
-The `use_shadow_photons` specifies whether to use shadow photons. In the current implementation, shadow photons are only used to determine if the global radiance evaluation should be delayed on secondary diffuse reflections. This used to help in reducing artifacts, but it doesn't seem to help much with the photon map improvements I've made since then and it can increase render times significantly in some scenes. 
+The `use_shadow_photons` field specifies whether to use shadow photons. Shadow photons are used to determine if it's necessary to cast shadow rays or delay the global radiance evaluation in certain situations. This can improve performance and reduce artifacts in some scenes and do the opposite in other others.
 
-The `direct_visualization` field can be used to visualize the photon maps directly. Setting this to true will make the program evaluate the global radiance from all photon maps at the first diffuse reflection. An example of this is in the report. 
+The `direct_visualization` field can be used to visualize the photon maps directly. Setting this to true will make the program evaluate the global radiance from all photon maps at the first diffuse reflection. An example of this is in the report.
 </details>
 
 ___
@@ -106,7 +103,6 @@ Normal naive scene intersection is used if this object is not specified. The `ty
 I've also tried splitting along all three axes each recursion to create octonary-trees. This produces good results but there's not much of an improvement compared to the quaternary version and the construction time becomes much longer due to the dimensionality curse when using 3D bins.
 
 `quaternary_sah` takes the longest to construct but tends to produce the best results. `octree` and `binary_sah` are faster to construct which is useful for quick renders. This is especially the case for the octree method, which surprisingly seems to be both faster to construct and create higher quality trees than the binary-tree SAH method.
-
 </details>
 
 ___
@@ -143,7 +139,8 @@ Example:
     "up": [ 0, 1, 0 ],
     "image": { 
       "width": 960, 
-      "height": 540 
+      "height": 540,
+      "tonemapper": "ACES"
     },
     "sqrtspp": 1,
     "savename": "c2"
@@ -161,7 +158,11 @@ The `sqrtspp` (Square-Rooted Samples Per Pixel) property defines the square-root
 
 The `savename` property defines the name of the resulting saved image file. Images are saved in TGA format.
 
+#### Image
+
 The `image` object specifies the image properties of the camera. The `width` and `height` ´fields specifies the image resolution in pixels.
+
+The `tonemapper` field of the image object specifies which tonemapper to use. The available ones are `Hable` (filmic tonemapper by [John Hable](http://filmicworlds.com/blog/filmic-tonemapping-operators/)) and `ACES` (fitted by [Krzysztof Narkowicz](https://knarkowicz.wordpress.com/2016/01/06/aces-filmic-tone-mapping-curve/)). The default tonemapper is `Hable`.
 
 The program has histogram-based auto-exposure which centers the histogram around the 0.5 intensity level before applying tone mapping (i.e. it corresponds to controlling the amount of light that reaches the film/sensor). This can be offset with the optional `exposure_compensation` field of the `image` object, which specifies the [exposure compensation](https://en.wikipedia.org/wiki/Exposure_compensation) in EV units (stops). 
 
@@ -263,6 +264,7 @@ Example:
 "surfaces": [
   {
       "type": "object",
+      "smooth": true,
       "file": "data/stanford_dragon.obj"
   },
   {
@@ -319,10 +321,12 @@ Each surface has a `type` field which can be either `sphere`, `triangle`, `objec
 The sphere position is defined by the `origin` field, while the sphere radius is defined by the `radius` field.
 
 #### Triangle
-The triangle is simply defined by its vertices, which is defined by the 3 vertices in the vertex array `vertices` in xyz-coordinates. The order of the vertices defines the normal direction, but this only matters if the surface has an emissive material.
+The triangle is simply defined by its vertices, which is defined by the 3 vertices in the vertex array `vertices` in xyz-coordinates. The order of the vertices defines the normal direction.
 
 #### Object
-The object surface type defines a triangle mesh object that consists of multiple triangles. The `vertex_set` field can be used to specify the key string of the vertex set to pull vertices from, and the `triangles` field then specifies the array of triangles of the object. Each triangle of the array consists of 3 indices that references the corresponding vertex index in the vertex set. Alternatively, the `file` field can be used to specify a path to an OBJ-file to load instead. The path should be relative to the scenes directory. The program uses normal interpolation for smooth shading if the OBJ file specifies vertex normals for the mesh.
+The object surface type defines a triangle mesh object that consists of multiple triangles. The `vertex_set` field can be used to specify the key string of the vertex set to pull vertices from, and the `triangles` field then specifies the array of triangles of the object. Each triangle of the array consists of 3 indices that references the corresponding vertex index in the vertex set. Alternatively, the `file` field can be used to specify a path to an OBJ-file to load instead. The path should be relative to the scenes directory. 
+
+The program uses normal interpolation for smooth shading if the `smooth` field is set to true. This will either compute area-weighted vertex normals or use the vertex normals from the OBJ file if they exist.
 
 #### Quadric
 A quadric surface consists of all points (x,y,z) that satisfies the quadric equation<sup>1</sup>:

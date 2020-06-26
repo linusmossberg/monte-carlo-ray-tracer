@@ -6,8 +6,9 @@
 
 #include "../ray/ray.hpp"
 #include "../ray/intersection.hpp"
-#include "../material/material.hpp"
 #include "../common/bounding-box.hpp"
+
+class Material;
 
 namespace Surface
 {
@@ -20,8 +21,13 @@ namespace Surface
         virtual ~Base() { }
 
         virtual bool intersect(const Ray& ray, Intersection& intersection) const = 0;
-        virtual glm::dvec3 operator()(double u, double v) const = 0; // point on surface
+        virtual glm::dvec3 operator()(double u, double v) const = 0;
         virtual glm::dvec3 normal(const glm::dvec3& pos) const = 0;
+
+        virtual glm::dvec3 interpolatedNormal(const glm::dvec2& uv) const 
+        { 
+            return glm::dvec3(); 
+        }
 
         BoundingBox BB() const
         {
@@ -71,6 +77,9 @@ namespace Surface
         virtual bool intersect(const Ray& ray, Intersection& intersection) const;
         virtual glm::dvec3 operator()(double u, double v) const;
         virtual glm::dvec3 normal(const glm::dvec3& pos) const;
+        virtual glm::dvec3 interpolatedNormal(const glm::dvec2& uv) const;
+
+        glm::dvec3 normal() const;
 
     protected:
         virtual void computeArea();

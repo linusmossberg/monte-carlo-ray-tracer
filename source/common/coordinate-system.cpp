@@ -1,14 +1,13 @@
 #include "coordinate-system.hpp"
 #include "util.hpp"
 
-glm::dvec3 orthogonalUnitVector(const glm::dvec3& v)
+inline glm::dvec3 orthogonalUnitVector(const glm::dvec3& v)
 {
     if (std::abs(v.x) > std::abs(v.y))
         return glm::dvec3(-v.z, 0, v.x) / std::sqrt(pow2(v.x) + pow2(v.z));
     else
         return glm::dvec3(0, v.z, -v.y) / std::sqrt(pow2(v.y) + pow2(v.z));
 }
-
 
 CoordinateSystem::CoordinateSystem(const glm::dvec3& N) : normal(N)
 {

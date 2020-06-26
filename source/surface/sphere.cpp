@@ -33,8 +33,7 @@ bool Surface::Sphere::intersect(const Ray& ray, Intersection& intersection) cons
         }
     }
 
-    glm::dvec3 pos = ray(t);
-    intersection = Intersection(pos, normal(pos), t, material);
+    intersection = Intersection(t);
 
     return true;
 }

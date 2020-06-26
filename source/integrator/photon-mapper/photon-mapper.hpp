@@ -5,11 +5,9 @@
 #include <glm/vec3.hpp>
 #include <nlohmann/json.hpp>
 
-#include "../integrator.hpp"
-
-#include "../../octree/linear-octree.hpp"
-
 #include "photon.hpp"
+#include "../integrator.hpp"
+#include "../../octree/linear-octree.hpp"
 
 class PhotonMapper : public Integrator
 {
@@ -22,12 +20,13 @@ public:
 
     virtual glm::dvec3 sampleRay(Ray ray, size_t ray_depth = 0);
 
-    glm::dvec3 estimateRadiance(LinearOctree<Photon>& map, const Intersection& intersect,
-                                const glm::dvec3& direction, const CoordinateSystem& cs, double r) const;
+    //glm::dvec3 estimateRadiance(LinearOctree<Photon>& map, const Interaction& interaction,
+    //                            const glm::dvec3& direction, const CoordinateSystem& cs, double r) const;
     
-    glm::dvec3 estimateCausticRadiance(const Intersection& intersect, const glm::dvec3& direction, const CoordinateSystem& cs);
+    glm::dvec3 estimateRadiance(const Interaction& interaction, const glm::dvec3& direction, const CoordinateSystem& cs, const std::vector<SearchResult<Photon>> &photons);
+    glm::dvec3 estimateCausticRadiance(const Interaction& interaction, const glm::dvec3& direction, const CoordinateSystem& cs);
 
-    bool hasShadowPhoton(const Intersection& intersect) const;
+    bool hasShadowPhotons(const Interaction& interaction) const;
 
     // Implemented in Tests.cpp
     void test(std::ostream& log, size_t num_iterations) const;
@@ -48,6 +47,7 @@ private:
 
     double max_radius;
     double max_caustic_radius;
+    double min_bounce_distance;
     double non_caustic_reject;
 
     bool direct_visualization;

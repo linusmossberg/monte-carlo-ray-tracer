@@ -17,6 +17,7 @@ struct BoundingBox
     double distance2(const glm::dvec3 &p) const;
     void merge(const BoundingBox &BB);
     void merge(const glm::dvec3 &p);
+    bool valid() const;
 
     glm::dvec3 min = glm::dvec3(std::numeric_limits<double>::max());
     glm::dvec3 max = glm::dvec3(std::numeric_limits<double>::lowest());

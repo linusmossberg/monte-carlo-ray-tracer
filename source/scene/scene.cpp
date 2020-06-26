@@ -6,6 +6,9 @@
 #include "../common/util.hpp"
 #include "../common/constants.hpp"
 #include "../common/format.hpp"
+#include "../material/material.hpp"
+#include "../surface/surface.hpp"
+#include "../bvh/bvh.hpp"
 
 #include <fstream>
 #include <sstream>
@@ -15,8 +18,7 @@ Scene::Scene(const nlohmann::json& j)
 {
     std::unordered_map<std::string, std::shared_ptr<Material>> materials = j.at("materials");
     auto vertices = getOptional(j, "vertices", std::unordered_map<std::string, std::vector<glm::dvec3>>());
-
-    ior = j.at("ior");
+    ior = getOptional(j, "ior", 1.0);
 
     for (const auto& s : j.at("surfaces"))
     {
@@ -44,27 +46,34 @@ Scene::Scene(const nlohmann::json& j)
                 triangles_v = s.at("triangles").get<std::vector<std::vector<size_t>>>();
             }
 
+            bool smooth = getOptional(s, "smooth", false);
+
+            if (smooth && n.empty())
+            {
+                generateVertexNormals(n, v, triangles_v);
+                triangles_vn = triangles_v;
+            }
+
             bool is_emissive = glm::compMax(material->emittance) > C::EPSILON;
             double total_area = 0.0;
             if (is_emissive)
             {
                 for (const auto& t : triangles_v)
                 {
-                    total_area += Surface::Triangle(v.at(t.at(0)), v.at(t.at(1)), v.at(t.at(2)), material).area();
+                    total_area += Surface::Triangle(v.at(t.at(0)), v.at(t.at(1)), v.at(t.at(2)), nullptr).area();
                 }
             }
-
-            bool vertex_normals = (triangles_vn.size() == triangles_v.size()) && !n.empty();
 
             for (size_t i = 0; i < triangles_v.size(); i++)
             {
                 const auto &t = triangles_v[i];
+
                 // Entire object emits the flux of assigned material emittance in scene file.
                 // The flux of the material therefore needs to be distributed amongst all object triangles.
                 std::shared_ptr<Material> mat;
                 if (is_emissive && total_area > C::EPSILON)
                 {
-                    double area = Surface::Triangle(v.at(t.at(0)), v.at(t.at(1)), v.at(t.at(2)), material).area();
+                    double area = Surface::Triangle(v.at(t.at(0)), v.at(t.at(1)), v.at(t.at(2)), nullptr).area();
                     mat = std::make_shared<Material>(*material);
                     mat->emittance *= area / total_area;
                 }
@@ -73,7 +82,7 @@ Scene::Scene(const nlohmann::json& j)
                     mat = material;
                 }
 
-                if (vertex_normals)
+                if (smooth)
                 {
                     const auto &tn = triangles_vn[i];
                     surfaces.push_back(std::make_shared<Surface::Triangle>(
@@ -118,56 +127,70 @@ Scene::Scene(const nlohmann::json& j)
 
     if (j.find("bvh") != j.end())
     {
-        bvh = std::make_unique<BVH>(BB_, surfaces, j.at("bvh"));
+        bvh = std::make_shared<BVH>(BB_, surfaces, j.at("bvh"));
     }
 
     generateEmissives();
 }
 
-Intersection Scene::intersect(const Ray& ray, bool shadow_ray) const
+Interaction Scene::interact(const Ray& ray, bool shadow_ray) const
 {
-    Intersection intersect;
+    Intersection intersection;
 
     if (bvh)
     {
-        intersect = bvh->intersect(ray);
+        intersection = bvh->intersect(ray);
     }
     else
     {
-        for (const auto& surface : surfaces)
+        for (const auto& s : surfaces)
         {
-            Intersection t_intersect;
-            if (surface->intersect(ray, t_intersect))
+            Intersection t_intersection;
+            if (s->intersect(ray, t_intersection))
             {
-                if (t_intersect.t < intersect.t)
-                    intersect = t_intersect;
+                if (t_intersection.t < intersection.t)
+                {
+                    intersection = t_intersection;
+                    intersection.surface = s;
+                }
             }
         }
     }
 
-    if (intersect && !shadow_ray)
+    Interaction interaction;
+
+    if (intersection)
     {
-        double cos_theta = glm::dot(ray.direction, intersect.normal);
+        interaction.position = ray(intersection.t);
+        interaction.normal = intersection.surface->normal(interaction.position);
+        interaction.material = intersection.surface->material;
+        interaction.t = intersection.t;
 
-        if (intersect.use_interpolated)
+        if (!shadow_ray)
         {
-            if (cos_theta < 0.0 != glm::dot(ray.direction, intersect.interpolated_normal) < 0.0)
+            double cos_theta = glm::dot(ray.direction, interaction.normal);
+
+            if (intersection.interpolate)
             {
-                intersect.use_interpolated = false;
+                interaction.shading_normal = intersection.surface->interpolatedNormal(intersection.uv);
+                if (cos_theta < 0.0 != glm::dot(ray.direction, interaction.shading_normal) < 0.0)
+                {
+                    interaction.shading_normal = interaction.normal;
+                }
             }
-        }
-
-        if (cos_theta > 0.0)
-        {
-            intersect.normal = -intersect.normal;
-            if (intersect.use_interpolated)
+            else
             {
-                intersect.interpolated_normal = -intersect.interpolated_normal;
+                interaction.shading_normal = interaction.normal;
+            }
+
+            if (cos_theta > 0.0)
+            {
+                interaction.normal = -interaction.normal;
+                interaction.shading_normal = -interaction.shading_normal;
             }
         }
     }
-
-    return intersect;
+    return interaction;
 }
 
 void Scene::generateEmissives()
@@ -192,9 +215,8 @@ void Scene::computeBoundingBox()
 
 glm::dvec3 Scene::skyColor(const Ray& ray) const
 {
-    double f = (1.0 + glm::dot(glm::dvec3(0.0, 1.0, 0.0), ray.direction)) / 2.0;
-    //if (f < 0.2) return glm::dvec3(0.1);
-    return glm::mix(glm::dvec3(1.0, 0.5, 0.0), glm::dvec3(0.0, 0.5, 1.0), f);
+    double fy = (1.0 + std::asin(glm::dot(glm::dvec3(0.0, 1.0, 0.0), ray.direction)) / C::PI) / 2.0;
+    return glm::mix(glm::dvec3(1.0, 0.5, 0.0), glm::dvec3(0.0, 0.5, 1.0), fy);
 }
 
 void Scene::parseOBJ(const std::filesystem::path &path, 
@@ -276,4 +298,27 @@ void Scene::parseOBJ(const std::filesystem::path &path,
     }
 
     file.close();
+}
+
+void Scene::generateVertexNormals(std::vector<glm::dvec3> &normals,
+                                  const std::vector<glm::dvec3> &vertices,
+                                  const std::vector<std::vector<size_t>> &triangles) const
+{
+    normals.resize(vertices.size(), glm::dvec3(0.0));
+
+    for (const auto &t : triangles)
+    {
+        auto triangle = Surface::Triangle(vertices.at(t.at(0)), vertices.at(t.at(1)), vertices.at(t.at(2)), nullptr);
+
+        glm::dvec3 weighted_normal = triangle.normal() * triangle.area();
+
+        normals.at(t.at(0)) += weighted_normal;
+        normals.at(t.at(1)) += weighted_normal;
+        normals.at(t.at(2)) += weighted_normal;
+    }
+
+    for (auto &n : normals)
+    {
+        n = glm::normalize(n);
+    }
 }

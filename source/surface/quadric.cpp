@@ -151,7 +151,7 @@ bool Surface::Quadric::intersect(const Ray& ray, Intersection& intersection) con
         return false;
     }
 
-    intersection = Intersection(pos, normal(pos), t, material);
+    intersection = Intersection(t);
     
     return true;
 }

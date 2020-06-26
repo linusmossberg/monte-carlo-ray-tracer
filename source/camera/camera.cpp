@@ -18,11 +18,11 @@ Camera::Camera(const nlohmann::json &j, const Option &option)
 {
     if (option.photon_map)
     {
-        integrator = std::make_unique<PhotonMapper>(j);
+        integrator = std::make_shared<PhotonMapper>(j);
     }
     else
     {
-        integrator = std::make_unique<PathTracer>(j);
+        integrator = std::make_shared<PathTracer>(j);
     }
 
     const nlohmann::json &c = j.at("cameras").at(option.camera_idx);

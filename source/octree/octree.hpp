@@ -10,7 +10,7 @@
 
 struct OctreeData
 {
-    virtual glm::dvec3 pos() const = 0;
+    virtual const glm::dvec3& pos() const = 0;
     virtual ~OctreeData() { }
 };
 

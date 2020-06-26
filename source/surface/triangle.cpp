@@ -49,12 +49,12 @@ bool Surface::Triangle::intersect(const Ray& ray, Intersection& intersection) co
         return false;
     }
 
-    intersection = Intersection(ray(t), normal_, t, material);
+    intersection = Intersection(t);
 
     if (!N.empty())
     {
-        intersection.interpolated_normal = glm::normalize((1.0 - u - v) * N[0] + u * N[1] + v * N[2]);
-        intersection.use_interpolated = true;
+        intersection.uv = { u, v };
+        intersection.interpolate = true;
     }
 
     return true;
@@ -69,6 +69,16 @@ glm::dvec3 Surface::Triangle::operator()(double u, double v) const
 glm::dvec3 Surface::Triangle::normal(const glm::dvec3& pos) const
 {
     return normal_;
+}
+
+glm::dvec3 Surface::Triangle::normal() const
+{
+    return normal_;
+}
+
+glm::dvec3 Surface::Triangle::interpolatedNormal(const glm::dvec2& uv) const
+{
+    return glm::normalize((1.0 - uv.x - uv.y) * N.at(0) + uv.x * N.at(1) + uv.y * N.at(2));
 }
 
 void Surface::Triangle::computeBoundingBox()

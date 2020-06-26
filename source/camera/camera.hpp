@@ -12,9 +12,10 @@
 #include "image.hpp"
 
 #include "../scene/scene.hpp"
-#include "../integrator/integrator.hpp"
 #include "../common/work-queue.hpp"
 #include "../common/option.hpp"
+
+class Integrator;
 
 class Camera
 {
@@ -22,7 +23,6 @@ public:
     Camera(const nlohmann::json &j, const Option &option);
 
     void capture();
-
     void sampleImage();
 
     void saveImage() const
@@ -64,7 +64,7 @@ private:
 
     const size_t bucket_size = 32;
 
-    std::unique_ptr<Integrator> integrator;
+    std::shared_ptr<Integrator> integrator;
 
     std::atomic_size_t num_sampled_pixels = 0;
     size_t last_num_sampled_pixels = 0;

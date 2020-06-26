@@ -12,6 +12,8 @@
 #include "../../common/work-queue.hpp"
 #include "../../common/constants.hpp"
 #include "../../common/format.hpp"
+#include "../../material/material.hpp"
+#include "../../surface/surface.hpp"
 
 #include "../../octree/octree.cpp"
 #include "../../octree/linear-octree.cpp"
@@ -32,6 +34,8 @@ PhotonMapper::PhotonMapper(const nlohmann::json& j) : Integrator(j)
     max_node_data = pm.at("max_photons_per_octree_leaf");
     direct_visualization = getOptional(pm, "direct_visualization", false);
     use_shadow_photons = getOptional(pm, "use_shadow_photons", true);
+
+    min_bounce_distance = 5.0 * max_radius;
     
     BoundingBox BB = scene.BB();
 
@@ -228,65 +232,65 @@ void PhotonMapper::emitPhoton(const Ray& ray, const glm::dvec3& flux, size_t thr
         return;
     }
 
-    Intersection intersect = scene.intersect(ray);
+    Interaction interaction = scene.interact(ray);
 
-    if (!intersect)
+    if (!interaction)
     {
         return;
     }
 
-    Ray new_ray(intersect.position);
+    Ray new_ray(interaction.position);
 
     glm::dvec3 BRDF;
 
     double n1 = ray.medium_ior;
-    double n2 = std::abs(ray.medium_ior - scene.ior) < C::EPSILON ? intersect.material->ior : scene.ior;
+    double n2 = std::abs(ray.medium_ior - scene.ior) < C::EPSILON ? interaction.material->ior : scene.ior;
 
-    switch (intersect.selectNewPath(n1, n2, -ray.direction))
+    switch (interaction.type(n1, n2, -ray.direction))
     {
-        case Path::REFLECT:
+        case Interaction::Type::REFLECT:
         {
             if (ray_depth == 0 && Random::trial(non_caustic_reject))
             {
-                createShadowPhotons(Ray(intersect.position - intersect.normal * C::EPSILON, intersect.position + ray.direction), thread);
+                createShadowPhotons(Ray(interaction.position - interaction.normal * C::EPSILON, interaction.position + ray.direction), thread);
             }
 
-            BRDF = intersect.material->SpecularBRDF();
-            new_ray.reflectSpecular(ray.direction, intersect, n1);
+            BRDF = interaction.material->SpecularBRDF();
+            new_ray.reflectSpecular(ray.direction, interaction, n1);
             break;
         }
-        case Path::REFRACT:
+        case Interaction::Type::REFRACT:
         {
-            BRDF = intersect.material->SpecularBRDF();
-            new_ray.refractSpecular(ray.direction, intersect, n1, n2);
+            BRDF = interaction.material->SpecularBRDF();
+            new_ray.refractSpecular(ray.direction, interaction, n1, n2);
             break;
         }
-        case Path::DIFFUSE:
+        case Interaction::Type::DIFFUSE:
         {
             if (ray_depth == 0)
             { 
                 if (Random::trial(non_caustic_reject))
                 {
-                    direct_vecs[thread].emplace_back(flux / non_caustic_reject, intersect.position, ray.direction);
-                    createShadowPhotons(Ray(intersect.position - intersect.normal * C::EPSILON, intersect.position + ray.direction), thread);
+                    direct_vecs[thread].emplace_back(flux / non_caustic_reject, interaction.position, ray.direction);
+                    createShadowPhotons(Ray(interaction.position - interaction.normal * C::EPSILON, interaction.position + ray.direction), thread);
                 }
             }
             else
             {
                 if (ray.specular)
                 {
-                    caustic_vecs[thread].emplace_back(flux, intersect.position, ray.direction);
+                    caustic_vecs[thread].emplace_back(flux, interaction.position, ray.direction);
                 }
                 else if(Random::trial(non_caustic_reject))
                 {
-                    indirect_vecs[thread].emplace_back(flux / non_caustic_reject, intersect.position, ray.direction);
+                    indirect_vecs[thread].emplace_back(flux / non_caustic_reject, interaction.position, ray.direction);
                 }
             }
             
-            CoordinateSystem cs(intersect.shadingNormal());
-            new_ray.reflectDiffuse(cs, intersect, n1);
+            CoordinateSystem cs(interaction.shading_normal);
+            new_ray.reflectDiffuse(cs, interaction, n1);
 
-            BRDF = C::PI * intersect.material->DiffuseBRDF(cs.globalToLocal(new_ray.direction), cs.globalToLocal(-ray.direction));
+            BRDF = C::PI * interaction.material->DiffuseBRDF(cs.globalToLocal(new_ray.direction), cs.globalToLocal(-ray.direction));
         }
     }
 
@@ -315,19 +319,19 @@ void PhotonMapper::createShadowPhotons(const Ray& ray, size_t thread, size_t dep
         return;
     }
 
-    Intersection intersect = scene.intersect(ray);
+    Interaction interaction = scene.interact(ray);
 
-    if (!intersect)
+    if (!interaction)
     {
         return;
     }
 
-    if (intersect.material->can_diffusely_reflect)
+    if (interaction.material->can_diffusely_reflect)
     {
-        shadow_vecs[thread].emplace_back(intersect.position);
+        shadow_vecs[thread].emplace_back(interaction.position);
     }
 
-    glm::dvec3 pos(intersect.position - intersect.normal * C::EPSILON);
+    glm::dvec3 pos(interaction.position - interaction.normal * C::EPSILON);
     createShadowPhotons(Ray(pos, pos + ray.direction), thread, depth + 1);
 }
 
@@ -339,93 +343,106 @@ glm::dvec3 PhotonMapper::sampleRay(Ray ray, size_t ray_depth)
         return glm::dvec3(0.0);
     }
 
-    Intersection intersect = scene.intersect(ray);
+    Interaction interaction = scene.interact(ray);
 
-    if (!intersect)
+    if (!interaction)
     {
         return scene.skyColor(ray);
     }
 
-    double absorb = ray_depth > min_ray_depth ? 1.0 - intersect.material->reflect_probability : 0.0;
+    double absorb = ray_depth > min_ray_depth ? 1.0 - interaction.material->reflect_probability : 0.0;
     
     if (Random::trial(absorb))
     {
         return glm::dvec3(0.0);
     }
 
-    Ray new_ray(intersect.position);
+    Ray new_ray(interaction.position);
 
     bool diffuse = ray_depth != 0 && !ray.specular;
 
-    bool global_contribution_evaluated = false;
-    glm::dvec3 caustics(0.0), direct(0.0), indirect(0.0), BRDF(1.0);
-    glm::dvec3 emittance = (ray_depth == 0 || ray.specular) ? intersect.material->emittance : glm::dvec3(0.0);
+    glm::dvec3 emittance = (ray_depth == 0 || ray.specular) ? interaction.material->emittance : glm::dvec3(0.0);
 
     double n1 = ray.medium_ior;
-    double n2 = std::abs(ray.medium_ior - scene.ior) < C::EPSILON ? intersect.material->ior : scene.ior;
+    double n2 = std::abs(ray.medium_ior - scene.ior) < C::EPSILON ? interaction.material->ior : scene.ior;
 
-    switch (intersect.selectNewPath(n1, n2, -ray.direction))
+    switch (interaction.type(n1, n2, -ray.direction))
     {
-        case Path::REFLECT:
+        case Interaction::Type::REFLECT:
         {
             if (diffuse) return glm::dvec3(0.0);
-            BRDF = intersect.material->SpecularBRDF();
-            new_ray.reflectSpecular(ray.direction, intersect, n1);
-            break;
+            new_ray.reflectSpecular(ray.direction, interaction, n1);
+            return (emittance + sampleRay(new_ray, ray_depth + 1) * interaction.material->SpecularBRDF()) / (1.0 - absorb);
         }
-        case Path::REFRACT:
+        case Interaction::Type::REFRACT:
         {
             if (diffuse) return glm::dvec3(0.0);
-            BRDF = intersect.material->SpecularBRDF();
-            new_ray.refractSpecular(ray.direction, intersect, n1, n2);
-            break;
+            new_ray.refractSpecular(ray.direction, interaction, n1, n2);
+            return (emittance + sampleRay(new_ray, ray_depth + 1) * interaction.material->SpecularBRDF()) / (1.0 - absorb);
         }
-        case Path::DIFFUSE:
+        case Interaction::Type::DIFFUSE: default:
         {
-            CoordinateSystem cs(intersect.shadingNormal());
+            CoordinateSystem cs(interaction.shading_normal);
 
-            caustics = estimateCausticRadiance(intersect, -ray.direction, cs);
+            glm::dvec3 caustics = estimateCausticRadiance(interaction, -ray.direction, cs);
+            glm::dvec3 indirect(0.0), direct(0.0);
 
-            bool has_shadow_photons = hasShadowPhoton(intersect);
-            if (!direct_visualization && (ray_depth == 0 || ray.specular || has_shadow_photons))
+            auto evaluateDirect = [&]()
             {
-                double n1 = ray.medium_ior;
-                new_ray.reflectDiffuse(cs, intersect, n1);
-                BRDF = intersect.material->DiffuseBRDF(cs.globalToLocal(new_ray.direction), cs.globalToLocal(-ray.direction)) * C::PI;
-                direct = sampleDirect(intersect);
+                if (use_shadow_photons && hasShadowPhotons(interaction) && linear_direct_map.radiusEmpty(interaction.position, max_radius))
+                    return glm::dvec3(0.0);
+                else
+                    return Integrator::sampleDirect(interaction);
+            };
+
+            auto evaluateDiffuse = [&]()
+            {
+                new_ray.reflectDiffuse(cs, interaction, n1);
+                glm::dvec3 BRDF = interaction.material->DiffuseBRDF(cs.globalToLocal(new_ray.direction), cs.globalToLocal(-ray.direction)) * C::PI;
+                indirect = sampleRay(new_ray, ray_depth + 1);
+                return (emittance + caustics + (evaluateDirect() + indirect) * BRDF) / (1.0 - absorb);
+            };
+
+            if (!direct_visualization && (ray_depth == 0 || ray.specular || interaction.t >= min_bounce_distance))
+            {
+                return evaluateDiffuse();
             }
             else
             {
-                direct = estimateRadiance(linear_direct_map, intersect, -ray.direction, cs, max_radius);
-                indirect = estimateRadiance(linear_indirect_map, intersect, -ray.direction, cs, max_radius);
-                global_contribution_evaluated = true;
+                auto indirect_photons = linear_indirect_map.knnSearch(interaction.position, k_nearest_photons, max_radius);
+                if (indirect_photons.size() == k_nearest_photons || direct_visualization)
+                {
+                    auto direct_photons = linear_direct_map.knnSearch(interaction.position, k_nearest_photons, max_radius);
+                    if (!direct_photons.empty())
+                    {
+                        direct = estimateRadiance(interaction, -ray.direction, cs, direct_photons);
+                    }
+                    else if (!direct_visualization && use_shadow_photons && !hasShadowPhotons(interaction))
+                    {
+                        indirect_photons.clear();
+                        return evaluateDiffuse();
+                    }
+                    indirect = estimateRadiance(interaction, -ray.direction, cs, indirect_photons);
+                    return (emittance + caustics + direct + indirect) / (1.0 - absorb);
+                }
+                else
+                {
+                    indirect_photons.clear();
+                    return evaluateDiffuse();
+                }
             }
-            break;
         }
     }
-
-    // Terminate the path once the global contribution has been evaluated to estimate all incoming radiance at this point. This happens 
-    // once a diffusely reflected ray hits a point that evaluates to diffuse, provided that there are no shadow photons at this point.
-    if (!global_contribution_evaluated)
-    {
-        indirect = sampleRay(new_ray, ray_depth + 1);
-    }
-
-    // BRDF is 1 if the indirect and direct radiance was estimated from the photon maps.
-    return (emittance + caustics + (indirect + direct) * BRDF) / (1.0 - absorb);
 }
 
-glm::dvec3 PhotonMapper::estimateRadiance(LinearOctree<Photon>& map, const Intersection& intersect,
-                                       const glm::dvec3& direction, const CoordinateSystem& cs, double r) const
+glm::dvec3 PhotonMapper::estimateRadiance(const Interaction& interaction, const glm::dvec3& direction, const CoordinateSystem& cs, const std::vector<SearchResult<Photon>> &photons)
 {
     glm::dvec3 radiance(0.0);
-    auto photons = map.knnSearch(intersect.position, k_nearest_photons, r);
     if (photons.empty()) return radiance;
-
     for (const auto& p : photons)
     {
         if (glm::dot(p.data.direction, cs.normal) >= 0.0) continue;
-        glm::dvec3 BRDF = intersect.material->DiffuseBRDF(cs.globalToLocal(p.data.direction), cs.globalToLocal(direction));
+        glm::dvec3 BRDF = interaction.material->DiffuseBRDF(cs.globalToLocal(p.data.direction), cs.globalToLocal(direction));
         radiance += p.data.flux * BRDF;
     }
     return radiance / photons.back().distance2;
@@ -434,10 +451,10 @@ glm::dvec3 PhotonMapper::estimateRadiance(LinearOctree<Photon>& map, const Inter
 /*********************************************************************************
 Cone filtering method that can be used for sharper caustics. Simplified for k = 1
 **********************************************************************************/
-glm::dvec3 PhotonMapper::estimateCausticRadiance(const Intersection& intersect, const glm::dvec3& direction, const CoordinateSystem& cs)
+glm::dvec3 PhotonMapper::estimateCausticRadiance(const Interaction& interaction, const glm::dvec3& direction, const CoordinateSystem& cs)
 {
     glm::dvec3 radiance(0.0);
-    auto photons = linear_caustic_map.knnSearch(intersect.position, k_nearest_photons, max_caustic_radius);
+    auto photons = linear_caustic_map.knnSearch(interaction.position, k_nearest_photons, max_caustic_radius);
     if (photons.empty()) return radiance;
 
     double max_squared_radius = photons.back().distance2;
@@ -446,13 +463,13 @@ glm::dvec3 PhotonMapper::estimateCausticRadiance(const Intersection& intersect, 
     {
         if (glm::dot(p.data.direction, cs.normal) >= 0.0) continue;
         double wp = std::max(0.0, 1.0 - std::sqrt(p.distance2 / max_squared_radius));
-        glm::dvec3 BRDF = intersect.material->DiffuseBRDF(cs.globalToLocal(p.data.direction), cs.globalToLocal(direction));
+        glm::dvec3 BRDF = interaction.material->DiffuseBRDF(cs.globalToLocal(p.data.direction), cs.globalToLocal(direction));
         radiance += p.data.flux * BRDF * wp;
     }
     return radiance / (max_squared_radius / 3.0);
 }
 
-bool PhotonMapper::hasShadowPhoton(const Intersection& intersect) const
+bool PhotonMapper::hasShadowPhotons(const Interaction& interaction) const
 {
-    return use_shadow_photons && !linear_shadow_map.knnSearch(intersect.position, k_nearest_photons, max_radius).empty();
+    return !linear_shadow_map.radiusEmpty(interaction.position, max_radius);
 }
