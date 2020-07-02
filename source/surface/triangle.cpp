@@ -3,7 +3,7 @@
 #include "../common/constants.hpp"
 
 Surface::Triangle::Triangle(const glm::dvec3& v0, const glm::dvec3& v1, const glm::dvec3& v2, std::shared_ptr<Material> material)
-    : Base(material), v0(v0), v1(v1), v2(v2), E1(v1 - v0), E2(v2 - v0), normal_(glm::normalize(glm::cross(E1, E2))) 
+    : Base(material), v0(v0), v1(v1), v2(v2), E1(v1 - v0), E2(v2 - v0), normal_(glm::normalize(glm::cross(E1, E2))), N(nullptr)
 {
     computeArea();
     computeBoundingBox();
@@ -12,7 +12,7 @@ Surface::Triangle::Triangle(const glm::dvec3& v0, const glm::dvec3& v1, const gl
 Surface::Triangle::Triangle(const glm::dvec3& v0, const glm::dvec3& v1, const glm::dvec3& v2,
                             const glm::dvec3& n0, const glm::dvec3& n1, const glm::dvec3& n2, std::shared_ptr<Material> material)
     : Base(material), v0(v0), v1(v1), v2(v2), E1(v1 - v0), E2(v2 - v0), normal_(glm::normalize(glm::cross(E1, E2))), 
-      N({ glm::normalize(n0), glm::normalize(n1), glm::normalize(n2) })
+      N(std::make_unique<const glm::dmat3>(glm::normalize(n0), glm::normalize(n1), glm::normalize(n2)))
 {
     computeArea();
     computeBoundingBox();
@@ -51,7 +51,7 @@ bool Surface::Triangle::intersect(const Ray& ray, Intersection& intersection) co
 
     intersection = Intersection(t);
 
-    if (!N.empty())
+    if (N)
     {
         intersection.uv = { u, v };
         intersection.interpolate = true;
@@ -78,7 +78,8 @@ glm::dvec3 Surface::Triangle::normal() const
 
 glm::dvec3 Surface::Triangle::interpolatedNormal(const glm::dvec2& uv) const
 {
-    return glm::normalize((1.0 - uv.x - uv.y) * N.at(0) + uv.x * N.at(1) + uv.y * N.at(2));
+    const auto &vn = *N;
+    return glm::normalize((1.0 - uv.x - uv.y) * vn[0] + uv.x * vn[1] + uv.y * vn[2]);
 }
 
 void Surface::Triangle::computeBoundingBox()

@@ -123,7 +123,7 @@ PhotonMapper::PhotonMapper(const nlohmann::json& j) : Integrator(j)
     std::unique_ptr<std::thread> print_thread;
     if (print)
     {
-        std::cout << std::string(28, '-') << "| PHOTON MAPPING PASS |" << std::string(28, '-') << std::endl << std::endl;
+        std::cout << std::endl << std::string(28, '-') << "| PHOTON MAPPING PASS |" << std::string(28, '-') << std::endl << std::endl;
         std::cout << "Total number of photon emissions from light sources: " << Format::largeNumber(photon_emissions) << std::endl << std::endl;
         print_thread = std::make_unique<std::thread>([&work_queue]()
         {
@@ -246,6 +246,8 @@ void PhotonMapper::emitPhoton(const Ray& ray, const glm::dvec3& flux, size_t thr
     double n1 = ray.medium_ior;
     double n2 = std::abs(ray.medium_ior - scene.ior) < C::EPSILON ? interaction.material->ior : scene.ior;
 
+    bool multi_scattered = true;
+
     switch (interaction.type(n1, n2, -ray.direction))
     {
         case Interaction::Type::REFLECT:
@@ -254,15 +256,22 @@ void PhotonMapper::emitPhoton(const Ray& ray, const glm::dvec3& flux, size_t thr
             {
                 createShadowPhotons(Ray(interaction.position - interaction.normal * C::EPSILON, interaction.position + ray.direction), thread);
             }
-
-            BRDF = interaction.material->SpecularBRDF();
-            new_ray.reflectSpecular(ray.direction, interaction, n1);
+            if (new_ray.reflectSpecular(ray.direction, interaction, n1))
+            {
+                CoordinateSystem cs(interaction.specular_normal);
+                BRDF = interaction.material->SpecularBRDF(cs.globalToLocal(new_ray.direction), cs.globalToLocal(-ray.direction));
+                multi_scattered = false;
+            }
             break;
         }
         case Interaction::Type::REFRACT:
         {
-            BRDF = interaction.material->SpecularBRDF();
-            new_ray.refractSpecular(ray.direction, interaction, n1, n2);
+            if (new_ray.refractSpecular(ray.direction, interaction, n1, n2))
+            {
+                CoordinateSystem cs(interaction.specular_normal);
+                BRDF = interaction.material->SpecularBRDF(cs.globalToLocal(new_ray.direction), cs.globalToLocal(-ray.direction));
+                multi_scattered = false;
+            }
             break;
         }
         case Interaction::Type::DIFFUSE:
@@ -286,11 +295,11 @@ void PhotonMapper::emitPhoton(const Ray& ray, const glm::dvec3& flux, size_t thr
                     indirect_vecs[thread].emplace_back(flux / non_caustic_reject, interaction.position, ray.direction);
                 }
             }
-            
+
             CoordinateSystem cs(interaction.shading_normal);
             new_ray.reflectDiffuse(cs, interaction, n1);
-
-            BRDF = C::PI * interaction.material->DiffuseBRDF(cs.globalToLocal(new_ray.direction), cs.globalToLocal(-ray.direction));
+            BRDF = interaction.material->DiffuseBRDF(cs.globalToLocal(new_ray.direction), cs.globalToLocal(-ray.direction)) * C::PI;
+            multi_scattered = false;
         }
     }
 
@@ -299,7 +308,7 @@ void PhotonMapper::emitPhoton(const Ray& ray, const glm::dvec3& flux, size_t thr
     // Based on slide 13 of https://cgg.mff.cuni.cz/~jaroslav/teaching/2015-npgr010/slides/11%20-%20npgr010-2015%20-%20PM.pdf
     double survive = std::min(ray_depth > min_ray_depth ? 0.9 : 1.0, glm::compMax(new_flux) / glm::compMax(flux));
 
-    if (Random::trial(survive))
+    if (!multi_scattered && Random::trial(survive))
     {
         emitPhoton(new_ray, new_flux / survive, thread, ray_depth + 1);
     }
@@ -347,7 +356,7 @@ glm::dvec3 PhotonMapper::sampleRay(Ray ray, size_t ray_depth)
 
     if (!interaction)
     {
-        return scene.skyColor(ray);
+        return glm::dvec3(0.0);
     }
 
     double absorb = ray_depth > min_ray_depth ? 1.0 - interaction.material->reflect_probability : 0.0;
@@ -366,24 +375,33 @@ glm::dvec3 PhotonMapper::sampleRay(Ray ray, size_t ray_depth)
     double n1 = ray.medium_ior;
     double n2 = std::abs(ray.medium_ior - scene.ior) < C::EPSILON ? interaction.material->ior : scene.ior;
 
+    bool multi_scattered = true;
+
     switch (interaction.type(n1, n2, -ray.direction))
     {
         case Interaction::Type::REFLECT:
         {
-            if (diffuse) return glm::dvec3(0.0);
-            new_ray.reflectSpecular(ray.direction, interaction, n1);
-            return (emittance + sampleRay(new_ray, ray_depth + 1) * interaction.material->SpecularBRDF()) / (1.0 - absorb);
+            if (!diffuse && new_ray.reflectSpecular(ray.direction, interaction, n1))
+            {
+                CoordinateSystem cs(interaction.specular_normal);
+                glm::dvec3 BRDF = interaction.material->SpecularBRDF(cs.globalToLocal(new_ray.direction), cs.globalToLocal(-ray.direction));
+                return (emittance + sampleRay(new_ray, ray_depth + 1) * BRDF) / (1.0 - absorb);
+            }
+            break;
         }
         case Interaction::Type::REFRACT:
         {
-            if (diffuse) return glm::dvec3(0.0);
-            new_ray.refractSpecular(ray.direction, interaction, n1, n2);
-            return (emittance + sampleRay(new_ray, ray_depth + 1) * interaction.material->SpecularBRDF()) / (1.0 - absorb);
+            if (!diffuse && new_ray.refractSpecular(ray.direction, interaction, n1, n2))
+            {
+                CoordinateSystem cs(interaction.specular_normal);
+                glm::dvec3 BRDF = interaction.material->SpecularBRDF(cs.globalToLocal(new_ray.direction), cs.globalToLocal(-ray.direction));
+                return (emittance + sampleRay(new_ray, ray_depth + 1) * BRDF) / (1.0 - absorb);
+            }
+            break;
         }
-        case Interaction::Type::DIFFUSE: default:
+        case Interaction::Type::DIFFUSE:
         {
             CoordinateSystem cs(interaction.shading_normal);
-
             glm::dvec3 caustics = estimateCausticRadiance(interaction, -ray.direction, cs);
             glm::dvec3 indirect(0.0), direct(0.0);
 
@@ -431,8 +449,10 @@ glm::dvec3 PhotonMapper::sampleRay(Ray ray, size_t ray_depth)
                     return evaluateDiffuse();
                 }
             }
+            break;
         }
     }
+    return emittance / (1.0 - absorb);
 }
 
 glm::dvec3 PhotonMapper::estimateRadiance(const Interaction& interaction, const glm::dvec3& direction, const CoordinateSystem& cs, const std::vector<SearchResult<Photon>> &photons)
@@ -457,16 +477,16 @@ glm::dvec3 PhotonMapper::estimateCausticRadiance(const Interaction& interaction,
     auto photons = linear_caustic_map.knnSearch(interaction.position, k_nearest_photons, max_caustic_radius);
     if (photons.empty()) return radiance;
 
-    double max_squared_radius = photons.back().distance2;
+    double inv_max_squared_radius = 1.0 / photons.back().distance2;
 
     for (const auto& p : photons)
     {
         if (glm::dot(p.data.direction, cs.normal) >= 0.0) continue;
-        double wp = std::max(0.0, 1.0 - std::sqrt(p.distance2 / max_squared_radius));
+        double wp = std::max(0.0, 1.0 - std::sqrt(p.distance2 * inv_max_squared_radius));
         glm::dvec3 BRDF = interaction.material->DiffuseBRDF(cs.globalToLocal(p.data.direction), cs.globalToLocal(direction));
         radiance += p.data.flux * BRDF * wp;
     }
-    return radiance / (max_squared_radius / 3.0);
+    return 3.0 * radiance * inv_max_squared_radius;
 }
 
 bool PhotonMapper::hasShadowPhotons(const Interaction& interaction) const

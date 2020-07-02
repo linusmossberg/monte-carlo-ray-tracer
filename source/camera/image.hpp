@@ -29,6 +29,8 @@ private:
 
     std::function<glm::dvec3(const glm::dvec3&)> tonemap;
 
+    bool plain; // No tonemapping or autoexposure/-gain
+
     /**************************************************************************
     Hard coded (except for dimensions) uncompressed 24bpp true-color TGA header.
     After writing this to file, the RGB bytes can be dumped in sequence

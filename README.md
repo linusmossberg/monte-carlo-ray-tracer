@@ -2,8 +2,8 @@
 
 This is a physically based renderer with Path Tracing and Photon Mapping.
 
-<div about="renders/stanford_dragon.jpg">
-  <img src="renders/stanford_dragon.jpg" alt="Path traced render of the stanford dragon, 871 414 triangles." title="Path traced render of the stanford dragon, 871 414 triangles." />
+<div about="renders/stanford_dragon_frosted.jpg">
+  <img src="renders/stanford_dragon_frosted.jpg" alt="Path traced render of the Stanford dragon with a frosted glass material, 871,414 triangles." title="Path traced render of the Stanford dragon with a frosted glass material, 871 414 triangles." />
   <a rel="license" href="https://creativecommons.org/licenses/by/4.0/"></a>
 </div>
 <div about="renders/quadric.jpg">
@@ -11,7 +11,7 @@ This is a physically based renderer with Path Tracing and Photon Mapping.
   <a rel="license" href="https://creativecommons.org/licenses/by/4.0/"></a>
 </div>
 <div about="renders/caustics.jpg">
-  <img src="renders/caustics.jpg" alt="Photon mapped render of caustics, 6 583 508 triangles. Original scene by Benedikt Bitterli." title="Photon mapped render of caustics, 6 583 508 triangles. Original scene by Benedikt Bitterli." />
+  <img src="renders/caustics.jpg" alt="Photon mapped render of caustics, 6 583 508 triangles and 156 572 184 photon particles. Original scene by Benedikt Bitterli." title="Photon mapped render of caustics, 6 583 508 triangles and 156 572 184 photon particles. Original scene by Benedikt Bitterli." />
   <a rel="license" href="https://creativecommons.org/licenses/by/4.0/"></a>
 </div>
 
@@ -98,7 +98,7 @@ Normal naive scene intersection is used if this object is not specified. The `ty
 | ------- | ------ | 
 | `octree` | First creates an octree by iterative insertion of the primitive centroids, and then transforms this tree into a BVH by just transferring the octree node hierarchy and computing the bounding boxes. | 
 | `binary_sah` | Creates a binary-tree BVH by recursively splitting the primitives into two groups. The split occurs along the axis with the largest primitive centroid extent, and the split position is determined by the Surface Area Heuristic (SAH). Binning is performed to reduce the number of evaluated split coordinates along the axis, and the number of bins is determined by the `bins_per_axis` field. | 
-| `quaternary_sah` | Creates a quaternary-tree BVH by recursively splitting the primitives into the four groups that results in the lowest SAH-cost. This is similar to the binary version, but the split now occurs along two axes. The bins form a regular 2D grid and `bins_per_axis`<sup>2</sup> possible split coordinates are evaluated. |
+| `quaternary_sah` | Creates a quaternary-tree BVH by recursively splitting the primitives into the four groups that results in the lowest SAH-cost. This is similar to the binary version, but the split now occurs along two axes. The bins form a regular 2D grid and (`bins_per_axis`-1)<sup>2</sup> possible split coordinates are evaluated. |
 
 I've also tried splitting along all three axes each recursion to create octonary-trees. This produces good results but there's not much of an improvement compared to the quaternary version and the construction time becomes much longer due to the dimensionality curse when using 3D bins.
 
@@ -162,7 +162,7 @@ The `savename` property defines the name of the resulting saved image file. Imag
 
 The `image` object specifies the image properties of the camera. The `width` and `height` ´fields specifies the image resolution in pixels.
 
-The `tonemapper` field specifies which tonemapper to use. The available ones are `Hable` ([filmic tonemapper by John Hable](http://filmicworlds.com/blog/filmic-tonemapping-operators/)) and `ACES` ([fitted by Krzysztof Narkowicz](https://knarkowicz.wordpress.com/2016/01/06/aces-filmic-tone-mapping-curve/)). The default tonemapper is `Hable`.
+The `tonemapper` field specifies which tonemapper to use. The available ones are `Hable` ([filmic tonemapper by John Hable](http://filmicworlds.com/blog/filmic-tonemapping-operators/)) and `ACES` ([fitted by Stephen Hill](https://twitter.com/self_shadow)). The default tonemapper is `Hable`.
 
 The program has histogram-based auto-exposure which centers the histogram around the 0.5 intensity level before applying tone mapping (corresponding to controlling the amount of light that reaches the film/sensor). This can be offset with the optional `exposure_compensation` field, which specifies the [exposure compensation](https://en.wikipedia.org/wiki/Exposure_compensation) in EV units (stops). 
 
@@ -190,7 +190,8 @@ Example:
   "crystal": {
     "ior": 2.0,
     "transparency":  1.0,
-    "specular_reflectance": [ 0.5, 1.0, 0.9 ]
+    "specular_reflectance": [ 0.5, 1.0, 0.9 ],
+    "specular_roughness": 0.1
   },
   "one_sheet_hyperboloid": {
     "specular_reflectance": "#FFFFFF",
@@ -208,19 +209,20 @@ The key string is used later when assigning a material to a surface. The materia
 
 The material fields are:
 
-| field                | type        | default value |
-| -------------------- | ----------- | --------------|
-| reflectance          | RGB vector  | [0 0 0]       |
-| specular_reflectance | RGB vector  | [0 0 0]       |
-| emittance            | RGB vector  | [0 0 0]       |
-| ior                  | scalar      | -1            |
-| roughness            | scalar      | 0             |
-| transparency         | scalar      | 0             |
-| perfect_mirror       | boolean     | false         |
+| field                  | type   | default | interval |
+| ---------------------- | ------ | ------- | -------- |
+| `reflectance`          | RGB    | [0 0 0] | [0, 1]   |
+| `specular_reflectance` | RGB    | [0 0 0] | [0, 1]   |
+| `emittance`            | RGB    | [0 0 0] | [0, ∞)   |
+| `ior`                  | scalar | -1      | [1, ∞)   |
+| `roughness`            | scalar | 0       | [0, ∞)   |
+| `specular_roughness`   | scalar | 0       | [0, 1]   |
+| `transparency`         | scalar | 0       | [0, 1]   |
+| `perfect_mirror`       | bool   | false   | {0, 1}   | 
 
-These fields are all optional and any combination of fields can be used. A material can for example be a combination of diffusely reflecting, specularly reflecting, emissive, transparent (specularly refracting) and rough. If the IOR is specified to be the less than 1, then the material is assumed to be completely diffuse. If set to true, the `perfect_mirror` field overrides most other fields to simulate a perfect mirror with infinite IOR.
+These fields are all optional and any combination of fields can be used. A material can for example be a combination of diffusely reflecting, specularly reflecting, emissive, transparent (specularly refracting) and rough. If the IOR is specified to be the less than 1, then the material is assumed to be completely diffuse. If set to true, the `perfect_mirror` field overrides most other fields to simulate a perfect mirror with infinite IOR. The program uses the Oren-Nayar microfacet BRDF for diffuse roughness and the Cook-Torrance microfacet BSDF with GGX + Smith for specular roughness.
 
-The `reflectance` and `specular_reflectance` fields specifies the amount of radiance that should be diffusely and specularly reflected for each RGB channel. This is a simplification since radiance and reflectances are spectral properties that varies with wavelength and not by the resulting tristimulus values of the virtual camera, but this is computationally cheaper and simpler. The reflectance properties are defined in the range `[0,0,0]` to `[1,1,1]`, or `#000000` to `#FFFFFF` if a hex string is used. The reflectance properties now take gamma-corrected values and linearizes them internally to make it easier to pick colors via color pickers (which usually display gamma corrected values).
+The `reflectance` and `specular_reflectance` fields specifies the amount of radiance that should be diffusely and specularly reflected for each RGB channel. This is a simplification since radiance and reflectances are spectral properties that varies with wavelength and not by the resulting tristimulus values of the virtual camera, but this is computationally cheaper and simpler. The reflectance properties now take gamma-corrected values and linearizes them internally to make it easier to pick colors via color pickers (which usually display gamma corrected values).
 
 The `emittance` field defines the radiant flux of each RGB channel in watts. This means that surfaces with different surface areas will emit the same amount of radiant energy if they are assigned the same emissive material.
 </details>
@@ -263,9 +265,9 @@ Example:
 ```json
 "surfaces": [
   {
-      "type": "object",
-      "smooth": true,
-      "file": "data/stanford_dragon.obj"
+    "type": "object",
+    "smooth": true,
+    "file": "data/stanford_dragon.obj"
   },
   {
     "type": "object",

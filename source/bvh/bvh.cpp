@@ -194,8 +194,7 @@ void BVH::recursiveBuildBinarySAH(std::shared_ptr<BuildNode> bvh_node)
     {
         double f = (centroid[split_axis] - centroid_extent.min[split_axis]) / extent_dims[split_axis];
         int idx = (int)glm::floor(f * bins_per_axis);
-        idx = glm::min(idx, bins_per_axis - 1);
-        return idx;
+        return glm::min(idx, bins_per_axis - 1);
     };
 
     std::vector<std::pair<size_t, BoundingBox>> bins(bins_per_axis, { 0, BoundingBox() });
@@ -315,8 +314,7 @@ void BVH::recursiveBuildQuaternarySAH(std::shared_ptr<BuildNode> bvh_node)
     {
         glm::dvec2 f = (glm::dvec2(centroid[axes.x], centroid[axes.y]) - axes_min) / axes_dim;
         glm::ivec2 idx = glm::floor(f * glm::dvec2(num_bins));
-        idx = glm::min(idx, num_bins - 1);
-        return idx;
+        return glm::min(idx, num_bins - 1);
     };
 
     std::vector<std::vector<std::pair<size_t, BoundingBox>>> bins(num_bins.x,

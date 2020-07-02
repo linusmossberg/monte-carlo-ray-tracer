@@ -152,7 +152,7 @@ void Camera::lookAt(const glm::dvec3& p)
 
 void Camera::capture()
 {
-    std::cout << std::string(28, '-') << "| MAIN RENDERING PASS |" << std::string(28, '-') << std::endl << std::endl;
+    std::cout << std::endl << std::string(28, '-') << "| MAIN RENDERING PASS |" << std::string(28, '-') << std::endl << std::endl;
     std::cout << "Samples per pixel: " << pow2(static_cast<double>(sqrtspp)) << std::endl << std::endl;
     auto before = std::chrono::system_clock::now();
     sampleImage();

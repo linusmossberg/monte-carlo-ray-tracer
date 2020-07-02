@@ -18,8 +18,7 @@ LinearOctree<Data>::LinearOctree(Octree<Data> &octree_root)
     uint32_t df_idx = root_idx;
     uint64_t data_idx = 0;
     compact(&octree_root, df_idx, data_idx, true);
-
-    octree_root.octants.clear(); 
+    octree_root.octants.clear();
 }
 
 template <class Data>

@@ -5,6 +5,7 @@
 
 struct CoordinateSystem
 {
+    CoordinateSystem() { }
     CoordinateSystem(const glm::dvec3& N);
 
     glm::dvec3 localToGlobal(const glm::dvec3& v) const;

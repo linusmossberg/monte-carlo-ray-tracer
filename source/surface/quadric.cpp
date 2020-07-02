@@ -144,9 +144,7 @@ bool Surface::Quadric::intersect(const Ray& ray, Intersection& intersection) con
 
     t += t_bb;
 
-    glm::dvec3 pos = ray(t);
-
-    if (!BB_.contains(pos))
+    if (!BB_.contains(ray(t)))
     {
         return false;
     }

@@ -86,7 +86,7 @@ namespace Surface
         virtual void computeBoundingBox();
 
         const glm::dvec3 v0, v1, v2;
-        const std::vector<glm::dvec3> N;
+        const std::unique_ptr<const glm::dmat3> N; // vertex normals
 
         // Pre-computed edges and normal
         const glm::dvec3 E1, E2, normal_;

@@ -17,11 +17,35 @@ glm::dvec3 filmicHable(const glm::dvec3 &in)
     return f(in) / f(glm::dvec3(W));
 }
 
-// From https://knarkowicz.wordpress.com/2016/01/06/aces-filmic-tone-mapping-curve/
 glm::dvec3 filmicACES(const glm::dvec3 &in)
 {
-    const double A = 2.51, B = 0.03, C = 2.43, D = 0.59, E = 0.14;
-    return glm::clamp((in * (A * in + B)) / (in * (C * in + D) + E), 0.0, 1.0);
+    glm::dmat3 ACESInputMat(glm::dvec3(0.59719, 0.07600, 0.02840),
+                            glm::dvec3(0.35458, 0.90834, 0.13383),
+                            glm::dvec3(0.04823, 0.01566, 0.83777));
+
+    glm::dmat3 ACESOutputMat(glm::dvec3(1.60475, -0.10208, -0.00327),
+                             glm::dvec3(-0.53108, 1.10813, -0.07276),
+                             glm::dvec3(-0.07367, -0.00605, 1.07602));
+
+    auto RRTAndODTFit = [](const glm::dvec3 &v)
+    {
+        glm::dvec3 a = v * (v + 0.0245786) - 0.000090537;
+        glm::dvec3 b = v * (0.983729 * v + 0.4329510) + 0.238081;
+        return a / b;
+    };
+
+    glm::dvec3 color = ACESInputMat * in;
+
+    color = RRTAndODTFit(color);
+
+    color = ACESOutputMat * color;
+
+    return glm::clamp(color, 0.0, 1.0);
+}
+
+glm::dvec3 linear(const glm::dvec3 &in)
+{
+    return in;
 }
 
 glm::dvec3 gammaCorrect(const glm::dvec3 &in)

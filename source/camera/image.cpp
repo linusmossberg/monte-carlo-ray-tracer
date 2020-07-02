@@ -12,6 +12,8 @@ Image::Image(const nlohmann::json &j)
     num_pixels = width * height;
     blob = std::vector<glm::dvec3>(num_pixels, glm::dvec3());
 
+    plain = getOptional(j, "plain", false);
+
     double exposure_EV = getOptional(j, "exposure_compensation", 0.0);
     double gain_EV = getOptional(j, "gain_compensation", 0.0);
 
@@ -21,16 +23,19 @@ Image::Image(const nlohmann::json &j)
     std::string tonemapper = getOptional<std::string>(j, "tonemapper", "HABLE");
     std::transform(tonemapper.begin(), tonemapper.end(), tonemapper.begin(), toupper);
 
-    if (tonemapper == "ACES") 
-        tonemap = filmicACES;
-    else 
-        tonemap = filmicHable;
+    if (plain)
+        tonemap = linear;
+    else
+        if (tonemapper == "ACES")
+            tonemap = filmicACES;
+        else 
+            tonemap = filmicHable;
 }
 
 void Image::save(const std::string& filename) const
 {
-    double exposure_factor = getExposure() * exposure_scale;
-    double gain_factor = getGain(exposure_factor) * gain_scale;
+    double exposure_factor = plain ? 1.0 : getExposure() * exposure_scale;
+    double gain_factor = plain ? 1.0 : getGain(exposure_factor) * gain_scale;
 
     HeaderTGA header((uint16_t)width, (uint16_t)height);
     std::ofstream out_tonemapped(filename + ".tga", std::ios::binary);

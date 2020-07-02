@@ -19,9 +19,6 @@ public:
     void createShadowPhotons(const Ray& ray, size_t thread, size_t depth = 0);
 
     virtual glm::dvec3 sampleRay(Ray ray, size_t ray_depth = 0);
-
-    //glm::dvec3 estimateRadiance(LinearOctree<Photon>& map, const Interaction& interaction,
-    //                            const glm::dvec3& direction, const CoordinateSystem& cs, double r) const;
     
     glm::dvec3 estimateRadiance(const Interaction& interaction, const glm::dvec3& direction, const CoordinateSystem& cs, const std::vector<SearchResult<Photon>> &photons);
     glm::dvec3 estimateCausticRadiance(const Interaction& interaction, const glm::dvec3& direction, const CoordinateSystem& cs);

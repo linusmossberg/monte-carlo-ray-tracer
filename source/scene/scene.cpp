@@ -157,40 +157,7 @@ Interaction Scene::interact(const Ray& ray, bool shadow_ray) const
         }
     }
 
-    Interaction interaction;
-
-    if (intersection)
-    {
-        interaction.position = ray(intersection.t);
-        interaction.normal = intersection.surface->normal(interaction.position);
-        interaction.material = intersection.surface->material;
-        interaction.t = intersection.t;
-
-        if (!shadow_ray)
-        {
-            double cos_theta = glm::dot(ray.direction, interaction.normal);
-
-            if (intersection.interpolate)
-            {
-                interaction.shading_normal = intersection.surface->interpolatedNormal(intersection.uv);
-                if (cos_theta < 0.0 != glm::dot(ray.direction, interaction.shading_normal) < 0.0)
-                {
-                    interaction.shading_normal = interaction.normal;
-                }
-            }
-            else
-            {
-                interaction.shading_normal = interaction.normal;
-            }
-
-            if (cos_theta > 0.0)
-            {
-                interaction.normal = -interaction.normal;
-                interaction.shading_normal = -interaction.shading_normal;
-            }
-        }
-    }
-    return interaction;
+    return intersection ? Interaction(intersection, ray, shadow_ray) : Interaction();
 }
 
 void Scene::generateEmissives()
