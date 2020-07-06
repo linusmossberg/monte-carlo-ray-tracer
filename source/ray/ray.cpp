@@ -17,47 +17,41 @@ glm::dvec3 Ray:: operator()(double t) const
     return start + direction * t;
 }
 
-void Ray::reflectDiffuse(const CoordinateSystem &cs, const Interaction &ia, double n1)
+void Ray::reflectDiffuse(const Interaction &ia)
 {
-    direction = cs.localToGlobal(Random::CosWeightedHemiSample());
-    start += ia.normal * C::EPSILON;
     specular = false;
-    medium_ior = n1;
-}
-
-bool Ray::reflectSpecular(const glm::dvec3 &in, const Interaction &ia, double n1)
-{
-    direction = glm::reflect(in, ia.specular_normal);
+    direction = ia.cs.from(Random::CosWeightedHemiSample());
+    medium_ior = ia.n1;
     start += ia.normal * C::EPSILON;
-    specular = true;
-    medium_ior = n1;
-
-    return glm::dot(ia.shading_normal, direction) > 0.0;
 }
 
-bool Ray::refractSpecular(const glm::dvec3 &in, const Interaction &ia, double n1, double n2)
+void Ray::reflectSpecular(const glm::dvec3 &in, const Interaction &ia)
+{
+    specular = true;
+    direction = glm::reflect(in, ia.cs.normal);
+    medium_ior = ia.n1;
+    start += ia.normal * C::EPSILON;
+}
+
+void Ray::refractSpecular(const glm::dvec3 &in, const Interaction &ia)
 {
     specular = true;
 
-    double ior_quotient = n1 / n2;
-    double cos_theta = glm::dot(ia.specular_normal, in);
+    double ior_quotient = ia.n1 / ia.n2;
+    double cos_theta = glm::dot(ia.cs.normal, in);
     double k = 1.0 - pow2(ior_quotient) * (1.0 - pow2(cos_theta)); // 1 - (n1/n2 * sin(theta))^2
     if (k >= 0)
     {
         /* SPECULAR REFRACTION */
-        direction = ior_quotient * in - (ior_quotient * cos_theta + std::sqrt(k)) * ia.specular_normal;
+        direction = ior_quotient * in - (ior_quotient * cos_theta + std::sqrt(k)) * ia.cs.normal;
+        medium_ior = ia.n2;
         start -= ia.normal * C::EPSILON;
-        medium_ior = n2;
-
-        return glm::dot(ia.shading_normal, direction) < 0.0;
     }
     else
     {
         /* CRITICAL ANGLE, SPECULAR REFLECTION */
-        direction = in - ia.specular_normal * cos_theta * 2.0;
+        direction = in - ia.cs.normal * cos_theta * 2.0;
+        medium_ior = ia.n1;
         start += ia.normal * C::EPSILON;
-        medium_ior = n1;
-
-        return glm::dot(ia.shading_normal, direction) > 0.0;
     }
 }

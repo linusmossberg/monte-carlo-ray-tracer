@@ -9,6 +9,7 @@
 #include "../common/constants.hpp"
 #include "../random/random.hpp"
 #include "../common/coordinate-system.hpp"
+#include "fresnel.hpp"
 
 glm::dvec3 Material::DiffuseBRDF(const glm::dvec3 &i, const glm::dvec3 &o)
 {
@@ -17,7 +18,9 @@ glm::dvec3 Material::DiffuseBRDF(const glm::dvec3 &i, const glm::dvec3 &o)
 
 glm::dvec3 Material::SpecularBRDF(const glm::dvec3 &i, const glm::dvec3 &o)
 {
-    return rough_specular ? GGXBRDF(i, o) : specular_reflectance;
+    if (rough_specular) return GGXBRDF(i, o);
+
+    return i.z < 0.0 ? transmittance : specular_reflectance;
 }
 
 glm::dvec3 Material::LambertianBRDF()
@@ -49,7 +52,8 @@ glm::dvec3 Material::GGXBRDF(const glm::dvec3 &i, const glm::dvec3 &o)
     // Refracted rays has negative dot product with normal. Assuming that the statistical shadowing amount 
     // is the same on both sides, then just flipping the sign should be correct. It would probably 
     // have to be mirrored against the normal in the unidirectional anisotropic case as well.
-    double cos_i = i.z < 0.0 ? -i.z : i.z;
+    bool refraction = i.z < 0.0;
+    double cos_i = refraction ? -i.z : i.z;
     
     // Slide 80:
     // https://twvideo01.ubm-us.net/o1/vault/gdc2017/Presentations/Hammon_Earl_PBR_Diffuse_Lighting.pdf
@@ -60,18 +64,7 @@ glm::dvec3 Material::GGXBRDF(const glm::dvec3 &i, const glm::dvec3 &o)
     // G2 = 2.0 * cos_i * cos_o / (cos_o * denom_i + cos_i * denom_o);
     double G2_div_G1 = (cos_i * (denom_o + cos_o)) / (cos_o * denom_i + cos_i * denom_o);
 
-    return specular_reflectance * G2_div_G1;
-}
-
-// Schlick's approximation of Fresnel factor
-double Material::Fresnel(double n1, double n2, const glm::dvec3& normal, const glm::dvec3& dir) const
-{
-    if (perfect_mirror) return 1.0;
-
-    if (std::abs(n1 - n2) < C::EPSILON || n2 < 1.0) return 0.0;
-
-    double R0 = pow2((n1 - n2) / (n1 + n2));
-    return R0 + (1.0 - R0) * std::pow(1.0 - glm::dot(normal, dir), 5);
+    return (refraction ? transmittance : specular_reflectance) * G2_div_G1;
 }
 
 // Samples a visible microfacet normal from the GGX distribution
@@ -110,15 +103,33 @@ glm::dvec3 Material::specularMicrofacetNormal(const glm::dvec3 &out) const
 
 void Material::computeProperties()
 {
-    can_diffusely_reflect = !perfect_mirror && std::abs(transparency - 1.0) > C::EPSILON;
-    reflect_probability = std::min(std::max(glm::compMax(reflectance), glm::compMax(specular_reflectance)), 0.8);
+    can_diffusely_reflect = !complex_ior && !perfect_mirror && std::abs(transparency - 1.0) > C::EPSILON;
 
-    rough = glm::compMax(reflectance) > C::EPSILON && roughness > C::EPSILON;
-    rough_specular = glm::compMax(specular_reflectance) > C::EPSILON && specular_roughness > C::EPSILON;
+    rough = roughness > C::EPSILON;
+    rough_specular = specular_roughness > C::EPSILON;
 
     double variance = pow2(roughness);
     A = 1.0 - 0.5 * (variance / (variance + 0.33));
     B = 0.45 * (variance / (variance + 0.09));
+
+    // Use fresnel at 45 degree incidence and n1 in vacuum to determine Russian roulette reflect probability
+    double cos_45 = std::cos(C::PI / 4.0);
+    if (complex_ior)
+    {
+        reflect_probability = glm::compMax(specular_reflectance * Fresnel::conductor(1.0, complex_ior.get(), cos_45));
+    }
+    else
+    {
+        double R = Fresnel::dielectric(1.0, ior, cos_45);
+        double T = transparency;
+
+        double R_prob = glm::compMax((1.0 - T) * R * specular_reflectance);
+        double T_prob = glm::compMax((1.0 - R) * T * transmittance);
+        double D_prob = glm::compMax((1.0 - R) * (1.0 - T) * reflectance);
+
+        reflect_probability = glm::max(R_prob, glm::max(T_prob, D_prob));
+    }
+    reflect_probability = std::min(reflect_probability, 0.8);
 }
 
 void from_json(const nlohmann::json &j, Material &m)
@@ -152,14 +163,28 @@ void from_json(const nlohmann::json &j, Material &m)
 
     getToOptional(j, "roughness", m.roughness);
     getToOptional(j, "specular_roughness", m.specular_roughness);
-    getToOptional(j, "ior", m.ior);
     getToOptional(j, "transparency", m.transparency);
     getToOptional(j, "perfect_mirror", m.perfect_mirror);
     getToOptional(j, "emittance", m.emittance);
     getReflectance("reflectance", m.reflectance);
     getReflectance("specular_reflectance", m.specular_reflectance);
+    getReflectance("transmittance", m.transmittance);
 
     m.reflectance = glm::pow(m.reflectance, glm::dvec3(2.2));
+
+    if (j.find("ior") != j.end())
+    {
+        if(j.at("ior").type() == nlohmann::json::value_t::object)
+        { 
+            m.complex_ior = std::make_shared<ComplexIOR>();
+            getToOptional(j.at("ior"), "real", m.complex_ior->real);
+            getToOptional(j.at("ior"), "imaginary", m.complex_ior->imaginary);
+        }
+        else
+        {
+            j.at("ior").get_to(m.ior);
+        }
+    }
 
     m.computeProperties();
 }

@@ -13,7 +13,7 @@ struct Interaction
 {
     Interaction() {}
 
-    Interaction(const Intersection &intersection, const Ray &ray, bool limited = false);
+    Interaction(const Intersection &intersection, const Ray &ray, double environment_ior);
 
     enum Type
     {
@@ -22,14 +22,17 @@ struct Interaction
         DIFFUSE
     };
 
-    Type type(double n1, double n2, const glm::dvec3& direction);
+    Type type;
 
-    double t;
+    glm::dvec3 BRDF(const glm::dvec3 &in) const;
+    
+    double t, n1, n2;
     std::shared_ptr<Material> material;
-    glm::dvec3 position, normal, shading_normal, specular_normal;
+    glm::dvec3 position, normal, out;
+    CoordinateSystem cs;
 
-    explicit operator bool() const
-    {
-        return material.operator bool();
-    }
+    Ray getNewRay() const;
+
+private:
+    void selectType(const glm::dvec3 &specular_normal);
 };

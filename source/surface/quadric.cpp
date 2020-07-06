@@ -9,19 +9,15 @@ Surface::Quadric::Quadric(const nlohmann::json &j, std::shared_ptr<Material> mat
     : Base(material)
 {
     double XX = getOptional(j, "XX", 0.0);
-    double XY = getOptional(j, "XY", 0.0) / 2.0;
-    double XZ = getOptional(j, "XZ", 0.0) / 2.0;
+    double XY = std::max(getOptional(j, "XY", 0.0), getOptional(j, "YX", 0.0)) / 2.0;
+    double XZ = std::max(getOptional(j, "XZ", 0.0), getOptional(j, "ZX", 0.0)) / 2.0;
     double X  = getOptional(j, "X",  0.0) / 2.0;
     double YY = getOptional(j, "YY", 0.0);
-    double YZ = getOptional(j, "YZ", 0.0) / 2.0;
+    double YZ = std::max(getOptional(j, "YZ", 0.0), getOptional(j, "ZY", 0.0)) / 2.0;
     double Y  = getOptional(j, "Y",  0.0) / 2.0;
     double ZZ = getOptional(j, "ZZ", 0.0);
     double Z  = getOptional(j, "Z",  0.0) / 2.0;
     double R  = getOptional(j, "R",  0.0);
-
-    if (std::abs(XY) < C::EPSILON) XY = getOptional(j, "YX", 0.0) / 2.0;
-    if (std::abs(XZ) < C::EPSILON) XZ = getOptional(j, "ZX", 0.0) / 2.0;
-    if (std::abs(YZ) < C::EPSILON) YZ = getOptional(j, "ZY", 0.0) / 2.0;
 
     double Qa[16] {
         XX, XY, XZ, X,
@@ -34,16 +30,8 @@ Surface::Quadric::Quadric(const nlohmann::json &j, std::shared_ptr<Material> mat
 
     glm::dvec3 origin = getOptional(j, "origin", glm::dvec3(0.0));
 
-    glm::dvec3 bound_dimensions;
-    if (j.find("bound_dimensions") != j.end())
-    {
-        bound_dimensions = j.at("bound_dimensions");
-    }
-    else
-    {
-        double bound_width = getOptional(j, "bound_size", 1.0);
-        bound_dimensions = glm::dvec3(bound_width);
-    }
+    glm::dvec3 bound_dimensions = getOptional(j, "bound_dimensions", glm::dvec3(1.0));
+
     BB_ = BoundingBox(origin - bound_dimensions / 2.0, origin + bound_dimensions / 2.0);
 
     glm::dmat4 scale = glm::scale(glm::dmat4(1.0), glm::dvec3(getOptional(j, "scale", 1.0)));

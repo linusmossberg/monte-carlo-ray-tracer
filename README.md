@@ -3,7 +3,7 @@
 This is a physically based renderer with Path Tracing and Photon Mapping.
 
 <div about="renders/stanford_dragon_frosted.jpg">
-  <img src="renders/stanford_dragon_frosted.jpg" alt="Path traced render of the Stanford dragon with a frosted glass material, 871,414 triangles." title="Path traced render of the Stanford dragon with a frosted glass material, 871 414 triangles." />
+  <img src="renders/stanford_dragon_frosted.jpg" alt="Path traced render of the Stanford dragon with a frosted glass material, 871 414 triangles." title="Path traced render of the Stanford dragon with a frosted glass material, 871 414 triangles." />
   <a rel="license" href="https://creativecommons.org/licenses/by/4.0/"></a>
 </div>
 <div about="renders/quadric.jpg">
@@ -11,7 +11,7 @@ This is a physically based renderer with Path Tracing and Photon Mapping.
   <a rel="license" href="https://creativecommons.org/licenses/by/4.0/"></a>
 </div>
 <div about="renders/caustics.jpg">
-  <img src="renders/caustics.jpg" alt="Photon mapped render of caustics, 6 583 508 triangles and 156 572 184 photon particles. Original scene by Benedikt Bitterli." title="Photon mapped render of caustics, 6 583 508 triangles and 156 572 184 photon particles. Original scene by Benedikt Bitterli." />
+  <img src="renders/caustics.jpg" alt="Photon mapped render of caustics, 6.6 million triangles and 157 million photon particles. Original scene by Benedikt Bitterli." title="Photon mapped render of caustics, 6.6 million triangles and 157 million photon particles. Original scene by Benedikt Bitterli." />
   <a rel="license" href="https://creativecommons.org/licenses/by/4.0/"></a>
 </div>
 
@@ -181,25 +181,29 @@ Example:
 ```json
 "materials": {
   "default": {
-      "reflectance": [ 0.73, 0.73, 0.73 ]
+      "reflectance": 0.73,
+      "roughness": 10.0
   },
-  "red": {
-    "reflectance": "#FF8080",
-    "roughness": 10.0
+  "silver": {
+    "specular_roughness": 0.06,
+    "ior": {
+      "real": [0.03122206, 0.02993163, 0.03752037],
+      "imaginary": [4.52084303, 3.61703254, 2.59526494]
+    }
   },
   "crystal": {
     "ior": 2.0,
     "transparency":  1.0,
-    "specular_reflectance": [ 0.5, 1.0, 0.9 ],
+    "transmittance": [ 0.5, 1.0, 0.9 ],
     "specular_roughness": 0.1
   },
   "one_sheet_hyperboloid": {
-    "specular_reflectance": "#FFFFFF",
+    "specular_reflectance": 0.5,
     "ior": 1.333,
     "reflectance": "#80B1D3"
   },
   "light": {
-    "reflectance": [ 0.9, 0.9, 0.9 ],
+    "reflectance": 0.9,
     "emittance": [ 1000, 1000, 1000 ]
   }
 }
@@ -209,22 +213,90 @@ The key string is used later when assigning a material to a surface. The materia
 
 The material fields are:
 
-| field                  | type   | default | interval |
-| ---------------------- | ------ | ------- | -------- |
-| `reflectance`          | RGB    | [0 0 0] | [0, 1]   |
-| `specular_reflectance` | RGB    | [0 0 0] | [0, 1]   |
-| `emittance`            | RGB    | [0 0 0] | [0, ∞)   |
-| `ior`                  | scalar | -1      | [1, ∞)   |
-| `roughness`            | scalar | 0       | [0, ∞)   |
-| `specular_roughness`   | scalar | 0       | [0, 1]   |
-| `transparency`         | scalar | 0       | [0, 1]   |
-| `perfect_mirror`       | bool   | false   | {0, 1}   | 
+| field                  | type        | default | range       |
+| ---------------------- | ----------- | ------- | ----------- |
+| `reflectance`          | RGB         | 0       | [0, 1]      |
+| `specular_reflectance` | RGB         | 1       | [0, 1]      |
+| `transmittance`        | RGB         | 1       | [0, 1]      |
+| `emittance`            | RGB         | 0       | [0, ∞)      |
+| `roughness`            | scalar      | 0       | [0, ∞)      |
+| `specular_roughness`   | scalar      | 0       | [0, 1]      |
+| `transparency`         | scalar      | 0       | [0, 1]      |
+| `perfect_mirror`       | bool        | 0       | {0, 1}      |
+| `ior`                  | [IOR](#ior) | 0       | [IOR](#ior) |
 
-These fields are all optional and any combination of fields can be used. A material can for example be a combination of diffusely reflecting, specularly reflecting, emissive, transparent (specularly refracting) and rough. If the IOR is specified to be the less than 1, then the material is assumed to be completely diffuse. If set to true, the `perfect_mirror` field overrides most other fields to simulate a perfect mirror with infinite IOR. The program uses the Oren-Nayar microfacet BRDF for diffuse roughness and the Cook-Torrance microfacet BSDF with GGX + Smith for specular roughness.
+These fields are all optional and any combination of fields can be used. A material can for example be a combination of diffusely reflecting, specularly reflecting, emissive, transmissive (specularly refracting) and rough. If set to true, the `perfect_mirror` field overrides most other fields to simulate a perfect mirror with infinite IOR.
 
-The `reflectance` and `specular_reflectance` fields specifies the amount of radiance that should be diffusely and specularly reflected for each RGB channel. This is a simplification since radiance and reflectances are spectral properties that varies with wavelength and not by the resulting tristimulus values of the virtual camera, but this is computationally cheaper and simpler. The reflectance properties now take gamma-corrected values and linearizes them internally to make it easier to pick colors via color pickers (which usually display gamma corrected values).
+The `reflectance`, `specular_reflectance` and `transmittance` fields specifies the amount of radiance that should be diffusely reflected and specularly reflected/transmitted for each RGB channel. This is a simplification since these are spectral properties that varies with wavelength and not by the resulting tristimulus values of the virtual camera, but this is computationally cheaper and simpler. These properties now take gamma-corrected values and linearizes them internally to make it easier to pick colors via color pickers. For realistic materials, `specular_reflectance` should probably only be set to gray values and complex IOR should be used instead for chromatic specular reflections. `transmittance` can also only be used to roughly model clear media such as colored glass or gemstones.
 
 The `emittance` field defines the radiant flux of each RGB channel in watts. This means that surfaces with different surface areas will emit the same amount of radiant energy if they are assigned the same emissive material.
+
+#### IOR
+
+For dialectric materials such as glass, water and plastic, the `ior` field can be specified as a scalar value in the range [1, ∞). If this value is less than 1, then the material will only ever produce diffuse reflections, regardless of scene IOR.
+
+For conductive materials such as metals, the `ior` field is instead specified as a complex-valued IOR object with a `real` and an `imaginary` field specified as RGB vectors. For example, physically based iron can be achieved by specifying the following IOR:
+
+```json
+"ior": {
+  "real": [2.91679227, 2.92517616, 2.53774810],
+  "imaginary": [3.08474983, 2.93861411, 2.74620057]
+}
+```
+
+The `real` part is often called *n* and it represents the usual index of refraction that is also present in dialectrics, but the spectral dependence is now considered as well. The real part varies over the visible spectrum for dielectrics as well (e.g. `[1.521, 1.525, 1.533]` for soda-lime glass), but transmission and refraction is tricky/expensive for spectrally dependent IOR which is why this is simplified to a single scalar value for dialectrics.
+
+The `imaginary` part is often called *k* and it represents the absorption/extinction coefficient. The imaginary part is non-zero for conductives and zero for dialectrics, which means that conductives absorbs the transmitted/non-reflected radiance while dielectrics let it pass through.
+
+Measured spectral distributions of these values are available at [refractiveindex.info](https://refractiveindex.info/). These spectral distributions must be reduced to linear RGB values before using them here. This can be done by integrating the product of the spectral distributions and each of the CIE color matching functions over the visible spectrum, and then converting the resulting XYZ tristimulus values to linear RGB. I wrote the following MATLAB script to do this:
+
+```matlab
+% Parse CIE color matching functions:
+xyz_cmfs = readmatrix('xyz-cie-1931-2deg.csv');
+xyz_w = xyz_cmfs(:,1); xyz = xyz_cmfs(:,2:4);
+
+% Parse complex IOR spectral distribution for iron:
+data = readtable('Johnson.csv');
+[~,index] = ismember("wl",data.wl); % Find start position of k data
+
+n_sRGB = integrate(data(1:index-1, :), xyz, xyz_w);
+k_sRGB = integrate(data(index+1:end, :), xyz, xyz_w);
+
+fprintf('"real": [%.8f, %.8f, %.8f],\n', n_sRGB)
+fprintf('"imaginary": [%.8f, %.8f, %.8f]\n', k_sRGB)
+
+function sRGB = integrate(data, xyz, xyz_w)
+    spd = str2double(data.n);
+    spd_w = str2double(data.wl) * 1000; % micro- to nanometers;
+    
+    % Average duplicate wavelengths
+    [spd_w, ~, idx] = unique(spd_w); spd = accumarray(idx, spd, [], @mean);
+
+    % Interpolate to align the spectral data wavelengths with the CMF's
+    spd_interp = interp1(spd_w, spd, xyz_w, 'pchip');
+
+    % Integrate using Riemann sum
+    XYZ = (xyz' * spd_interp)' / sum(xyz(:,2));
+
+    % Convert to linear sRGB
+    sRGB = xyz2rgb(XYZ, 'colorspace', 'linear-rgb', 'WhitePoint', [1,1,1]);
+end
+```
+
+The CIE color matching functions are available [here](https://gist.github.com/linusmossberg/904905010eeb6990719335ebdd60d2b4). Note that I use a constant illuminant `I(λ)=1` and constant stepsize `Δλ`, which paired with the normalization factor `1/∫(y(λ)I(λ)dλ)` results in:
+
+<pre><code>X = ∫(S(λ)x(λ)I(λ)dλ) / ∫(y(λ)I(λ)dλ) ≈
+  ≈ Σ(S(λ)x(λ)I(λ)Δλ) / Σ(y(λ)I(λ)Δλ) =
+  = (<del>I(λ)Δλ</del> · Σ(S(λ)x(λ))) / (<del>I(λ)Δλ</del> · Σ(y(λ))) =
+  = Σ(S(λ)x(λ)) / Σ(y(λ))</code></pre>
+
+and the same for `Y` and `Z`. The constant illuminant is also the reason why the equal energy white point is used for `xyz2rgb`. A few metal materials based on measured data are available in *scenes/metals.json*.
+
+<div about="renders/metals.jpg">
+  <img src="renders/metals.jpg" alt="Metals with complex IOR based on measured data. Au, Ag, Cu, Fe, Al, Hg, Ni, Pd." title="Metals with complex IOR based on measured data. Au, Ag, Cu, Fe, Al, Hg, Ni, Pd." />
+  <a rel="license" href="https://creativecommons.org/licenses/by/4.0/"></a>
+</div>
+
 </details>
 
 ___
@@ -298,7 +370,7 @@ Example:
   },
   {
     "type": "triangle",
-    "material":  "red",
+    "material":  "silver",
     "vertices": [ 
       [ 9, 4.9, -2.5 ],
       [ 9, 4.9, -1.5 ],
@@ -345,7 +417,7 @@ with constants J=-1, A=E=H=1 and the rest 0. This is achieved in the program by 
 ```
 Instead of the usual constant names, I've opted for more descriptive field names that correspond to the expression that the field value is multiplied with in the quadric equation. The `R` field corresponds to J in the quadric equation, i.e. the scalar constant added at the end. The value of unspecified constants are set to 0.
 
-The `bound_dimensions` field specifies the dimensions of the axis-aligned bounding box that the quadric surface is confined to. This can be replaced by the `bound_size` field which specifies a single width used for all dimensions.
+The `bound_dimensions` field specifies the dimensions of the axis-aligned bounding box that the quadric surface is confined to.
 
 The `origin`, `scale` and `orientation` fields are optional and they are used to transform the quadric surface. The `axis` field of the `orientation` object specifies the vector that the surface should be rotated about `angle` degrees (curl right hand rule).
 

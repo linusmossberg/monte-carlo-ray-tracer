@@ -20,8 +20,8 @@ public:
 
     virtual glm::dvec3 sampleRay(Ray ray, size_t ray_depth = 0);
     
-    glm::dvec3 estimateRadiance(const Interaction& interaction, const glm::dvec3& direction, const CoordinateSystem& cs, const std::vector<SearchResult<Photon>> &photons);
-    glm::dvec3 estimateCausticRadiance(const Interaction& interaction, const glm::dvec3& direction, const CoordinateSystem& cs);
+    glm::dvec3 estimateRadiance(const Interaction& interaction, const std::vector<SearchResult<Photon>> &photons);
+    glm::dvec3 estimateCausticRadiance(const Interaction& interaction);
 
     bool hasShadowPhotons(const Interaction& interaction) const;
 

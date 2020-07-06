@@ -16,17 +16,17 @@ CoordinateSystem::CoordinateSystem(const glm::dvec3& N) : normal(N)
     T = glm::dmat3(X, glm::cross(N, X), N);
 }
 
-glm::dvec3 CoordinateSystem::localToGlobal(const glm::dvec3& v) const
+glm::dvec3 CoordinateSystem::from(const glm::dvec3& v) const
 {
     return T * v;
 }
 
-glm::dvec3 CoordinateSystem::globalToLocal(const glm::dvec3& v) const
+glm::dvec3 CoordinateSystem::to(const glm::dvec3& v) const
 {
     return glm::transpose(T) * v;
 }
 
-glm::dvec3 CoordinateSystem::localToGlobal(const glm::dvec3& v, const glm::dvec3& N)
+glm::dvec3 CoordinateSystem::from(const glm::dvec3& v, const glm::dvec3& N)
 {
     glm::dvec3 tX = orthogonalUnitVector(N);
     glm::dvec3 tY = glm::cross(N, tX);

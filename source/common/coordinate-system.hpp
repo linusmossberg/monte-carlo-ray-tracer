@@ -8,10 +8,10 @@ struct CoordinateSystem
     CoordinateSystem() { }
     CoordinateSystem(const glm::dvec3& N);
 
-    glm::dvec3 localToGlobal(const glm::dvec3& v) const;
-    glm::dvec3 globalToLocal(const glm::dvec3& v) const;
+    glm::dvec3 from(const glm::dvec3& v) const;
+    glm::dvec3 to(const glm::dvec3& v) const;
 
-    static glm::dvec3 localToGlobal(const glm::dvec3& v, const glm::dvec3& N);
+    static glm::dvec3 from(const glm::dvec3& v, const glm::dvec3& N);
 
     glm::dvec3 normal;
 

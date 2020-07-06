@@ -1,9 +1,13 @@
 #include "path-tracer.hpp"
 
+#include <glm/gtx/component_wise.hpp>
+
 #include "../../common/util.hpp"
 #include "../../random/random.hpp"
 #include "../../common/constants.hpp"
 #include "../../material/material.hpp"
+#include "../../surface/surface.hpp"
+#include "../../ray/interaction.hpp"
 
 /*************************************************************************************************************
 A material can be any combination of reflective, transparent and diffuse, but instead of branching into several
@@ -18,58 +22,35 @@ glm::dvec3 PathTracer::sampleRay(Ray ray, size_t ray_depth)
         return glm::dvec3(0.0);
     }
 
-    Interaction interaction = scene.interact(ray);
+    Intersection intersection = scene.intersect(ray);
 
-    if (!interaction)
+    if (!intersection)
     {
         return scene.skyColor(ray);
     }
 
-    double absorb = ray_depth > Integrator::min_ray_depth ? 1.0 - interaction.material->reflect_probability : 0.0;
+    double absorb = ray_depth > Integrator::min_ray_depth ? 1.0 - intersection.surface->material->reflect_probability : 0.0;
 
     if (Random::trial(absorb))
     {
         return glm::dvec3(0.0);
     }
 
-    Ray new_ray(interaction.position);
+    Interaction interaction(intersection, ray, scene.ior);
 
     glm::dvec3 emittance = (ray_depth == 0 || ray.specular || naive) ? interaction.material->emittance : glm::dvec3(0.0);
 
-    double n1 = ray.medium_ior;
-    double n2 = std::abs(ray.medium_ior - scene.ior) < C::EPSILON ? interaction.material->ior : scene.ior;
+    Ray new_ray = interaction.getNewRay();
+    glm::dvec3 radiance = sampleRay(new_ray, ray_depth + 1);
 
-    switch (interaction.type(n1, n2, -ray.direction))
+    if (interaction.type == Interaction::Type::DIFFUSE)
     {
-        case Interaction::Type::REFLECT:
+        radiance *= C::PI;
+        if (!naive)
         {
-            if (new_ray.reflectSpecular(ray.direction, interaction, n1))
-            {
-                CoordinateSystem cs(interaction.specular_normal);
-                glm::dvec3 BRDF = interaction.material->SpecularBRDF(cs.globalToLocal(new_ray.direction), cs.globalToLocal(-ray.direction));
-                return (emittance + BRDF * sampleRay(new_ray, ray_depth + 1)) / (1.0 - absorb);
-            }
-            break;
-        }
-        case Interaction::Type::REFRACT:
-        {
-            if (new_ray.refractSpecular(ray.direction, interaction, n1, n2))
-            {
-                CoordinateSystem cs(interaction.specular_normal);
-                glm::dvec3 BRDF = interaction.material->SpecularBRDF(cs.globalToLocal(new_ray.direction), cs.globalToLocal(-ray.direction));
-                return (emittance + BRDF * sampleRay(new_ray, ray_depth + 1)) / (1.0 - absorb);
-            }
-            break;
-        }
-        case Interaction::Type::DIFFUSE:
-        {
-            CoordinateSystem cs(interaction.shading_normal);
-            new_ray.reflectDiffuse(cs, interaction, n1);
-            glm::dvec3 BRDF = interaction.material->DiffuseBRDF(cs.globalToLocal(new_ray.direction), cs.globalToLocal(-ray.direction)) * C::PI;
-            glm::dvec3 direct = naive ? glm::dvec3(0.0) : Integrator::sampleDirect(interaction);
-            glm::dvec3 indirect = sampleRay(new_ray, ray_depth + 1);
-            return (emittance + BRDF * (direct + indirect)) / (1.0 - absorb);
-        }
+            radiance += Integrator::sampleDirect(interaction);
+        }       
     }
-    return emittance / (1.0 - absorb);
+
+    return (emittance + interaction.BRDF(new_ray.direction) * radiance) / (1.0 - absorb);
 }

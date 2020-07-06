@@ -1,18 +1,20 @@
 #include "interaction.hpp"
 
+#include "../material/fresnel.hpp"
 #include "../material/material.hpp"
 #include "../random/random.hpp"
 #include "../common/constants.hpp"
 #include "../common/coordinate-system.hpp"
 #include "../surface/surface.hpp"
 
-Interaction::Interaction(const Intersection &isect, const Ray &ray, bool limited)
-    : t(isect.t), position(ray(t)), normal(isect.surface->normal(position)), material(isect.surface->material)
+Interaction::Interaction(const Intersection &isect, const Ray &ray, double environment_ior)
+    : t(isect.t), position(ray(t)), normal(isect.surface->normal(position)), 
+      material(isect.surface->material), out(-ray.direction), n1(ray.medium_ior)
 {
-    if (limited) return;
-
+    n2 = std::abs(n1 - environment_ior) < C::EPSILON ? material->ior : environment_ior;
     double cos_theta = glm::dot(ray.direction, normal);
 
+    glm::dvec3 shading_normal;
     if (isect.interpolate)
     {
         shading_normal = isect.surface->interpolatedNormal(isect.uv);
@@ -32,34 +34,85 @@ Interaction::Interaction(const Intersection &isect, const Ray &ray, bool limited
         shading_normal = -shading_normal;
     }
 
+    cs = CoordinateSystem(shading_normal);
+
     if (material->rough_specular)
     {
-        CoordinateSystem cs(shading_normal);
-        specular_normal = cs.localToGlobal(material->specularMicrofacetNormal(cs.globalToLocal(-ray.direction)));
+        glm::dvec3 specular_normal = cs.from(material->specularMicrofacetNormal(cs.to(out)));
+        selectType(specular_normal);
+        if (type != DIFFUSE) cs = CoordinateSystem(specular_normal);
     }
     else
     {
-        specular_normal = shading_normal;
+        selectType(shading_normal);
     }
 }
 
-Interaction::Type Interaction::type(double n1, double n2, const glm::dvec3& direction)
+void Interaction::selectType(const glm::dvec3 &specular_normal)
 {
-    double R = material->Fresnel(n1, n2, specular_normal, direction);
+    if (material->perfect_mirror || material->complex_ior)
+    {
+        type = REFLECT; 
+        return;
+    }
+
+    double R = Fresnel::dielectric(n1, n2, glm::dot(specular_normal, out));
     double T = material->transparency;
 
     double p = Random::range(0.0, 1.0);
 
     if (R > p)
     {
-        return Type::REFLECT;
+        type = REFLECT;
     }
     else if (R + (1.0 - R) * T > p)
     {
-        return Type::REFRACT;
+        type = REFRACT;
     }
     else // R + (1 - R) * T + (1 - R) * (1 - T) = 1 > p
     {
-        return Type::DIFFUSE;
+        type = DIFFUSE;
     }
+}
+
+glm::dvec3 Interaction::BRDF(const glm::dvec3 &in) const
+{
+    if (type != DIFFUSE)
+    {
+        glm::dvec3 local_out = cs.to(out);
+        glm::dvec3 brdf = material->SpecularBRDF(cs.to(in), local_out);
+        if (material->complex_ior)
+        {
+            brdf *= Fresnel::conductor(n1, material->complex_ior.get(), local_out.z);
+        }
+        return brdf;
+    }
+    else
+    {
+        return material->DiffuseBRDF(cs.to(in), cs.to(out));
+    }
+}
+
+Ray Interaction::getNewRay() const
+{
+    Ray new_ray(position);
+    switch (type)
+    {
+        case REFLECT:
+        {
+            new_ray.reflectSpecular(-out, *this); 
+            break;
+        }
+        case REFRACT:
+        {
+            new_ray.refractSpecular(-out, *this); 
+            break;
+        }
+        case DIFFUSE:
+        {
+            new_ray.reflectDiffuse(*this);
+            break;
+        }
+    }
+    return new_ray;
 }

@@ -7,7 +7,7 @@
 #include <nlohmann/json.hpp>
 
 #include "../ray/ray.hpp"
-#include "../ray/interaction.hpp"
+#include "../ray/intersection.hpp"
 #include "../common/bounding-box.hpp"
 
 class BVH;
@@ -18,7 +18,7 @@ class Scene
 public:
     Scene(const nlohmann::json& j);
 
-    Interaction interact(const Ray& ray, bool shadow_ray = false) const;
+    Intersection intersect(const Ray& ray) const;
 
     void generateEmissives();
 

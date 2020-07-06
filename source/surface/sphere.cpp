@@ -17,17 +17,17 @@ bool Surface::Sphere::intersect(const Ray& ray, Intersection& intersection) cons
     double c = glm::dot(so, so) - pow2(radius);
 
     double discriminant = pow2(b) - c;
-    if (discriminant < 0)
+    if (discriminant < 0.0)
     {
         return false;
     }
 
     double v = std::sqrt(discriminant);
     double t = -b - v;
-    if (t < 0)
+    if (t < 0.0)
     {
         t = v - b;
-        if (t < 0)
+        if (t < 0.0)
         {
             return false;
         }

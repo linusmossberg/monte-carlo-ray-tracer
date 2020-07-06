@@ -2,7 +2,6 @@
 
 #include "glm/gtx/component_wise.hpp"
 
-#include "../ray/intersection.hpp"
 #include "../common/util.hpp"
 #include "../common/constants.hpp"
 #include "../common/format.hpp"
@@ -133,7 +132,7 @@ Scene::Scene(const nlohmann::json& j)
     generateEmissives();
 }
 
-Interaction Scene::interact(const Ray& ray, bool shadow_ray) const
+Intersection Scene::intersect(const Ray& ray) const
 {
     Intersection intersection;
 
@@ -157,7 +156,7 @@ Interaction Scene::interact(const Ray& ray, bool shadow_ray) const
         }
     }
 
-    return intersection ? Interaction(intersection, ray, shadow_ray) : Interaction();
+    return intersection;
 }
 
 void Scene::generateEmissives()

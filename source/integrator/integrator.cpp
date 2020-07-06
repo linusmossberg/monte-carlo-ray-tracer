@@ -8,6 +8,7 @@
 #include "../random/random.hpp"
 #include "../material/material.hpp"
 #include "../surface/surface.hpp"
+#include "../ray/interaction.hpp"
 
 Integrator::Integrator(const nlohmann::json &j) : scene(j)
 {
@@ -19,12 +20,10 @@ Integrator::Integrator(const nlohmann::json &j) : scene(j)
     std::cout << "\nThreads used for rendering: " << num_threads << std::endl;
 }
 
-/**********************************************************************************************
-Only applies cos(theta) from the rendering equation to the diffuse point that samples this
-direct contribution. This way direct and indirect (which uses cosine weighted sampling with
-PDF = cos(theta) / PI) can be treated the same way later, i.e. (direct + indirect) * (BRDF*PI).
-We also need to divide by PI to make (BRDF*PI)  applicable to the direct contribution as well.
-**********************************************************************************************/
+/*****************************************************************************
+Only applies cos(theta) from the rendering equation to the diffuse point that 
+samples this direct contribution. It must be attenuated by the BRDF later.
+******************************************************************************/
 glm::dvec3 Integrator::sampleDirect(const Interaction& interaction) const
 {
     // Pick one light source and divide with probability of picking light source
@@ -42,22 +41,25 @@ glm::dvec3 Integrator::sampleDirect(const Interaction& interaction) const
             return glm::dvec3(0.0);
         }    
 
-        Interaction shadow_interaction = scene.interact(shadow_ray, true);
+        Intersection shadow_intersection = scene.intersect(shadow_ray);
 
-        if (shadow_interaction)
+        if (shadow_intersection)
         {
-            double cos_light_theta = glm::dot(shadow_interaction.normal, -shadow_ray.direction);
+            glm::dvec3 position = shadow_ray(shadow_intersection.t);
+            glm::dvec3 normal = shadow_intersection.surface->normal(position);
 
-            if (cos_light_theta <= 0 || glm::distance(shadow_interaction.position, light_pos) > C::EPSILON)
+            double cos_light_theta = glm::dot(normal, -shadow_ray.direction);
+
+            if (cos_light_theta <= 0 || glm::distance(position, light_pos) > C::EPSILON)
             {
                 return glm::dvec3(0.0);
             }
 
             // Factor to transform the PDF of sampling the point on the light (1/area) to 
             // the solid angle PDF at the diffuse point that samples this direct contribution.
-            double t = light->area() * cos_light_theta / pow2(shadow_interaction.t);
+            double t = light->area() * cos_light_theta / pow2(shadow_intersection.t);
 
-            return (light->material->emittance * t * cos_theta * static_cast<double>(scene.emissives.size())) / C::PI;
+            return light->material->emittance * t * cos_theta * static_cast<double>(scene.emissives.size());
         }
     }
     return glm::dvec3(0.0);
