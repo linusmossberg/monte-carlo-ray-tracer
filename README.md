@@ -7,7 +7,7 @@ This is a physically based renderer with Path Tracing and Photon Mapping.
   <a rel="license" href="https://creativecommons.org/licenses/by/4.0/"></a>
 </div>
 <div about="renders/metal_bunnies.jpg">
-  <img src="renders/metal_bunnies.jpg" alt="Path traced render of the Stanford bunny with different brushed metal materials, 864 348 triangles." title="Path traced render of the Stanford bunny with different brushed metal materials, 864 348 triangles." />
+  <img src="renders/metal_bunnies.jpg" alt="Path traced render of the Stanford bunny with different rough metal materials, 864 348 triangles." title="Path traced render of the Stanford bunny with different rough metal materials, 864 348 triangles." />
   <a rel="license" href="https://creativecommons.org/licenses/by/4.0/"></a>
 </div>
 <div about="renders/caustics.jpg">
@@ -423,3 +423,18 @@ ___
 </details>
 
 ___
+
+### Resources/Attributions
+The following lists some of the resources used for this project:
+* [Physically Based Rendering - Matt Pharr, Wenzel Jakob and Greg Humphreys](http://www.pbr-book.org/)
+* [Global Illumination using Photon Maps - Henrik Wann Jensen](http://graphics.stanford.edu/~henrik/papers/ewr7/ewr7.html)
+* [A Simpler and Exact Sampling Routine for the GGX Distribution of Visible Normals - Eric Heitz](https://hal.archives-ouvertes.fr/hal-01509746/document)
+* [Importance Sampling techniques for GGX with Smith Masking-Shadowing - Joe Schutte](https://schuttejoe.github.io/post/ggximportancesamplingpart2/)
+* [PBR Diffuse Lighting for GGX+Smith Microsurfaces - Earl Hammon](https://twvideo01.ubm-us.net/o1/vault/gdc2017/Presentations/Hammon_Earl_PBR_Diffuse_Lighting.pdf)
+* [Memo on Fresnel Equations - Sébastien Lagarde](https://seblagarde.wordpress.com/2013/04/29/memo-on-fresnel-equations/)
+* [Filmic Tonemapping Operators - John Hable](http://filmicworlds.com/blog/filmic-tonemapping-operators/)
+* [Automatic Exposure - Krzysztof Narkowicz](https://knarkowicz.wordpress.com/2016/01/09/automatic-exposure/)
+* [Better Sampling - Rory Driscoll](http://www.rorydriscoll.com/2009/01/07/better-sampling/)
+* [Introduction to Acceleration Structures - Scratchapixel](https://www.scratchapixel.com/lessons/advanced-rendering/introduction-acceleration-structure/bounding-volume-hierarchy-BVH-part1)
+* [Refractive index database - Mikhail Polyanskiy](https://refractiveindex.info/).
+* [The Stanford 3D Scanning Repository](http://graphics.stanford.edu/data/3Dscanrep/)
