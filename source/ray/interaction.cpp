@@ -77,10 +77,13 @@ void Interaction::selectType(const glm::dvec3 &specular_normal)
 
 glm::dvec3 Interaction::BRDF(const glm::dvec3 &in) const
 {
+    glm::dvec3 local_in = cs.to(in);
+    if (local_in.z == 0.0) return glm::dvec3(0.0); // Grazing angle edge case
+
     if (type != DIFFUSE)
     {
         glm::dvec3 local_out = cs.to(out);
-        glm::dvec3 brdf = material->SpecularBRDF(cs.to(in), local_out);
+        glm::dvec3 brdf = material->SpecularBRDF(local_in, local_out);
         if (material->complex_ior)
         {
             brdf *= Fresnel::conductor(n1, material->complex_ior.get(), local_out.z);
@@ -89,7 +92,7 @@ glm::dvec3 Interaction::BRDF(const glm::dvec3 &in) const
     }
     else
     {
-        return material->DiffuseBRDF(cs.to(in), cs.to(out));
+        return material->DiffuseBRDF(local_in, cs.to(out));
     }
 }
 

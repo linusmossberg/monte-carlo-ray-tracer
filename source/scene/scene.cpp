@@ -53,6 +53,12 @@ Scene::Scene(const nlohmann::json& j)
                 triangles_vn = triangles_v;
             }
 
+            if (s.find("origin") != s.end())
+            {
+                glm::dvec3 origin = s.at("origin");
+                for (auto &p : v) p += origin;
+            }
+
             bool is_emissive = glm::compMax(material->emittance) > C::EPSILON;
             double total_area = 0.0;
             if (is_emissive)

@@ -6,12 +6,16 @@ This is a physically based renderer with Path Tracing and Photon Mapping.
   <img src="renders/stanford_dragon_frosted.jpg" alt="Path traced render of the Stanford dragon with a frosted glass material, 871 414 triangles." title="Path traced render of the Stanford dragon with a frosted glass material, 871 414 triangles." />
   <a rel="license" href="https://creativecommons.org/licenses/by/4.0/"></a>
 </div>
-<div about="renders/quadric.jpg">
-  <img src="renders/quadric.jpg" alt="Path traced render of scene with only quadric surfaces" title="Path traced render of scene with only quadric surfaces" />
+<div about="renders/metal_bunnies.jpg">
+  <img src="renders/metal_bunnies.jpg" alt="Path traced render of the Stanford bunny with different brushed metal materials, 864 348 triangles." title="Path traced render of the Stanford bunny with different brushed metal materials, 864 348 triangles." />
   <a rel="license" href="https://creativecommons.org/licenses/by/4.0/"></a>
 </div>
 <div about="renders/caustics.jpg">
   <img src="renders/caustics.jpg" alt="Photon mapped render of caustics, 6.6 million triangles and 157 million photon particles. Original scene by Benedikt Bitterli." title="Photon mapped render of caustics, 6.6 million triangles and 157 million photon particles. Original scene by Benedikt Bitterli." />
+  <a rel="license" href="https://creativecommons.org/licenses/by/4.0/"></a>
+</div>
+<div about="renders/quadric.jpg">
+  <img src="renders/quadric.jpg" alt="Path traced render of scene with only quadric surfaces" title="Path traced render of scene with only quadric surfaces" />
   <a rel="license" href="https://creativecommons.org/licenses/by/4.0/"></a>
 </div>
 
@@ -213,7 +217,7 @@ The key string is used later when assigning a material to a surface. The materia
 
 The material fields are:
 
-| field                  | type        | default | range       |
+| field                  | type        | default | interval    |
 | ---------------------- | ----------- | ------- | ----------- |
 | `reflectance`          | RGB         | 0       | [0, 1]      |
 | `specular_reflectance` | RGB         | 1       | [0, 1]      |
@@ -227,35 +231,26 @@ The material fields are:
 
 These fields are all optional and any combination of fields can be used. A material can for example be a combination of diffusely reflecting, specularly reflecting, emissive, transmissive (specularly refracting) and rough. If set to true, the `perfect_mirror` field overrides most other fields to simulate a perfect mirror with infinite IOR.
 
-The `reflectance`, `specular_reflectance` and `transmittance` fields specifies the amount of radiance that should be diffusely reflected and specularly reflected/transmitted for each RGB channel. This is a simplification since these are spectral properties that varies with wavelength and not by the resulting tristimulus values of the virtual camera, but this is computationally cheaper and simpler. These properties now take gamma-corrected values and linearizes them internally to make it easier to pick colors via color pickers. For realistic materials, `specular_reflectance` should probably only be set to gray values and complex IOR should be used instead for chromatic specular reflections. `transmittance` can also only be used to roughly model clear media such as colored glass or gemstones.
+The `reflectance`, `specular_reflectance` and `transmittance` fields specifies the amount of radiance that should be diffusely reflected and specularly reflected/transmitted for each RGB channel. This is a simplification since these are spectral properties that varies with wavelength and not by the resulting tristimulus values of the virtual camera, but this is computationally cheaper and simpler. These properties now take gamma-corrected values and linearizes them internally to make it easier to pick colors via color pickers.
 
 The `emittance` field defines the radiant flux of each RGB channel in watts. This means that surfaces with different surface areas will emit the same amount of radiant energy if they are assigned the same emissive material.
 
 #### IOR
 
-For dialectric materials such as glass, water and plastic, the `ior` field can be specified as a scalar value in the range [1, ∞). If this value is less than 1, then the material will only ever produce diffuse reflections, regardless of scene IOR.
+For dielectric materials such as glass and plastic, the `ior` field is specified as a scalar value in the range [1, ∞). If this value is less than 1, then the material will only produce diffuse reflections regardless of scene IOR. For conductive materials such as metals, the `ior` field is instead specified as a complex-valued IOR object with a `real` and an `imaginary` field specified as RGB vectors.
 
-For conductive materials such as metals, the `ior` field is instead specified as a complex-valued IOR object with a `real` and an `imaginary` field specified as RGB vectors. For example, physically based iron can be achieved by specifying the following IOR:
+The `real` part is often called *n* and it represents the usual index of refraction that is also present in dielectrics, but the spectral dependence is now considered as well. The real part varies over the visible spectrum for dielectrics also (e.g. `[1.521, 1.525, 1.533]` for soda-lime glass), but refraction is difficult for spectrally varying IOR.
 
-```json
-"ior": {
-  "real": [2.91679227, 2.92517616, 2.53774810],
-  "imaginary": [3.08474983, 2.93861411, 2.74620057]
-}
-```
-
-The `real` part is often called *n* and it represents the usual index of refraction that is also present in dialectrics, but the spectral dependence is now considered as well. The real part varies over the visible spectrum for dielectrics as well (e.g. `[1.521, 1.525, 1.533]` for soda-lime glass), but transmission and refraction is tricky/expensive for spectrally dependent IOR which is why this is simplified to a single scalar value for dialectrics.
-
-The `imaginary` part is often called *k* and it represents the absorption/extinction coefficient. The imaginary part is non-zero for conductives and zero for dialectrics, which means that conductives absorbs the transmitted/non-reflected radiance while dielectrics let it pass through.
+The `imaginary` part is often called *k* and it represents the absorption coefficient. The imaginary part is non-zero for conductives and zero for dielectrics, which means that conductives rapidly absorbs the transmitted radiance while dielectrics let it pass through.
 
 Measured spectral distributions of these values are available at [refractiveindex.info](https://refractiveindex.info/). These spectral distributions must be reduced to linear RGB values before using them here. This can be done by integrating the product of the spectral distributions and each of the CIE color matching functions over the visible spectrum, and then converting the resulting XYZ tristimulus values to linear RGB. I wrote the following MATLAB script to do this:
 
 ```matlab
-% Parse CIE color matching functions:
+% Read CIE color matching functions:
 xyz_cmfs = readmatrix('xyz-cie-1931-2deg.csv');
 xyz_w = xyz_cmfs(:,1); xyz = xyz_cmfs(:,2:4);
 
-% Parse complex IOR spectral distribution for iron:
+% Read complex IOR spectral distribution for iron:
 data = readtable('Johnson.csv');
 [~,index] = ismember("wl",data.wl); % Find start position of k data
 
@@ -279,11 +274,11 @@ function sRGB = integrate(data, xyz, xyz_w)
     XYZ = (xyz' * spd_interp)' / sum(xyz(:,2));
 
     % Convert to linear sRGB
-    sRGB = xyz2rgb(XYZ, 'colorspace', 'linear-rgb', 'WhitePoint', [1,1,1]);
+    sRGB = xyz2rgb(XYZ, 'colorspace', 'linear-rgb', 'WhitePoint', 'e');
 end
 ```
 
-The CIE color matching functions are available [here](https://gist.github.com/linusmossberg/904905010eeb6990719335ebdd60d2b4). Note that I use a constant illuminant `I(λ)=1` and constant stepsize `Δλ`, which paired with the normalization factor `1/∫(y(λ)I(λ)dλ)` results in:
+The CIE color matching functions are available [here](https://gist.github.com/linusmossberg/904905010eeb6990719335ebdd60d2b4). Note that I implicitly use a constant illuminant `I(λ)` and stepsize `Δλ`, which results in:
 
 <pre><code>X = ∫(S(λ)x(λ)I(λ)dλ) / ∫(y(λ)I(λ)dλ) ≈
   ≈ Σ(S(λ)x(λ)I(λ)Δλ) / Σ(y(λ)I(λ)Δλ) =
