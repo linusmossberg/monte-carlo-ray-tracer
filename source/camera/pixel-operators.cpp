@@ -48,9 +48,38 @@ glm::dvec3 linear(const glm::dvec3 &in)
     return in;
 }
 
-glm::dvec3 gammaCorrect(const glm::dvec3 &in)
+glm::dvec3 gammaCompress(const glm::dvec3 &in)
 {
-    return glm::pow(in, glm::dvec3(1.0 / 2.2));
+    glm::dvec3 out;
+    for (uint8_t c = 0; c < 3; c++)
+    {
+        if (in[c] <= 0.0031308)
+        {
+            out[c] = 12.92 * in[c];
+        }
+        else
+        {
+            out[c] = 1.055 * std::pow(in[c], 1.0 / 2.4) - 0.055;
+        }
+    }
+    return out;
+}
+
+glm::dvec3 gammaExpand(const glm::dvec3 &in)
+{
+    glm::dvec3 out;
+    for (uint8_t c = 0; c < 3; c++)
+    {
+        if (in[c] <= 0.04045)
+        {
+            out[c] = in[c] / 12.92;
+        }
+        else
+        {
+            out[c] = std::pow((in[c] + 0.055) / 1.055, 2.4);
+        }
+    }
+    return out;
 }
 
 std::vector<uint8_t> truncate(const glm::dvec3 &in)

@@ -424,8 +424,10 @@ ___
 
 ___
 
-### Resources/Attributions
-The following lists some of the resources used for this project:
+## Resources/Attributions
+
+<details><summary>The following are some of the resources that have been helpful for the project.</summary><br>
+
 * [Physically Based Rendering - Matt Pharr, Wenzel Jakob and Greg Humphreys](http://www.pbr-book.org/)
 * [Global Illumination using Photon Maps - Henrik Wann Jensen](http://graphics.stanford.edu/~henrik/papers/ewr7/ewr7.html)
 * [A Simpler and Exact Sampling Routine for the GGX Distribution of Visible Normals - Eric Heitz](https://hal.archives-ouvertes.fr/hal-01509746/document)
@@ -438,3 +440,4 @@ The following lists some of the resources used for this project:
 * [Introduction to Acceleration Structures - Scratchapixel](https://www.scratchapixel.com/lessons/advanced-rendering/introduction-acceleration-structure/bounding-volume-hierarchy-BVH-part1)
 * [Refractive index database - Mikhail Polyanskiy](https://refractiveindex.info/).
 * [The Stanford 3D Scanning Repository](http://graphics.stanford.edu/data/3Dscanrep/)
+</details>

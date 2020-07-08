@@ -9,6 +9,7 @@
 #include "../common/constants.hpp"
 #include "../random/random.hpp"
 #include "../common/coordinate-system.hpp"
+#include "../camera/pixel-operators.hpp"
 #include "fresnel.hpp"
 
 glm::dvec3 Material::DiffuseBRDF(const glm::dvec3 &i, const glm::dvec3 &o)
@@ -170,7 +171,7 @@ void from_json(const nlohmann::json &j, Material &m)
     getReflectance("specular_reflectance", m.specular_reflectance);
     getReflectance("transmittance", m.transmittance);
 
-    m.reflectance = glm::pow(m.reflectance, glm::dvec3(2.2));
+    m.reflectance = gammaExpand(m.reflectance);
 
     if (j.find("ior") != j.end())
     {
