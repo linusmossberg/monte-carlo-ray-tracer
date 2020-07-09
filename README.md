@@ -208,7 +208,7 @@ Example:
   },
   "iron": {
     "ior": "data/Johnson.csv"
-  }
+  },
   "light": {
     "reflectance": 0.9,
     "emittance": [ 1000, 1000, 1000 ]
@@ -239,7 +239,7 @@ These fields are all optional and any combination of fields can be used. A mater
 
 The `reflectance`, `specular_reflectance` and `transmittance` fields specifies the amount of radiance that should be diffusely reflected and specularly reflected/transmitted for each RGB channel. This is a simplification since these are spectral properties that varies with wavelength and not by the resulting tristimulus values of the virtual camera, but this is computationally cheaper and simpler. These properties now take gamma-corrected values and linearizes them internally to make it easier to pick colors via color pickers.
 
-The `emittance` field defines the radiant flux of each RGB channel in watts. This means that surfaces with different surface areas will emit the same amount of radiant energy if they are assigned the same emissive material. It's also possible to set this field to a [CIE standard illuminant](https://en.wikipedia.org/wiki/Standard_illuminant) by specifying an object with an `illuminant` and `scale` field.
+The `emittance` field defines the radiant flux of each RGB channel in watts. This means that surfaces with different surface areas will emit the same amount of radiant energy if they are assigned the same emissive material. It's also possible to set this field to a [CIE standard illuminant](https://en.wikipedia.org/wiki/Standard_illuminant) by specifying an object with an `illuminant` and a `scale` field.
 
 #### IOR
 
@@ -430,9 +430,9 @@ ___
 
 ___
 
-## Resources and Attributions
+## Resources
 
-<details><summary>The following are some helpful resources that I've used for the project.</summary><br>
+<details><summary>The following are some useful resources that I've used for the project.</summary><br>
 
 * [Physically Based Rendering - Matt Pharr, Wenzel Jakob and Greg Humphreys](http://www.pbr-book.org/)
 * [Global Illumination using Photon Maps - Henrik Wann Jensen](http://graphics.stanford.edu/~henrik/papers/ewr7/ewr7.html)
