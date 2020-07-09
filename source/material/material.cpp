@@ -1,6 +1,9 @@
 #include "material.hpp"
 
 #include <sstream>
+#include <filesystem>
+#include <fstream>
+#include <iostream>
 
 #include <glm/glm.hpp>
 #include <glm/gtx/component_wise.hpp>
@@ -10,6 +13,7 @@
 #include "../random/random.hpp"
 #include "../common/coordinate-system.hpp"
 #include "../camera/pixel-operators.hpp"
+#include "../cie/cie.hpp"
 #include "fresnel.hpp"
 
 glm::dvec3 Material::DiffuseBRDF(const glm::dvec3 &i, const glm::dvec3 &o)
@@ -166,20 +170,95 @@ void from_json(const nlohmann::json &j, Material &m)
     getToOptional(j, "specular_roughness", m.specular_roughness);
     getToOptional(j, "transparency", m.transparency);
     getToOptional(j, "perfect_mirror", m.perfect_mirror);
-    getToOptional(j, "emittance", m.emittance);
     getReflectance("reflectance", m.reflectance);
     getReflectance("specular_reflectance", m.specular_reflectance);
     getReflectance("transmittance", m.transmittance);
 
     m.reflectance = gammaExpand(m.reflectance);
 
+    if (j.find("emittance") != j.end())
+    {
+        auto e = j.at("emittance");
+        if (e.type() == nlohmann::json::value_t::object)
+        {
+            double scale = getOptional(e, "scale", 1.0);
+            std::string illuminant = getOptional<std::string>(e, "illuminant", "D65");
+            m.emittance = CIE::RGB(CIE::whitePoint(CIE::strToIlluminant(illuminant), scale));
+        }
+        else
+        {
+            m.emittance = e.get<glm::dvec3>();
+        }
+    }
+
     if (j.find("ior") != j.end())
     {
-        if(j.at("ior").type() == nlohmann::json::value_t::object)
+        auto type = j.at("ior").type();
+        if(type == nlohmann::json::value_t::object)
         { 
             m.complex_ior = std::make_shared<ComplexIOR>();
             getToOptional(j.at("ior"), "real", m.complex_ior->real);
             getToOptional(j.at("ior"), "imaginary", m.complex_ior->imaginary);
+        }
+        else if (type == nlohmann::json::value_t::string)
+        {
+            auto path = std::filesystem::current_path() / "scenes";
+            path /= j.at("ior").get<std::string>();
+
+            if (std::filesystem::exists(path))
+            {
+                std::set<CIE::SpectralValue> real, imaginary;
+                char type = 'n';
+
+                std::ifstream file(path);
+                std::string line;
+                while (std::getline(file, line))
+                {
+                    auto p = line.find(',');
+                    if (p != std::string::npos)
+                    {
+                        auto wl = line.substr(0, p);
+                        auto v = line.substr(p + 1);
+                        wl.erase(std::remove(wl.begin(), wl.end(), ' '), wl.end());
+                        v.erase(std::remove(v.begin(), v.end(), ' '), v.end());
+
+                        if (wl == "wl")
+                        {
+                            if (v == "n") type = 'n';
+                            if (v == "k") type = 'k';
+                        }
+                        else
+                        {
+                            double wavelength = std::stod(wl) * 1e3; // micro- to nanometers
+                            double value = std::stod(v);
+                            if (type == 'n') real.insert({ wavelength, value });
+                            if (type == 'k') imaginary.insert({ wavelength, value });
+                        }
+                    }
+                }
+
+                auto pad = [](std::set<CIE::SpectralValue> &d)
+                {
+                    if (d.empty()) d.insert({ CIE::MIN_WAVELENGTH, 0.0 });
+
+                    if (d.begin()->wavelength > CIE::MIN_WAVELENGTH)
+                        d.insert({ CIE::MIN_WAVELENGTH, d.begin()->value });
+
+                    if ((--d.end())->wavelength < CIE::MAX_WAVELENGTH)
+                        d.insert({ CIE::MAX_WAVELENGTH, (--d.end())->value });
+                };
+
+                pad(real);
+                pad(imaginary);
+
+                m.complex_ior = std::make_shared<ComplexIOR>();
+                m.complex_ior->real = CIE::RGB(real);
+                m.complex_ior->imaginary = CIE::RGB(imaginary);
+            }
+            else
+            {
+                std::cout << std::endl << path.string() << " not found.\n";
+            }
         }
         else
         {

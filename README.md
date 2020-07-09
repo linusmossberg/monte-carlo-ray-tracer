@@ -206,9 +206,15 @@ Example:
     "ior": 1.333,
     "reflectance": "#80B1D3"
   },
+  "iron": {
+    "ior": "data/Johnson.csv"
+  }
   "light": {
     "reflectance": 0.9,
     "emittance": [ 1000, 1000, 1000 ]
+  },
+  "horizon-light": {
+    "emittance": { "illuminant": "D50", "scale": 1000 }
   }
 }
 ```
@@ -233,24 +239,24 @@ These fields are all optional and any combination of fields can be used. A mater
 
 The `reflectance`, `specular_reflectance` and `transmittance` fields specifies the amount of radiance that should be diffusely reflected and specularly reflected/transmitted for each RGB channel. This is a simplification since these are spectral properties that varies with wavelength and not by the resulting tristimulus values of the virtual camera, but this is computationally cheaper and simpler. These properties now take gamma-corrected values and linearizes them internally to make it easier to pick colors via color pickers.
 
-The `emittance` field defines the radiant flux of each RGB channel in watts. This means that surfaces with different surface areas will emit the same amount of radiant energy if they are assigned the same emissive material.
+The `emittance` field defines the radiant flux of each RGB channel in watts. This means that surfaces with different surface areas will emit the same amount of radiant energy if they are assigned the same emissive material. It's also possible to set this field to a [CIE standard illuminant](https://en.wikipedia.org/wiki/Standard_illuminant) by specifying an object with an `illuminant` and `scale` field.
 
 #### IOR
 
-For dielectric materials such as glass and plastic, the `ior` field is specified as a scalar value in the range [1, ∞). If this value is less than 1, then the material will only produce diffuse reflections regardless of scene IOR. For conductive materials such as metals, the `ior` field is instead specified as a complex-valued IOR object with a `real` and an `imaginary` field specified as RGB vectors.
+For dielectric materials such as glass and plastic, the `ior` field is specified as a scalar value in the range [1, ∞). If this value is less than 1, then the material will only produce diffuse reflections regardless of scene IOR. For conductive materials such as metals, the `ior` field is instead specified as a complex-valued IOR object with a `real` and an `imaginary` field specified as RGB vectors. It is also possible to specify a path to a `*.csv` file with spectral data downloaded from [refractiveindex.info](https://refractiveindex.info/). The path should be relative to the scenes directory.
 
 The `real` part is often called *n* and it represents the usual index of refraction that is also present in dielectrics, but the spectral dependence is now considered as well. The real part varies over the visible spectrum for dielectrics also (e.g. `[1.521, 1.525, 1.533]` for soda-lime glass), but refraction is difficult for spectrally varying IOR.
 
 The `imaginary` part is often called *k* and it represents the absorption coefficient. The imaginary part is non-zero for conductives and zero for dielectrics, which means that conductives rapidly absorbs the transmitted radiance while dielectrics let it pass through.
 
-Measured spectral distributions of these values are available at [refractiveindex.info](https://refractiveindex.info/). These spectral distributions must be reduced to linear RGB values before using them here. This can be done by integrating the product of the spectral distributions and each of the CIE color matching functions over the visible spectrum, and then converting the resulting XYZ tristimulus values to linear RGB. I wrote the following MATLAB script to do this:
+As mentioned previously, spectral distributions of these values are available at [refractiveindex.info](https://refractiveindex.info/). These spectral distributions can be reduced to linear RGB by integrating the product of the spectral distributions and each of the CIE color matching functions over the visible spectrum, and then converting the resulting XYZ tristimulus values to linear RGB. The program does this automatically if a file with spectral data is provided for the `ior` field, but I also wrote the following MATLAB script to get the values directly:
 
 ```matlab
-% Read CIE color matching functions:
-xyz_cmfs = readmatrix('xyz-cie-1931-2deg.csv');
+% Read CIE cmfs, http://cvrl.ioo.ucl.ac.uk/cmfs.htm
+xyz_cmfs = readmatrix('ciexyz31_1.csv');
 xyz_w = xyz_cmfs(:,1); xyz = xyz_cmfs(:,2:4);
 
-% Read complex IOR spectral distribution for iron:
+% Read complex IOR spectral distribution for iron
 data = readtable('Johnson.csv');
 [~,index] = ismember("wl",data.wl); % Find start position of k data
 
@@ -278,7 +284,7 @@ function sRGB = integrate(data, xyz, xyz_w)
 end
 ```
 
-The CIE color matching functions are available [here](https://gist.github.com/linusmossberg/904905010eeb6990719335ebdd60d2b4). Note that I implicitly use a constant illuminant `I(λ)` and stepsize `Δλ`, which results in:
+Note that I implicitly use a constant illuminant `I(λ)` and stepsize `Δλ`, which results in:
 
 <pre><code>X = ∫(S(λ)x(λ)I(λ)dλ) / ∫(y(λ)I(λ)dλ) ≈
   ≈ Σ(S(λ)x(λ)I(λ)Δλ) / Σ(y(λ)I(λ)Δλ) =
@@ -424,9 +430,9 @@ ___
 
 ___
 
-## Resources/Attributions
+## Resources and Attributions
 
-<details><summary>The following are some of the resources that have been helpful for the project.</summary><br>
+<details><summary>The following are some helpful resources that I've used for the project.</summary><br>
 
 * [Physically Based Rendering - Matt Pharr, Wenzel Jakob and Greg Humphreys](http://www.pbr-book.org/)
 * [Global Illumination using Photon Maps - Henrik Wann Jensen](http://graphics.stanford.edu/~henrik/papers/ewr7/ewr7.html)
