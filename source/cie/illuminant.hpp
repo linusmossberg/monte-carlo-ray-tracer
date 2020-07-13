@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <cstring>
 
 #include <glm/vec2.hpp>
 
@@ -18,7 +19,7 @@ namespace CIE
             NUM
         };
 
-        inline constexpr char* const strings[]
+        inline constexpr const char* strings[]
         {
             "A", "B", "C",
             "D50", "D55", "D65", "D75",

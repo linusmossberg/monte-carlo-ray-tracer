@@ -4,13 +4,13 @@
 
 double Random::unit()
 {
-    const static thread_local std::uniform_real_distribution<double> unit_distribution(0.0, std::nextafter(1.0, 0.0));
+    static thread_local std::uniform_real_distribution<double> unit_distribution(0.0, std::nextafter(1.0, 0.0));
     return unit_distribution(engine);
 }
 
 double Random::angle()
 {
-    const static thread_local std::uniform_real_distribution<double> angle_distribution(0.0, std::nextafter(C::TWO_PI, 0.0));
+    static thread_local std::uniform_real_distribution<double> angle_distribution(0.0, std::nextafter(C::TWO_PI, 0.0));
     return angle_distribution(engine);
 }
 
