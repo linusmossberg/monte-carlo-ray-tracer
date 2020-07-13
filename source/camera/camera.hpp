@@ -44,6 +44,7 @@ public:
 
     double focal_length, sensor_width, aperture_radius, focus_distance;
     Image image;
+    bool thin_lens;
 
     std::string savename;
 

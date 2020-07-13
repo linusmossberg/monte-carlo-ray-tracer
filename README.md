@@ -6,20 +6,29 @@ This is a physically based renderer with Path Tracing and Photon Mapping.
   <img src="renders/stanford_dragon_frosted.jpg" alt="Path traced render of the Stanford dragon with a frosted glass material, 871 414 triangles." title="Path traced render of the Stanford dragon with a frosted glass material, 871 414 triangles." />
   <a rel="license" href="https://creativecommons.org/licenses/by/4.0/"></a>
 </div>
-<div about="renders/metal_bunnies.jpg">
-  <img src="renders/metal_bunnies.jpg" alt="Path traced render of the Stanford bunny with different rough metal materials, 864 348 triangles." title="Path traced render of the Stanford bunny with different rough metal materials, 864 348 triangles." />
+<div about="renders/quadric.jpg">
+  <img src="renders/quadric.jpg" alt="Path traced render of scene with only quadric surfaces" title="Path traced render of scene with only quadric surfaces" />
   <a rel="license" href="https://creativecommons.org/licenses/by/4.0/"></a>
 </div>
 <div about="renders/caustics.jpg">
   <img src="renders/caustics.jpg" alt="Photon mapped render of caustics, 6.6 million triangles and 157 million photon particles. Original scene by Benedikt Bitterli." title="Photon mapped render of caustics, 6.6 million triangles and 157 million photon particles. Original scene by Benedikt Bitterli." />
   <a rel="license" href="https://creativecommons.org/licenses/by/4.0/"></a>
 </div>
-<div about="renders/quadric.jpg">
-  <img src="renders/quadric.jpg" alt="Path traced render of scene with only quadric surfaces" title="Path traced render of scene with only quadric surfaces" />
-  <a rel="license" href="https://creativecommons.org/licenses/by/4.0/"></a>
-</div>
 
-This program was initially developed over a period of about 2 months for the course [Advanced Global Illumination and Rendering (TNCG15)](https://liu.se/studieinfo/kurs/tncg15) at Linköpings Universitet. I have however continued developing it by adding features such as depth of field and quadric surfaces. The program is written in C++ and requires a compiler with C++17 support.
+This program was initially developed over a period of about 2 months for the course [Advanced Global Illumination and Rendering (TNCG15)](https://liu.se/studieinfo/kurs/tncg15) at Linköpings Universitet. I have however continued developing it by adding features such as depth of field and quadric surfaces. The program is written in C++ and requires a compiler with C++17 support. The only dependencies are the header-only libraries [GLM](https://glm.g-truc.net/) and [nlohmann::json](https://github.com/nlohmann/json), which are included in the repository.
+
+## Building
+Clone the repository using the following [git](https://git-scm.com/) command in your terminal:
+```
+git clone https://github.com/linusmossberg/monte-carlo-ray-tracer
+```
+Next, install [CMake](https://cmake.org/download/) and open the included GUI application. Enter the `monte-carlo-ray-tracer` directory as source directory and select a build directory. Click `Configure` and continue with the instructions for your platform:
+
+### Linux/macOS
+Select the `Unix Makefiles` generator and click `Finish`. Click `Generate` to generate a makefile, which then can be built by running the command `make -j` in the build directory.
+
+### Windows
+Select the `Visual Studio 15 2017` generator or later with the `x64` platform and click `Finish`. Click `Generate` to generate a visual studio solution file, which then can be opened and built in visual studio.
 
 ## Usage
 
@@ -243,13 +252,13 @@ The `emittance` field defines the radiant flux of each RGB channel in watts. Thi
 
 #### IOR
 
-For dielectric materials such as glass and plastic, the `ior` field is specified as a scalar value in the range [1, ∞). If this value is less than 1, then the material will only produce diffuse reflections regardless of scene IOR. For conductive materials such as metals, the `ior` field is instead specified as a complex-valued IOR object with a `real` and an `imaginary` field specified as RGB vectors. It is also possible to specify a path to a `*.csv` file with spectral data downloaded from [refractiveindex.info](https://refractiveindex.info/). The path should be relative to the scenes directory.
+For dielectric materials such as glass and plastic, the `ior` field is specified as a scalar value in the range [1, ∞). If this value is less than 1, then the material will only produce diffuse reflections regardless of scene IOR. For conductive materials such as metals, the `ior` field is instead specified as a complex-valued IOR object with a `real` and an `imaginary` field specified as RGB vectors.
 
 The `real` part is often called *n* and it represents the usual index of refraction that is also present in dielectrics, but the spectral dependence is now considered as well. The real part varies over the visible spectrum for dielectrics also (e.g. `[1.521, 1.525, 1.533]` for soda-lime glass), but refraction is difficult for spectrally varying IOR.
 
 The `imaginary` part is often called *k* and it represents the absorption coefficient. The imaginary part is non-zero for conductives and zero for dielectrics, which means that conductives rapidly absorbs the transmitted radiance while dielectrics let it pass through.
 
-As mentioned previously, spectral distributions of these values are available at [refractiveindex.info](https://refractiveindex.info/). These spectral distributions can be reduced to linear RGB by integrating the product of the spectral distributions and each of the CIE color matching functions over the visible spectrum, and then converting the resulting XYZ tristimulus values to linear RGB. The program does this automatically if a file with spectral data is provided for the `ior` field, but I also wrote the following MATLAB script to get the values directly:
+Spectral distributions of these values are available at [refractiveindex.info](https://refractiveindex.info/). These spectral distributions can be reduced to linear RGB by integrating the product of the spectral distributions and each of the CIE color matching functions over the visible spectrum, and then converting the resulting XYZ tristimulus values to linear RGB. The program does this automatically if a path to a downloaded CSV file with spectral data is provided for the `ior` field, but I also wrote the following MATLAB script to get the values directly:
 
 ```matlab
 % Read CIE cmfs, http://cvrl.ioo.ucl.ac.uk/cmfs.htm
@@ -430,10 +439,23 @@ ___
 
 ___
 
+## Renders
+<div about="renders/metal_bunnies.jpg">
+  <img src="renders/metal_bunnies.jpg" alt="Path traced render of the Stanford bunny with different rough metal materials, 864 348 triangles." title="Path traced render of the Stanford bunny with different rough metal materials, 864 348 triangles." />
+  <a rel="license" href="https://creativecommons.org/licenses/by/4.0/"></a>
+</div>
+<div about="renders/stanford_dragon.jpg">
+  <img src="renders/stanford_dragon.jpg" alt="Path traced render of the Stanford bunny with different rough metal materials, 864 348 triangles." title="Path traced render of the Stanford bunny with different rough metal materials, 864 348 triangles." />
+  <a rel="license" href="https://creativecommons.org/licenses/by/4.0/"></a>
+</div>
+<div about="renders/hexagon-room-flint-glass.jpg">
+  <img src="renders/hexagon-room-flint-glass.jpg" alt="Path traced render of hexagon room suspended in flint glass (1.75 scene IOR)." title="Path traced render of hexagon room suspended in flint glass (1.75 scene IOR)." />
+  <a rel="license" href="https://creativecommons.org/licenses/by/4.0/"></a>
+</div>
+
 ## Resources
 
-<details><summary>The following are some useful resources that I've used for the project.</summary><br>
-
+The following resources have been useful the project:
 * [Physically Based Rendering - Matt Pharr, Wenzel Jakob and Greg Humphreys](http://www.pbr-book.org/)
 * [Global Illumination using Photon Maps - Henrik Wann Jensen](http://graphics.stanford.edu/~henrik/papers/ewr7/ewr7.html)
 * [A Simpler and Exact Sampling Routine for the GGX Distribution of Visible Normals - Eric Heitz](https://hal.archives-ouvertes.fr/hal-01509746/document)
@@ -444,6 +466,5 @@ ___
 * [Automatic Exposure - Krzysztof Narkowicz](https://knarkowicz.wordpress.com/2016/01/09/automatic-exposure/)
 * [Better Sampling - Rory Driscoll](http://www.rorydriscoll.com/2009/01/07/better-sampling/)
 * [Introduction to Acceleration Structures - Scratchapixel](https://www.scratchapixel.com/lessons/advanced-rendering/introduction-acceleration-structure/bounding-volume-hierarchy-BVH-part1)
-* [Refractive index database - Mikhail Polyanskiy](https://refractiveindex.info/).
+* [Refractive index database - Mikhail Polyanskiy](https://refractiveindex.info/)
 * [The Stanford 3D Scanning Repository](http://graphics.stanford.edu/data/3Dscanrep/)
-</details>

@@ -20,7 +20,7 @@ glm::dvec3 Ray:: operator()(double t) const
 void Ray::reflectDiffuse(const Interaction &ia)
 {
     specular = false;
-    direction = ia.cs.from(Random::CosWeightedHemiSample());
+    direction = ia.cs.from(Random::cosWeightedHemiSample());
     medium_ior = ia.n1;
     start += ia.normal * C::EPSILON;
 }

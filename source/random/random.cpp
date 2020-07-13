@@ -1,46 +1,25 @@
 #include "random.hpp"
 
-#include <glm/vec2.hpp>
-
 #include "../common/constants.hpp"
 
-thread_local std::mt19937_64 Random::engine;
-thread_local unsigned Random::engine_seed;
-
-void Random::seed(unsigned seed)
+double Random::unit()
 {
-    engine.seed(seed);
-    engine_seed = seed;
+    const static thread_local std::uniform_real_distribution<double> unit_distribution(0.0, std::nextafter(1.0, 0.0));
+    return unit_distribution(engine);
 }
 
-unsigned Random::seed()
+double Random::angle()
 {
-    return engine_seed;
-}
-
-std::mt19937_64 Random::getEngine()
-{
-    return engine;
-}
-
-// Generates random numbers in range [min,max[
-double Random::range(double min, double max)
-{
-    return std::uniform_real_distribution<double>(min, std::nextafter(max, min))(engine);
-}
-
-// Generates random unsigned integers in range [min,max]
-size_t Random::uirange(size_t min, size_t max)
-{
-    return std::uniform_int_distribution<size_t>(min, max)(engine);
+    const static thread_local std::uniform_real_distribution<double> angle_distribution(0.0, std::nextafter(C::TWO_PI, 0.0));
+    return angle_distribution(engine);
 }
 
 size_t Random::weightedUIntSample(const std::vector<double>& weights)
 {
-    double p = range(0.0, 1.0);
+    double p = unit();
     double prev = 0.0;
     size_t i = 0;
-    for ( ; i < weights.size() - 1; i++)
+    for (; i < weights.size() - 1; i++)
     {
         prev += weights[i];
         if (prev > p) return i;
@@ -50,33 +29,32 @@ size_t Random::weightedUIntSample(const std::vector<double>& weights)
 
 bool Random::trial(double probability)
 {
-    return probability > range(0.0, 1.0);
+    return probability > Random::unit();
 }
 
-glm::dvec2 Random::UniformDiskSample()
+glm::dvec2 Random::uniformDiskSample()
 {
-    double azimuth = range(0.0, C::TWO_PI);
-    return glm::dvec2(std::cos(azimuth), std::sin(azimuth)) * std::sqrt(range(0.0, 1.0));
+    double azimuth = Random::angle();
+    return glm::dvec2(std::cos(azimuth), std::sin(azimuth)) * std::sqrt(unit());
 }
 
-glm::dvec3 Random::CosWeightedHemiSample()
+glm::dvec3 Random::cosWeightedHemiSample()
 {
     // Generate uniform sample on unit disk at radius r and angle azimuth
-    double u = range(0.0, 1.0);
+    double u = unit();
     double r = std::sqrt(u);
-    double azimuth = range(0.0, C::TWO_PI);
+    double azimuth = Random::angle();
 
     // Project up to hemisphere.
-    // The result is a cosine-weighted hemispherical sample.
     // z = sin(acos(r)) = sqrt(1-r^2) = sqrt(1-sqrt(u)^2) = sqrt(1-u) 
     return glm::dvec3(r * std::cos(azimuth), r * std::sin(azimuth), std::sqrt(1 - u));
 }
 
-glm::dvec3 Random::UniformHemiSample()
+glm::dvec3 Random::uniformHemiSample()
 {
-    double u = range(0.0, 1.0);
+    double u = unit();
     double r = std::sqrt(1.0 - u * u);
-    double azimuth = range(0.0, C::TWO_PI);
+    double azimuth = Random::angle();
 
     return glm::dvec3(r * std::cos(azimuth), r * std::sin(azimuth), u);
 }

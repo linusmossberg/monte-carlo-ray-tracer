@@ -3,6 +3,8 @@
 #include <iostream>
 #include <thread>
 
+#include <glm/gtx/norm.hpp>
+
 #include "../common/util.hpp"
 #include "../common/constants.hpp"
 #include "../random/random.hpp"
@@ -29,28 +31,32 @@ glm::dvec3 Integrator::sampleDirect(const Interaction& interaction) const
     // Pick one light source and divide with probability of picking light source
     if (!scene.emissives.empty())
     {
-        const auto& light = scene.emissives[Random::uirange(0, scene.emissives.size() - 1)];
+        const auto& light = scene.emissives[Random::get<size_t>(0, scene.emissives.size() - 1)];
 
-        glm::dvec3 light_pos = light->operator()(Random::range(0, 1), Random::range(0, 1));
+        glm::dvec3 light_pos = light->operator()(Random::unit(), Random::unit());
         Ray shadow_ray(interaction.position + interaction.normal * C::EPSILON, light_pos);
+
+        double cos_light_theta = glm::dot(-shadow_ray.direction, light->normal(light_pos));
+
+        if (cos_light_theta <= 0.0)
+        {
+            return glm::dvec3(0.0);
+        }
 
         double cos_theta = glm::dot(shadow_ray.direction, interaction.normal);
 
         if (cos_theta <= 0)
         {
             return glm::dvec3(0.0);
-        }    
+        }
 
         Intersection shadow_intersection = scene.intersect(shadow_ray);
 
         if (shadow_intersection)
         {
             glm::dvec3 position = shadow_ray(shadow_intersection.t);
-            glm::dvec3 normal = shadow_intersection.surface->normal(position);
 
-            double cos_light_theta = glm::dot(normal, -shadow_ray.direction);
-
-            if (cos_light_theta <= 0 || glm::distance(position, light_pos) > C::EPSILON)
+            if (glm::distance2(position, light_pos) > pow2(C::EPSILON))
             {
                 return glm::dvec3(0.0);
             }

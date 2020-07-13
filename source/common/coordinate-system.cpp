@@ -2,7 +2,7 @@
 #include "util.hpp"
 #include "constants.hpp"
 
-inline glm::dvec3 orthogonalUnitVector(const glm::dvec3& v)
+glm::dvec3 orthogonalUnitVector(const glm::dvec3& v)
 {
     if (std::abs(v.x) > std::abs(v.y))
         return glm::dvec3(-v.z, 0, v.x) / std::sqrt(pow2(v.x) + pow2(v.z));

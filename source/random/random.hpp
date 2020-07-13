@@ -5,32 +5,31 @@
 #include <glm/vec3.hpp>
 #include <glm/vec2.hpp>
 
-struct Random
+namespace Random
 {
-    Random() { }
+    // thread_local to create one differently seeded engine per thread
+    inline thread_local std::mt19937_64 engine(std::random_device{}());
 
-    static unsigned seed();
+    template <typename T>
+    T get(const T min, const T max) 
+    {
+        if constexpr (std::is_integral<T>::value)
+            return std::uniform_int_distribution(min, max)(engine); // [min,max]
+        else
+            return std::uniform_real_distribution(min, std::nextafter(max, min))(engine); // [min,max)
+    }
 
-    static void seed(unsigned seed);
+    // Random::get with commonly used distributions. 
+    // These may be possible to non-type template in C++20
+    double unit(), angle();
 
-    static std::mt19937_64 getEngine();
+    size_t weightedUIntSample(const std::vector<double>& weights);
 
-    static double range(double v1, double v2);
+    bool trial(double probability);
 
-    static size_t uirange(size_t v1, size_t v2);
+    glm::dvec2 uniformDiskSample();
 
-    static size_t weightedUIntSample(const std::vector<double>& weights);
-
-    static bool trial(double probability);
-
-    static glm::dvec2 UniformDiskSample();
-
-    static glm::dvec3 CosWeightedHemiSample();
-    
-    static glm::dvec3 UniformHemiSample();
-
-private:
-    // thread_local to create one static random engine per thread.
-    thread_local static std::mt19937_64 engine;
-    thread_local static unsigned engine_seed;
-};
+    glm::dvec3 cosWeightedHemiSample();
+   
+    glm::dvec3 uniformHemiSample();
+}

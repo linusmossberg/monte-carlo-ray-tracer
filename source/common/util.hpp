@@ -10,7 +10,7 @@ inline std::ostream& operator<<(std::ostream& out, const glm::dvec3& v)
 }
 
 template <class T>
-inline T pow2(T x)
+constexpr T pow2(T x)
 {
     return x * x;
 }

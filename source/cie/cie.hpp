@@ -5,14 +5,20 @@
 #include <glm/vec3.hpp>
 #include <glm/vec2.hpp>
 
+#include "illuminant.hpp"
+
 // Using CIE 1931 2°
 namespace CIE
 {
-    // wavelength to CIE XYZ color matching functions
+    // wavelength to CIE XYZ color matching functions value
     glm::dvec3 CMF(double wavelength);
 
     // Chromaticity coordinates xy and luminance Y to XYZ
-    glm::dvec3 XYZ(const glm::dvec2 &xy, double Y);
+    constexpr glm::dvec3 XYZ(const glm::dvec2 &xy, double Y)
+    {
+        double N = Y / xy.y;
+        return { N * xy.x, Y, N * (1.0 - xy.x - xy.y) };
+    }
 
     struct SpectralValue
     {
@@ -29,24 +35,34 @@ namespace CIE
     glm::dvec3 RGB(const std::set<SpectralValue> &distribution);
 
     // sRGB to XYZ_D65
-    glm::dvec3 XYZ(const glm::dvec3 &RGB);
+    constexpr glm::dvec3 XYZ(const glm::dvec3 &RGB)
+    {
+        return
+        {
+            0.41239080 * RGB.r + 0.35758434 * RGB.g + 0.18048079 * RGB.b,
+            0.21263901 * RGB.r + 0.71516868 * RGB.g + 0.07219232 * RGB.b,
+            0.01933082 * RGB.r + 0.11919478 * RGB.g + 0.95053215 * RGB.b
+        };
+    }
 
     // XYZ_D65 to sRGB
-    glm::dvec3 RGB(const glm::dvec3 &XYZ);
-
-    enum Illuminant
+    constexpr glm::dvec3 RGB(const glm::dvec3 &XYZ)
     {
-        A, B, C,
-        D50, D55, D65, D75,
-        E,
-        F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12,
-        LED_B1, LED_B2, LED_B3, LED_B4, LED_B5, LED_BH1, LED_RGB1, LED_V1, LED_V2
-    };
+        return
+        {
+             3.24096994 * XYZ.x - 1.53738318 * XYZ.y - 0.49861076 * XYZ.z,
+            -0.96924364 * XYZ.x + 1.87596750 * XYZ.y + 0.04155506 * XYZ.z,
+             0.05563008 * XYZ.x - 0.20397696 * XYZ.y + 1.05697151 * XYZ.z
+        };
+    }
 
-    glm::dvec3 whitePoint(Illuminant illuminant, double Y = 1.0);
+    constexpr glm::dvec3 whitePoint(Illuminant::IDX illuminant, double Y = 1.0)
+    {
+        return XYZ(Illuminant::xy[illuminant], Y);
+    }
 
-    Illuminant strToIlluminant(std::string &I);
+    glm::dvec3 whitePoint(std::string illuminant, double Y = 1.0);
 
-    inline const double MIN_WAVELENGTH = 360;
-    inline const double MAX_WAVELENGTH = 830;
+    inline constexpr double MIN_WAVELENGTH = 360;
+    inline constexpr double MAX_WAVELENGTH = 830;
 }

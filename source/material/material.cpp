@@ -86,8 +86,8 @@ glm::dvec3 Material::specularMicrofacetNormal(const glm::dvec3 &out) const
     // Choose a point on a disk with each half of the disk weighted
     // proportionally to its projection onto stretched out-direction
     double a = 1.0 / (1.0 + out_z);
-    double r = std::sqrt(Random::range(0.0, 1.0));
-    double u = Random::range(0.0, 1.0);
+    double r = std::sqrt(Random::unit());
+    double u = Random::unit();
     double azimuth = ((u < a) ? (u / a) : 1.0 + (u - a) / (1.0 - a)) * C::PI;
 
     glm::dvec3 p;
@@ -183,7 +183,7 @@ void from_json(const nlohmann::json &j, Material &m)
         {
             double scale = getOptional(e, "scale", 1.0);
             std::string illuminant = getOptional<std::string>(e, "illuminant", "D65");
-            m.emittance = CIE::RGB(CIE::whitePoint(CIE::strToIlluminant(illuminant), scale));
+            m.emittance = CIE::RGB(CIE::whitePoint(illuminant, scale));
         }
         else
         {
@@ -196,9 +196,10 @@ void from_json(const nlohmann::json &j, Material &m)
         auto type = j.at("ior").type();
         if(type == nlohmann::json::value_t::object)
         { 
-            m.complex_ior = std::make_shared<ComplexIOR>();
-            getToOptional(j.at("ior"), "real", m.complex_ior->real);
-            getToOptional(j.at("ior"), "imaginary", m.complex_ior->imaginary);
+            m.complex_ior = std::make_shared<ComplexIOR>(
+                getOptional(j.at("ior"), "real", glm::dvec3(1.0)),
+                getOptional(j.at("ior"), "imaginary", glm::dvec3(0.0))
+            );
         }
         else if (type == nlohmann::json::value_t::string)
         {
@@ -251,9 +252,7 @@ void from_json(const nlohmann::json &j, Material &m)
                 pad(real);
                 pad(imaginary);
 
-                m.complex_ior = std::make_shared<ComplexIOR>();
-                m.complex_ior->real = CIE::RGB(real);
-                m.complex_ior->imaginary = CIE::RGB(imaginary);
+                m.complex_ior = std::make_shared<ComplexIOR>(CIE::RGB(real), CIE::RGB(imaginary));
             }
             else
             {

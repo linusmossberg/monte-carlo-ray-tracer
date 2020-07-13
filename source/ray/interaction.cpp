@@ -59,7 +59,7 @@ void Interaction::selectType(const glm::dvec3 &specular_normal)
     double R = Fresnel::dielectric(n1, n2, glm::dot(specular_normal, out));
     double T = material->transparency;
 
-    double p = Random::range(0.0, 1.0);
+    double p = Random::unit();
 
     if (R > p)
     {

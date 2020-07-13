@@ -4,6 +4,7 @@
 
 struct ComplexIOR
 {
+    ComplexIOR(const glm::dvec3 &real, const glm::dvec3 &imaginary) : real(real), imaginary(imaginary) { }
     glm::dvec3 real, imaginary;
 };
 

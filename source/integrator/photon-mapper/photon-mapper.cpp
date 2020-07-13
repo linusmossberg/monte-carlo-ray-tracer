@@ -84,7 +84,7 @@ PhotonMapper::PhotonMapper(const nlohmann::json& j) : Integrator(j)
         }
     }
 
-    std::shuffle(work_vec.begin(), work_vec.end(), Random::getEngine());
+    std::shuffle(work_vec.begin(), work_vec.end(), Random::engine);
     WorkQueue<EmissionWork> work_queue(work_vec);
 
     std::vector<std::unique_ptr<std::thread>> threads(Integrator::num_threads);
@@ -100,16 +100,14 @@ PhotonMapper::PhotonMapper(const nlohmann::json& j) : Integrator(j)
         (
             [this, &work_queue, thread]()
             {
-                Random::seed(std::random_device{}()); // Each thread uses different seed.
-
                 EmissionWork work;
                 while (work_queue.getWork(work))
                 {
                     for (size_t i = 0; i < work.num_emissions; i++)
                     {
-                        glm::dvec3 pos = (*work.light)(Random::range(0, 1), Random::range(0, 1));
+                        glm::dvec3 pos = (*work.light)(Random::unit(), Random::unit());
                         glm::dvec3 normal = work.light->normal(pos);
-                        glm::dvec3 dir = CoordinateSystem::from(Random::CosWeightedHemiSample(), normal);
+                        glm::dvec3 dir = CoordinateSystem::from(Random::cosWeightedHemiSample(), normal);
 
                         pos += normal * C::EPSILON;
 
@@ -221,7 +219,7 @@ PhotonMapper::PhotonMapper(const nlohmann::json& j) : Integrator(j)
                   << std::setw(19) << "Direct photons: "   << Format::largeNumber(num_direct_photons)   << std::endl
                   << std::setw(19) << "Indirect photons: " << Format::largeNumber(num_indirect_photons) << std::endl
                   << std::setw(19) << "Caustic photons: "  << Format::largeNumber(num_caustic_photons)  << std::endl
-                  << std::setw(19) << "Shadow photons: "   << Format::largeNumber(num_shadow_photons)   << std::endl << std::endl;
+                  << std::setw(19) << "Shadow photons: "   << Format::largeNumber(num_shadow_photons)   << std::endl;
     }
 }
 

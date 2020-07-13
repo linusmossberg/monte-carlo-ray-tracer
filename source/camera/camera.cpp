@@ -51,6 +51,8 @@ Camera::Camera(const nlohmann::json &j, const Option &option)
         up = glm::normalize(c.at("up").get<glm::dvec3>());
         left = glm::normalize(glm::cross(up, forward));
     }
+
+    thin_lens = aperture_radius > 0.0 && focus_distance > 0.0;
 }
 
 void Camera::samplePixel(size_t x, size_t y)
@@ -60,23 +62,25 @@ void Camera::samplePixel(size_t x, size_t y)
     double pixel_size = sensor_width / image.width;
     double sub_step = 1.0 / sqrtspp;
 
+    glm::dvec2 half_dim = glm::dvec2(image.width, image.height) * 0.5;
+
     for (int s_x = 0; s_x < sqrtspp; s_x++)
     {
         for (int s_y = 0; s_y < sqrtspp; s_y++)
         {
-            glm::dvec2 pixel_space_pos(x + s_x * sub_step + Random::range(0.0, sub_step), y + s_y * sub_step + Random::range(0.0, sub_step));
-            glm::dvec2 center_offset = pixel_size * (glm::dvec2(image.width, image.height) / 2.0 - pixel_space_pos);
+            glm::dvec2 pixel_space_pos(x + s_x * sub_step + Random::get(0.0, sub_step), y + s_y * sub_step + Random::get(0.0, sub_step));
+            glm::dvec2 center_offset = pixel_size * (half_dim - pixel_space_pos);
 
             glm::dvec3 sensor_pos = eye + forward * focal_length + left * center_offset.x + up * center_offset.y;
 
             // Pinhole camera ray
             Ray ray(eye, sensor_pos, integrator->scene.ior);
 
-            if (aperture_radius > 0.0 && focus_distance > 0.0)
+            if (thin_lens)
             {
                 // Thin lens camera ray for depth of field
                 glm::dvec3 focus_point = ray(focus_distance / glm::dot(ray.direction, forward));
-                glm::dvec2 aperture_sample = Random::UniformDiskSample() * aperture_radius;
+                glm::dvec2 aperture_sample = Random::uniformDiskSample() * aperture_radius;
                 ray.start += left * aperture_sample.x + up * aperture_sample.y;
                 ray.direction = glm::normalize(focus_point - ray.start);
             }
@@ -84,7 +88,7 @@ void Camera::samplePixel(size_t x, size_t y)
             pixel += integrator->sampleRay(ray);
         }
     }
-    pixel /= pow2(static_cast<double>(sqrtspp));
+    pixel /= pow2(sqrtspp);
     num_sampled_pixels++;
 }
 
@@ -103,7 +107,7 @@ void Camera::sampleImage()
         }
     }
 
-    std::shuffle(buckets_vec.begin(), buckets_vec.end(), Random::getEngine());
+    std::shuffle(buckets_vec.begin(), buckets_vec.end(), Random::engine);
     WorkQueue<Bucket> buckets(buckets_vec);
     buckets_vec.clear();
 
@@ -128,8 +132,6 @@ void Camera::sampleImage()
 
 void Camera::sampleImageThread(WorkQueue<Bucket>& buckets)
 {
-    Random::seed(std::random_device{}()); // Each thread uses different seed.
-
     Bucket bucket;
     while (buckets.getWork(bucket))
     {
@@ -152,8 +154,8 @@ void Camera::lookAt(const glm::dvec3& p)
 
 void Camera::capture()
 {
-    std::cout << std::endl << std::string(28, '-') << "| MAIN RENDERING PASS |" << std::string(28, '-') << std::endl << std::endl;
-    std::cout << "Samples per pixel: " << pow2(static_cast<double>(sqrtspp)) << std::endl << std::endl;
+    std::cout << std::endl << std::string(28, '-') << "| MAIN RENDERING PASS |" << std::string(28, '-') << std::endl;
+    std::cout << std::endl << "Samples per pixel: " << pow2(static_cast<double>(sqrtspp)) << std::endl << std::endl;
     auto before = std::chrono::system_clock::now();
     sampleImage();
     saveImage();
