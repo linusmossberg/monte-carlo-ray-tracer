@@ -13,7 +13,9 @@
 #include "../random/random.hpp"
 #include "../common/coordinate-system.hpp"
 #include "../camera/pixel-operators.hpp"
-#include "../cie/cie.hpp"
+#include "../color/cie.hpp"
+#include "../color/illuminant.hpp"
+#include "../color/spectral.h"
 #include "fresnel.hpp"
 
 glm::dvec3 Material::DiffuseBRDF(const glm::dvec3 &i, const glm::dvec3 &o)
@@ -21,11 +23,17 @@ glm::dvec3 Material::DiffuseBRDF(const glm::dvec3 &i, const glm::dvec3 &o)
     return rough ? OrenNayarBRDF(i, o) : LambertianBRDF();
 }
 
-glm::dvec3 Material::SpecularBRDF(const glm::dvec3 &i, const glm::dvec3 &o)
+glm::dvec3 Material::SpecularBRDF(const glm::dvec3 &i, const glm::dvec3 &o, bool exit_object)
 {
-    if (rough_specular) return GGXBRDF(i, o);
-
-    return i.z < 0.0 ? transmittance : specular_reflectance;
+    if (i.z < 0.0) // Transmission
+    {
+        double factor = rough_specular ? GGXFactor(-i.z, o.z) : 1.0;
+        return (exit_object ? glm::dvec3(factor) : factor * transmittance) * specular_reflectance;
+    }
+    else
+    {
+        return rough_specular ? GGXFactor(i.z, o.z) * specular_reflectance : specular_reflectance;
+    }
 }
 
 glm::dvec3 Material::LambertianBRDF()
@@ -48,17 +56,9 @@ glm::dvec3 Material::OrenNayarBRDF(const glm::dvec3 &i, const glm::dvec3 &o)
 }
 
 
-glm::dvec3 Material::GGXBRDF(const glm::dvec3 &i, const glm::dvec3 &o)
+double Material::GGXFactor(double cos_i, double cos_o)
 {
     double a2 = pow2(specular_roughness);
-
-    double cos_o = o.z;
-
-    // Refracted rays has negative dot product with normal. Assuming that the statistical shadowing amount 
-    // is the same on both sides, then just flipping the sign should be correct. It would probably 
-    // have to be mirrored against the normal in the unidirectional anisotropic case as well.
-    bool refraction = i.z < 0.0;
-    double cos_i = refraction ? -i.z : i.z;
     
     // Slide 80:
     // https://twvideo01.ubm-us.net/o1/vault/gdc2017/Presentations/Hammon_Earl_PBR_Diffuse_Lighting.pdf
@@ -67,9 +67,7 @@ glm::dvec3 Material::GGXBRDF(const glm::dvec3 &i, const glm::dvec3 &o)
 
     // G1 = 2.0 * cos_o / (denom_o + cos_o);
     // G2 = 2.0 * cos_i * cos_o / (cos_o * denom_i + cos_i * denom_o);
-    double G2_div_G1 = (cos_i * (denom_o + cos_o)) / (cos_o * denom_i + cos_i * denom_o);
-
-    return (refraction ? transmittance : specular_reflectance) * G2_div_G1;
+    return (cos_i * (denom_o + cos_o)) / (cos_o * denom_i + cos_i * denom_o); // G2 / G1
 }
 
 // Samples a visible microfacet normal from the GGX distribution
@@ -183,7 +181,8 @@ void from_json(const nlohmann::json &j, Material &m)
         {
             double scale = getOptional(e, "scale", 1.0);
             std::string illuminant = getOptional<std::string>(e, "illuminant", "D65");
-            m.emittance = CIE::RGB(CIE::whitePoint(illuminant, scale));
+            std::transform(illuminant.begin(), illuminant.end(), illuminant.begin(), toupper);
+            m.emittance = CIE::RGB(CIE::Illuminant::whitePoint(illuminant.c_str()) * scale);
         }
         else
         {
@@ -208,7 +207,7 @@ void from_json(const nlohmann::json &j, Material &m)
 
             if (std::filesystem::exists(path))
             {
-                std::set<CIE::SpectralValue> real, imaginary;
+                Spectral::Distribution<double> real, imaginary;
                 char type = 'n';
 
                 std::ifstream file(path);
@@ -238,7 +237,7 @@ void from_json(const nlohmann::json &j, Material &m)
                     }
                 }
 
-                auto pad = [](std::set<CIE::SpectralValue> &d)
+                auto pad = [](std::set<Spectral::Value<double>> &d)
                 {
                     if (d.empty()) d.insert({ CIE::MIN_WAVELENGTH, 0.0 });
 
@@ -252,7 +251,10 @@ void from_json(const nlohmann::json &j, Material &m)
                 pad(real);
                 pad(imaginary);
 
-                m.complex_ior = std::make_shared<ComplexIOR>(CIE::RGB(real), CIE::RGB(imaginary));
+                m.complex_ior = std::make_shared<ComplexIOR>(
+                    CIE::RGB(real, Spectral::REFLECTANCE), 
+                    CIE::RGB(imaginary, Spectral::REFLECTANCE)
+                );
             }
             else
             {

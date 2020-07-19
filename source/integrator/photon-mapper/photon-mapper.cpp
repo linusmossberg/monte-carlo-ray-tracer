@@ -329,7 +329,7 @@ glm::dvec3 PhotonMapper::sampleRay(Ray ray, size_t ray_depth)
 
     if (!intersection)
     {
-        return scene.skyColor(ray);
+        return glm::dvec3(0.0);
     }
 
     double absorb = ray_depth > min_ray_depth ? 1.0 - intersection.surface->material->reflect_probability : 0.0;

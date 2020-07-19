@@ -191,7 +191,7 @@ glm::dvec3 Scene::skyColor(const Ray& ray) const
     return glm::mix(glm::dvec3(1.0, 0.5, 0.0), glm::dvec3(0.0, 0.5, 1.0), fy);
 }
 
-void Scene::parseOBJ(const std::filesystem::path &path, 
+void Scene::parseOBJ(const std::filesystem::path &path,
                      std::vector<glm::dvec3> &vertices,
                      std::vector<glm::dvec3> &normals,
                      std::vector<std::vector<size_t>> &triangles_v,

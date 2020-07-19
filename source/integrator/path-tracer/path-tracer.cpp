@@ -9,11 +9,6 @@
 #include "../../surface/surface.hpp"
 #include "../../ray/interaction.hpp"
 
-/*************************************************************************************************************
-A material can be any combination of reflective, transparent and diffuse, but instead of branching into several
-paths only one is selected probabilistically based on the fresnel and transparency at the intersection point.
-Energy is conserved 'automatically' because the path probability is set to be the same as the path weight.
-*************************************************************************************************************/
 glm::dvec3 PathTracer::sampleRay(Ray ray, size_t ray_depth)
 {
     if (ray_depth == Integrator::max_ray_depth)

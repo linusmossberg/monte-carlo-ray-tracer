@@ -72,7 +72,7 @@ BVH::BVH(const BoundingBox &BB,
     size_t msec_duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
 
     std::cout << "BVH constructed in " + Format::timeDuration(msec_duration)
-              << ". Branching factor of tree: " << (num_nodes - 1) / num_branchings << std::endl << std::endl;
+              << ". Branching factor of tree: " << (num_nodes - 1) / num_branchings << std::endl;
 }
 
 Intersection BVH::intersect(const Ray& ray)

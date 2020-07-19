@@ -11,7 +11,17 @@ Interaction::Interaction(const Intersection &isect, const Ray &ray, double envir
     : t(isect.t), position(ray(t)), normal(isect.surface->normal(position)), 
       material(isect.surface->material), out(-ray.direction), n1(ray.medium_ior)
 {
-    n2 = std::abs(n1 - environment_ior) < C::EPSILON ? material->ior : environment_ior;
+    if (std::abs(n1 - environment_ior) < C::EPSILON)
+    {
+        exit_object = false;
+        n2 = material->ior;
+    }
+    else
+    {
+        exit_object = true;
+        n2 = environment_ior;
+    }
+
     double cos_theta = glm::dot(ray.direction, normal);
 
     glm::dvec3 shading_normal;
@@ -83,7 +93,7 @@ glm::dvec3 Interaction::BRDF(const glm::dvec3 &in) const
     if (type != DIFFUSE)
     {
         glm::dvec3 local_out = cs.to(out);
-        glm::dvec3 brdf = material->SpecularBRDF(local_in, local_out);
+        glm::dvec3 brdf = material->SpecularBRDF(local_in, local_out, exit_object);
         if (material->complex_ior)
         {
             brdf *= Fresnel::conductor(n1, material->complex_ior.get(), local_out.z);

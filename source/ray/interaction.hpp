@@ -30,6 +30,7 @@ struct Interaction
     std::shared_ptr<Material> material;
     glm::dvec3 position, normal, out;
     CoordinateSystem cs;
+    bool exit_object;
 
     Ray getNewRay() const;
 
