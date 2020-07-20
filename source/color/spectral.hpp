@@ -1,6 +1,7 @@
 #pragma once
 
 #include <set>
+#include <array>
 
 #include "cie.hpp"
 #include "../common/constants.hpp"
@@ -43,12 +44,26 @@ namespace Spectral
         return s0.value + lerp * (s1.value - s0.value);
     }
 
-    // constexpr inferring of size and stepsize + automatic static assertion 
-    // of valid() would be nice, but I'm not sure if it's possible.
-    template<class T, unsigned SIZE, unsigned STEP>
+    template<class T, unsigned SIZE>
     struct EvenDistribution
     {
-        const Value<T> S[SIZE];
+        static_assert(SIZE >= 2, "Even spectral distribution must have at least 2 elements.");
+
+        constexpr EvenDistribution(const std::array<Value<T>, SIZE> &S) 
+            : S(S), STEP(S[1].wavelength - S[0].wavelength)
+        {
+            if (STEP <= 0.0) throw std::invalid_argument("");
+
+            for (int i = 0; i < SIZE - 1; i++)
+            {
+                double dw = S[i + 1].wavelength - S[i].wavelength;
+                double delta = dw < STEP ? STEP - dw : dw - STEP;
+                if (dw <= 0.0 || delta > C::EPSILON)
+                {
+                    throw std::invalid_argument("");
+                }
+            }
+        }
 
         constexpr T get(double wavelength) const
         {
@@ -67,19 +82,10 @@ namespace Spectral
             return S[idx].value;
         }
 
-        constexpr bool valid() const
-        {
-            if (SIZE < 2) return false;
-            for (int i = 0; i < SIZE - 1; i++)
-            {
-                double dw = S[i + 1].wavelength - S[i].wavelength;
-                double delta = dw < STEP ? STEP - dw : dw - STEP;
-                if (dw <= 0.0 || delta > C::EPSILON) return false;
-            }
-            return true;
-        }
-
         constexpr unsigned size() const { return SIZE; }
-        constexpr unsigned step() const { return STEP; }
+
+    private:
+        const std::array<Value<T>, SIZE> S;
+        const double STEP;
     };
 }

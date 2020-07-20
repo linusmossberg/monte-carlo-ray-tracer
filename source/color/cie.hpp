@@ -50,8 +50,8 @@ namespace CIE
     inline constexpr double STEP = 1.0, MIN_WAVELENGTH = 360, MAX_WAVELENGTH = 830;
 
     // Luminance (Y-component) of spectral radiance L
-    template<unsigned L_SIZE, unsigned L_STEP>
-    constexpr double luminance(const Spectral::EvenDistribution<double, L_SIZE, L_STEP> &L)
+    template<unsigned SIZE>
+    constexpr double luminance(const Spectral::EvenDistribution<double, SIZE> &L)
     {
         double result = 0.0;
         for (double w0 = MIN_WAVELENGTH; w0 <= MAX_WAVELENGTH; w0 += STEP)
@@ -62,10 +62,11 @@ namespace CIE
         return result;
     }
 
-    inline constexpr Spectral::EvenDistribution<double, 2, 470> E{{ { 360, 1.0 }, { 830, 1.0 } }};
-    static_assert(E.valid(), "Invalid even spectral distribution.");
+    // Equal energy illuminant
+    inline constexpr Spectral::EvenDistribution<double, 2> E({{ { MIN_WAVELENGTH, 1.0 },
+                                                                { MAX_WAVELENGTH, 1.0 } }});
 
     // Compile-time integrated normalization factors
-    inline constexpr double NF_REFLECTANCE = 1.0 / luminance<D65.size(), D65.step()>(D65);
-    inline constexpr double NF_RADIANCE    = 1.0 / luminance<E.size(), E.step()>(E);
+    inline constexpr double NF_REFLECTANCE = 1.0 / luminance<D65.size()>(D65);
+    inline constexpr double NF_RADIANCE    = 1.0 / luminance<E.size()>(E);
 }
