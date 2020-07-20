@@ -1,7 +1,5 @@
 #pragma once
 
-#include <functional>
-
 #include <glm/vec3.hpp>
 #include <nlohmann/json.hpp>
 

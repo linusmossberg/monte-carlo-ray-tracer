@@ -2,7 +2,7 @@
 
 #include <glm/vec3.hpp>
 
-#include "spectral.h"
+#include "spectral.hpp"
 
 namespace CIE
 {

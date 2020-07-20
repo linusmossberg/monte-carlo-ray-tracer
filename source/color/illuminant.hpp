@@ -59,12 +59,12 @@ namespace CIE
             NUM
         };
         
-        inline constexpr glm::dvec3 whitePoint(size_t idx)
+        constexpr glm::dvec3 whitePoint(size_t idx)
         {
             return XYZ(white_points[idx >= A && idx < NUM ? idx : NUM].xy, 1.0);
         }
 
-        inline constexpr glm::dvec3 whitePoint(const char* name)
+        constexpr glm::dvec3 whitePoint(const char* name)
         {
             glm::dvec2 xy = white_points[NUM].xy;
             for (int i = 0; i < NUM; i++)

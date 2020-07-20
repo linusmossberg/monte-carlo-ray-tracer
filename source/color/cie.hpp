@@ -5,9 +5,9 @@
 #include <glm/vec3.hpp>
 #include <glm/vec2.hpp>
 
-#include "spectral.h"
-#include "d65.h"
-#include "cmf.h"
+#include "spectral.hpp"
+#include "d65.hpp"
+#include "cmf.hpp"
 
 // Using CIE 1931 2°
 namespace CIE
@@ -17,9 +17,6 @@ namespace CIE
 
     // Spectral distribution to sRGB
     glm::dvec3 RGB(const Spectral::Distribution<double> &distribution, Spectral::Type type);
-
-    // wavelength to CIE CMF value
-    glm::dvec3 fittedCMF(double wavelength);
 
     // sRGB to XYZ_D65
     constexpr glm::dvec3 XYZ(const glm::dvec3 &RGB)
@@ -65,8 +62,10 @@ namespace CIE
         return result;
     }
 
+    inline constexpr Spectral::EvenDistribution<double, 2, 470> E{{ { 360, 1.0 }, { 830, 1.0 } }};
+    static_assert(E.valid(), "Invalid even spectral distribution.");
+
     // Compile-time integrated normalization factors
     inline constexpr double NF_REFLECTANCE = 1.0 / luminance<D65.size(), D65.step()>(D65);
-    inline constexpr double NF_RADIANCE    = 1.0 / luminance<2, 500>({{{ 300, 1.0 },
-                                                                       { 800, 1.0 }}});
+    inline constexpr double NF_RADIANCE    = 1.0 / luminance<E.size(), E.step()>(E);
 }

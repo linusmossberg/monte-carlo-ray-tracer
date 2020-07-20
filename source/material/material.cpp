@@ -15,7 +15,7 @@
 #include "../camera/pixel-operators.hpp"
 #include "../color/cie.hpp"
 #include "../color/illuminant.hpp"
-#include "../color/spectral.h"
+#include "../color/spectral.hpp"
 #include "fresnel.hpp"
 
 glm::dvec3 Material::DiffuseBRDF(const glm::dvec3 &i, const glm::dvec3 &o)

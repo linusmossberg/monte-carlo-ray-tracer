@@ -1,6 +1,6 @@
 #pragma once
 
-#include "spectral.h"
+#include "spectral.hpp"
 
 namespace CIE
 {
@@ -114,7 +114,7 @@ namespace CIE
             { 820,  57.4406 },
             { 825,  58.8765 },
             { 830,  60.3125 }
-        } 
+        }
     };
     static_assert(D65.valid(), "Invalid even spectral distribution.");
 }

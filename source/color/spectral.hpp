@@ -43,6 +43,8 @@ namespace Spectral
         return s0.value + lerp * (s1.value - s0.value);
     }
 
+    // constexpr inferring of size and stepsize + automatic static assertion 
+    // of valid() would be nice, but I'm not sure if it's possible.
     template<class T, unsigned SIZE, unsigned STEP>
     struct EvenDistribution
     {
@@ -52,7 +54,7 @@ namespace Spectral
         {
             if (wavelength < S[0].wavelength || wavelength > S[SIZE - 1].wavelength)
             {
-                return T(0.0);
+                return T(0);
             }
 
             unsigned idx = static_cast<unsigned>((wavelength - S[0].wavelength) / STEP);
