@@ -1,6 +1,6 @@
 #include "ray.hpp"
 
-#include "../common/util.hpp"
+#include "../common/constexpr-math.hpp"
 #include "../random/random.hpp"
 #include "../common/constants.hpp"
 #include "interaction.hpp"

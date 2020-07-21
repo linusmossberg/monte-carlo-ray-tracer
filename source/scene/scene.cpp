@@ -35,9 +35,8 @@ Scene::Scene(const nlohmann::json& j)
             std::vector<std::vector<size_t>> triangles_v, triangles_vt, triangles_vn;
             if (s.find("file") != s.end())
             {
-                auto path = std::filesystem::current_path() / "scenes";
-                path /= s.at("file").get<std::string>();
-                parseOBJ(path, v, n, triangles_v, triangles_vt, triangles_vn);
+                auto obj_path = path / s.at("file").get<std::string>();
+                parseOBJ(obj_path, v, n, triangles_v, triangles_vt, triangles_vn);
             }
             else
             {
@@ -294,3 +293,5 @@ void Scene::generateVertexNormals(std::vector<glm::dvec3> &normals,
         n = glm::normalize(n);
     }
 }
+
+std::filesystem::path Scene::path = std::filesystem::current_path() / "scenes";

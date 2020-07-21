@@ -36,6 +36,8 @@ public:
 
     double ior;
 
+    static std::filesystem::path path;
+
 private:
     BoundingBox BB_;
 

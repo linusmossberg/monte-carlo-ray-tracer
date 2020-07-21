@@ -6,6 +6,7 @@
 #include <glm/gtx/norm.hpp>
 
 #include "../common/util.hpp"
+#include "../common/constexpr-math.hpp"
 #include "../common/constants.hpp"
 #include "../random/random.hpp"
 #include "../material/material.hpp"

@@ -4,6 +4,7 @@
 #include <glm/gtx/component_wise.hpp>
 #include "pixel-operators.hpp"
 #include "../common/util.hpp"
+#include "../color/srgb.hpp"
 
 Image::Image(const nlohmann::json &j)
 {
@@ -42,7 +43,7 @@ void Image::save(const std::string& filename) const
     out_tonemapped.write(reinterpret_cast<char*>(&header), sizeof(header));
     for (const auto& p : blob)
     {
-        std::vector<uint8_t> fp = truncate(gammaCompress(tonemap(p * exposure_factor) * gain_factor));
+        std::vector<uint8_t> fp = truncate(sRGB::gammaCompress(tonemap(p * exposure_factor) * gain_factor));
         out_tonemapped.write(reinterpret_cast<char*>(fp.data()), fp.size() * sizeof(uint8_t));
     }
     out_tonemapped.close();

@@ -1,6 +1,6 @@
 #include "surface.hpp"
 
-#include "../common/util.hpp"
+#include "../common/constexpr-math.hpp"
 #include "../common/constants.hpp"
 
 Surface::Sphere::Sphere(const glm::dvec3& origin, double radius, std::shared_ptr<Material> material)

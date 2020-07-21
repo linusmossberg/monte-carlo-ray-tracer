@@ -12,6 +12,7 @@
 #include "../integrator/photon-mapper/photon-mapper.hpp"
 #include "../random/random.hpp"
 #include "../common/util.hpp"
+#include "../common/constexpr-math.hpp"
 #include "../common/format.hpp"
 
 Camera::Camera(const nlohmann::json &j, const Option &option)

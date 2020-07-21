@@ -3,7 +3,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/norm.hpp>
 
-#include "../common/util.hpp"
+#include "../common/constexpr-math.hpp"
 #include "../common/constants.hpp"
 
 /**************

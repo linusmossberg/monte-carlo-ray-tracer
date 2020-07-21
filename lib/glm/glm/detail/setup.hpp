@@ -6,9 +6,9 @@
 #define GLM_VERSION_MAJOR			0
 #define GLM_VERSION_MINOR			9
 #define GLM_VERSION_PATCH			9
-#define GLM_VERSION_REVISION		6
-#define GLM_VERSION					996
-#define GLM_VERSION_MESSAGE			"GLM: version 0.9.9.6"
+#define GLM_VERSION_REVISION		8
+#define GLM_VERSION					998
+#define GLM_VERSION_MESSAGE			"GLM: version 0.9.9.8"
 
 #define GLM_SETUP_INCLUDED			GLM_VERSION
 
@@ -35,9 +35,9 @@
 ///////////////////////////////////////////////////////////////////////////////////
 // Build model
 
-#if defined(__arch64__) || defined(__LP64__) || defined(_M_X64) || defined(__ppc64__) || defined(__x86_64__)
+#if defined(_M_ARM64) || defined(__LP64__) || defined(_M_X64) || defined(__ppc64__) || defined(__x86_64__)
 #	define GLM_MODEL	GLM_MODEL_64
-#elif defined(__i386__) || defined(__ppc__)
+#elif defined(__i386__) || defined(__ppc__) || defined(__ILP32__) || defined(_M_ARM)
 #	define GLM_MODEL	GLM_MODEL_32
 #else
 #	define GLM_MODEL	GLM_MODEL_32

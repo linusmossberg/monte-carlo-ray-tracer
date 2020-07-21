@@ -3,6 +3,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "../common/util.hpp"
+#include "../common/constexpr-math.hpp"
 #include "../common/constants.hpp"
 
 Surface::Quadric::Quadric(const nlohmann::json &j, std::shared_ptr<Material> material)

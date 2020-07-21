@@ -1,5 +1,5 @@
 #include "coordinate-system.hpp"
-#include "util.hpp"
+#include "constexpr-math.hpp"
 #include "constants.hpp"
 
 glm::dvec3 orthogonalUnitVector(const glm::dvec3& v)

@@ -7,6 +7,7 @@
 #include "../octree/octree.cpp"
 #include "../common/format.hpp"
 #include "../surface/surface.hpp"
+#include "../common/util.hpp"
 
 BVH::BVH(const BoundingBox &BB, 
          const std::vector<std::shared_ptr<Surface::Base>> &surfaces, 

@@ -1,21 +1,17 @@
 #include "material.hpp"
 
 #include <sstream>
-#include <filesystem>
-#include <fstream>
-#include <iostream>
 
 #include <glm/glm.hpp>
 #include <glm/gtx/component_wise.hpp>
 
 #include "../common/util.hpp"
+#include "../common/constexpr-math.hpp"
 #include "../common/constants.hpp"
 #include "../random/random.hpp"
 #include "../common/coordinate-system.hpp"
-#include "../camera/pixel-operators.hpp"
-#include "../color/cie.hpp"
 #include "../color/illuminant.hpp"
-#include "../color/spectral.hpp"
+#include "../color/srgb.hpp"
 #include "fresnel.hpp"
 
 glm::dvec3 Material::DiffuseBRDF(const glm::dvec3 &i, const glm::dvec3 &o)
@@ -115,7 +111,7 @@ void Material::computeProperties()
     A = 1.0 - 0.5 * (variance / (variance + 0.33));
     B = 0.45 * (variance / (variance + 0.09));
 
-    // Use fresnel at 45 degree incidence and n1 in vacuum to determine Russian roulette reflect probability
+    // Using fresnel at 45 degree incidence and n1 in vacuum to determine Russian roulette reflect probability
     double cos_45 = std::cos(C::PI / 4.0);
     if (complex_ior)
     {
@@ -172,7 +168,7 @@ void from_json(const nlohmann::json &j, Material &m)
     getReflectance("specular_reflectance", m.specular_reflectance);
     getReflectance("transmittance", m.transmittance);
 
-    m.reflectance = gammaExpand(m.reflectance);
+    m.reflectance = sRGB::gammaExpand(m.reflectance);
 
     if (j.find("emittance") != j.end())
     {
@@ -182,7 +178,7 @@ void from_json(const nlohmann::json &j, Material &m)
             double scale = getOptional(e, "scale", 1.0);
             std::string illuminant = getOptional<std::string>(e, "illuminant", "D65");
             std::transform(illuminant.begin(), illuminant.end(), illuminant.begin(), toupper);
-            m.emittance = CIE::RGB(CIE::Illuminant::whitePoint(illuminant.c_str()) * scale);
+            m.emittance = sRGB::RGB(CIE::Illuminant::whitePoint(illuminant.c_str()) * scale);
         }
         else
         {
@@ -192,78 +188,14 @@ void from_json(const nlohmann::json &j, Material &m)
 
     if (j.find("ior") != j.end())
     {
-        auto type = j.at("ior").type();
-        if(type == nlohmann::json::value_t::object)
-        { 
-            m.complex_ior = std::make_shared<ComplexIOR>(
-                getOptional(j.at("ior"), "real", glm::dvec3(1.0)),
-                getOptional(j.at("ior"), "imaginary", glm::dvec3(0.0))
-            );
-        }
-        else if (type == nlohmann::json::value_t::string)
+        auto i = j.at("ior");
+        if (i.type() == nlohmann::json::value_t::object || i.type() == nlohmann::json::value_t::string)
         {
-            auto path = std::filesystem::current_path() / "scenes";
-            path /= j.at("ior").get<std::string>();
-
-            if (std::filesystem::exists(path))
-            {
-                Spectral::Distribution<double> real, imaginary;
-                char type = 'n';
-
-                std::ifstream file(path);
-                std::string line;
-                while (std::getline(file, line))
-                {
-                    auto p = line.find(',');
-                    if (p != std::string::npos)
-                    {
-                        auto wl = line.substr(0, p);
-                        auto v = line.substr(p + 1);
-                        wl.erase(std::remove(wl.begin(), wl.end(), ' '), wl.end());
-                        v.erase(std::remove(v.begin(), v.end(), ' '), v.end());
-
-                        if (wl == "wl")
-                        {
-                            if (v == "n") type = 'n';
-                            if (v == "k") type = 'k';
-                        }
-                        else
-                        {
-                            double wavelength = std::stod(wl) * 1e3; // micro- to nanometers
-                            double value = std::stod(v);
-                            if (type == 'n') real.insert({ wavelength, value });
-                            if (type == 'k') imaginary.insert({ wavelength, value });
-                        }
-                    }
-                }
-
-                auto pad = [](std::set<Spectral::Value<double>> &d)
-                {
-                    if (d.empty()) d.insert({ CIE::MIN_WAVELENGTH, 0.0 });
-
-                    if (d.begin()->wavelength > CIE::MIN_WAVELENGTH)
-                        d.insert({ CIE::MIN_WAVELENGTH, d.begin()->value });
-
-                    if ((--d.end())->wavelength < CIE::MAX_WAVELENGTH)
-                        d.insert({ CIE::MAX_WAVELENGTH, (--d.end())->value });
-                };
-
-                pad(real);
-                pad(imaginary);
-
-                m.complex_ior = std::make_shared<ComplexIOR>(
-                    CIE::RGB(real, Spectral::REFLECTANCE), 
-                    CIE::RGB(imaginary, Spectral::REFLECTANCE)
-                );
-            }
-            else
-            {
-                std::cout << std::endl << path.string() << " not found.\n";
-            }
+            m.complex_ior = std::make_shared<ComplexIOR>(i.get<ComplexIOR>());
         }
         else
         {
-            j.at("ior").get_to(m.ior);
+            i.get_to(m.ior);
         }
     }
 

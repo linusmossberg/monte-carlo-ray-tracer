@@ -5,6 +5,8 @@
 #include <glm/vec3.hpp>
 #include <glm/vec2.hpp>
 
+#include "../common/constexpr-math.hpp"
+
 #include "spectral.hpp"
 #include "d65.hpp"
 #include "cmf.hpp"
@@ -12,34 +14,6 @@
 // Using CIE 1931 2°
 namespace CIE
 {
-    // Spectral distribution to XYZ
-    glm::dvec3 XYZ(const Spectral::Distribution<double> &distribution, Spectral::Type type);
-
-    // Spectral distribution to sRGB
-    glm::dvec3 RGB(const Spectral::Distribution<double> &distribution, Spectral::Type type);
-
-    // sRGB to XYZ_D65
-    constexpr glm::dvec3 XYZ(const glm::dvec3 &RGB)
-    {
-        return
-        {
-            0.41239080 * RGB[0] + 0.35758434 * RGB[1] + 0.18048079 * RGB[2],
-            0.21263901 * RGB[0] + 0.71516868 * RGB[1] + 0.07219232 * RGB[2],
-            0.01933082 * RGB[0] + 0.11919478 * RGB[1] + 0.95053215 * RGB[2]
-        };
-    }
-
-    // XYZ_D65 to sRGB
-    constexpr glm::dvec3 RGB(const glm::dvec3 &XYZ)
-    {
-        return
-        {
-             3.24096994 * XYZ[0] - 1.53738318 * XYZ[1] - 0.49861076 * XYZ[2],
-            -0.96924364 * XYZ[0] + 1.87596750 * XYZ[1] + 0.04155506 * XYZ[2],
-             0.05563008 * XYZ[0] - 0.20397696 * XYZ[1] + 1.05697151 * XYZ[2]
-        };
-    }
-
     // Chromaticity coordinates xy and luminance Y to XYZ
     constexpr glm::dvec3 XYZ(const glm::dvec2 &xy, double Y)
     {
@@ -47,26 +21,40 @@ namespace CIE
         return { N * xy[0], Y, N * (1.0 - xy[0] - xy[1]) };
     }
 
-    inline constexpr double STEP = 1.0, MIN_WAVELENGTH = 360, MAX_WAVELENGTH = 830;
-
-    // Luminance (Y-component) of spectral radiance L
+    // Spectral radiance L to XYZ using midpoint Riemann sum
     template<unsigned SIZE>
-    constexpr double luminance(const Spectral::EvenDistribution<double, SIZE> &L)
+    constexpr glm::dvec3 XYZ(const Spectral::EvenDistribution<double, SIZE> &L)
     {
-        double result = 0.0;
-        for (double w0 = MIN_WAVELENGTH; w0 <= MAX_WAVELENGTH; w0 += STEP)
+        glm::dvec3 result(0.0);
+        for (double w = CMF.min_w() + CMF.dw() / 2.0; w < CMF.max_w(); w += CMF.dw())
         {
-            double w1 = w0 + STEP;
-            result += 0.5 * (CMF.get(w0)[1] * L.get(w0) + CMF.get(w1)[1] * L.get(w1)) * STEP;
+            result += L(w) * CMF(w);
         }
-        return result;
+        return CMF.dw() * result;
     }
 
     // Equal energy illuminant
-    inline constexpr Spectral::EvenDistribution<double, 2> E({{ { MIN_WAVELENGTH, 1.0 },
-                                                                { MAX_WAVELENGTH, 1.0 } }});
+    inline constexpr Spectral::EvenDistribution<double, 2> E({{{ CMF.min_w(), 1.0 },
+                                                               { CMF.max_w(), 1.0 }}});
 
-    // Compile-time integrated normalization factors
-    inline constexpr double NF_REFLECTANCE = 1.0 / luminance<D65.size()>(D65);
-    inline constexpr double NF_RADIANCE    = 1.0 / luminance<E.size()>(E);
+    // Compile-time integrated tristimulus of spectral radiance from illuminants
+    inline constexpr glm::dvec3 D65_XYZ = XYZ<D65.size()>(D65);
+    inline constexpr glm::dvec3 E_XYZ = XYZ<E.size()>(E);
+
+    // Spectral reflectance or radiance distribution to XYZ using midpoint Riemann sum
+    inline glm::dvec3 XYZ(const Spectral::Distribution<double> &distribution, Spectral::Type type)
+    {
+        bool is_reflectance = type == Spectral::REFLECTANCE;
+        auto it = distribution.begin(), end = distribution.end();
+
+        glm::dvec3 result(0.0);
+        for (double w = CMF.min_w() + CMF.dw() / 2.0; w < CMF.max_w(); w += CMF.dw())
+        {
+            if (!Spectral::advance<double>(it, end, w)) break;
+            auto v = interpolate(*it, *std::next(it), w) * CMF(w);
+            result += is_reflectance ? v * D65(w) : v;
+        }
+
+        return (CMF.dw() * result) / (is_reflectance ? D65_XYZ.y : E_XYZ.y);
+    }
 }

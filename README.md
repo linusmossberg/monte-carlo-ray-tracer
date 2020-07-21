@@ -462,6 +462,7 @@ The following resources have been useful the project:
 * [Importance Sampling techniques for GGX with Smith Masking-Shadowing - Joe Schutte](https://schuttejoe.github.io/post/ggximportancesamplingpart2/)
 * [PBR Diffuse Lighting for GGX+Smith Microsurfaces - Earl Hammon](https://twvideo01.ubm-us.net/o1/vault/gdc2017/Presentations/Hammon_Earl_PBR_Diffuse_Lighting.pdf)
 * [Memo on Fresnel Equations - Sébastien Lagarde](https://seblagarde.wordpress.com/2013/04/29/memo-on-fresnel-equations/)
+* [Useful Color Equations - Bruce Lindbloom](http://www.brucelindbloom.com/)
 * [Filmic Tonemapping Operators - John Hable](http://filmicworlds.com/blog/filmic-tonemapping-operators/)
 * [Automatic Exposure - Krzysztof Narkowicz](https://knarkowicz.wordpress.com/2016/01/09/automatic-exposure/)
 * [Better Sampling - Rory Driscoll](http://www.rorydriscoll.com/2009/01/07/better-sampling/)

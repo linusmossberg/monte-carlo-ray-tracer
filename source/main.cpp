@@ -10,13 +10,13 @@
 
 int main(int argc, char* argv[])
 {
-    std::filesystem::path path(std::filesystem::current_path() / (argc == 2 ? argv[1] : "scenes"));
-    std::cout << "Scene directory:" << std::endl << path.string() << std::endl << std::endl;
+    if (argc == 2) Scene::path = std::filesystem::current_path() / argv[1];
+    std::cout << "Scene directory:" << std::endl << Scene::path.string() << std::endl << std::endl;
 
     std::vector<Option> options;
     try
     {
-        options = availible(path);
+        options = availible(Scene::path);
     }
     catch (const std::exception& ex)
     {

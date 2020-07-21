@@ -2,8 +2,8 @@
 
 #include <set>
 #include <array>
+#include <stdexcept>
 
-#include "cie.hpp"
 #include "../common/constants.hpp"
 
 namespace Spectral
@@ -21,20 +21,20 @@ namespace Spectral
     template<class T>
     using Distribution = std::set<Value<T>>;
 
-    // Returns iterator i where i->wavelength <= w < next(i)->wavelength.
+    // Advances iterator it such that it->wavelength <= w < next(it)->wavelength.
     template<class T>
-    typename Distribution<T>::iterator advance(typename Distribution<T>::iterator start,
-                                               typename Distribution<T>::iterator end, double w)
+    bool advance(typename Distribution<T>::iterator &it,
+                 typename Distribution<T>::iterator end, double w)
     {
-        if (start->wavelength >= w && std::next(start) != end)
+        if (it->wavelength >= w && std::next(it) != end)
         {
-            return start;
+            return true;
         }
-        for (auto it = start; std::next(it) != end; it++)
+        for ( ; std::next(it) != end; it++)
         {
-            if (it->wavelength <= w && std::next(it)->wavelength > w) return it;
+            if (it->wavelength <= w && std::next(it)->wavelength > w) return true;
         }
-        return end;
+        return false;
     };
 
     template<class T>
@@ -49,7 +49,7 @@ namespace Spectral
     {
         static_assert(SIZE >= 2, "Even spectral distribution must have at least 2 elements.");
 
-        constexpr EvenDistribution(const std::array<Value<T>, SIZE> &S) 
+        constexpr EvenDistribution(const std::array<Value<T>, SIZE> &S)
             : S(S), STEP(S[1].wavelength - S[0].wavelength)
         {
             if (STEP <= 0.0) throw std::invalid_argument("");
@@ -65,7 +65,7 @@ namespace Spectral
             }
         }
 
-        constexpr T get(double wavelength) const
+        constexpr T operator()(double wavelength) const
         {
             if (wavelength < S[0].wavelength || wavelength > S[SIZE - 1].wavelength)
             {
@@ -83,6 +83,9 @@ namespace Spectral
         }
 
         constexpr unsigned size() const { return SIZE; }
+        constexpr double dw() const { return STEP; }
+        constexpr double min_w() const { return S[0].wavelength; }
+        constexpr double max_w() const { return S[SIZE-1].wavelength; }
 
     private:
         const std::array<Value<T>, SIZE> S;
