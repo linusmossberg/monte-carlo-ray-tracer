@@ -15,13 +15,13 @@
 // https://seblagarde.wordpress.com/2013/04/29/memo-on-fresnel-equations/
 double Fresnel::dielectric(double n1, double n2, double cos_theta)
 {
-    if (n2 < 1.0 || std::abs(n1 - n2) < C::EPSILON) return 0.0;
+    if (n2 < 1.0) return 0.0;
 
-    double sqr_g = pow2(n2 / n1) + pow2(cos_theta) - 1.0;
+    double g2 = pow2(n2 / n1) + pow2(cos_theta) - 1.0;
 
-    if (sqr_g < 0.0) return 1.0;
+    if (g2 < 0.0) return 1.0;
 
-    double g = std::sqrt(sqr_g);
+    double g = std::sqrt(g2);
     double g_p_c = g + cos_theta;
     double g_m_c = g - cos_theta;
 
@@ -92,7 +92,7 @@ void from_json(const nlohmann::json &j, ComplexIOR &c)
                     }
                 }
             }
-
+            // Integrate spectral distributions to sRGB
             c.real = sRGB::RGB(real, Spectral::REFLECTANCE);
             c.imaginary = sRGB::RGB(imaginary, Spectral::REFLECTANCE);
         }

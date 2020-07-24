@@ -8,8 +8,6 @@
 
 namespace sRGB
 {
-    // Compile-time generation of sRGB transformation matrix, derived 
-    // from compile-time integrated D65 white point and sRGB primaries.
     constexpr glm::dmat3 generateRGB2XYZ()
     {
         constexpr glm::dmat3 primaries
@@ -31,6 +29,7 @@ namespace sRGB
         };
     }
 
+    // Generated compile-time
     inline constexpr glm::dmat3 RGB2XYZ = generateRGB2XYZ();
     inline constexpr glm::dmat3 XYZ2RGB = inverse(RGB2XYZ);
 

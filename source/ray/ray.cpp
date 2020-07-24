@@ -5,9 +5,9 @@
 #include "../common/constants.hpp"
 #include "interaction.hpp"
 
-Ray::Ray() : start(), direction(), medium_ior(1) { }
+Ray::Ray() : start(), direction(), medium_ior(1.0) { }
 
-Ray::Ray(const glm::dvec3& start) : start(start), direction(), medium_ior(1) { }
+Ray::Ray(const glm::dvec3& start) : start(start), direction(), medium_ior(1.0) { }
 
 Ray::Ray(const glm::dvec3& start, const glm::dvec3& end, double medium_ior)
     : start(start), direction(glm::normalize(end - start)), medium_ior(medium_ior) { }

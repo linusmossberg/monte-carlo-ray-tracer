@@ -197,6 +197,12 @@ void Scene::parseOBJ(const std::filesystem::path &path,
                      std::vector<std::vector<size_t>> &triangles_vt,
                      std::vector<std::vector<size_t>> &triangles_vn) const
 {
+    if (!std::filesystem::exists(path))
+    {
+        std::cout << std::endl << path.string() << " not found.\n";
+        return;
+    }
+
     std::ifstream file(path);
 
     auto isNumber = [](const std::string &s) 

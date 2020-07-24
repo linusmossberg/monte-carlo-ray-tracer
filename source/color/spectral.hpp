@@ -13,82 +13,81 @@ namespace Spectral
     template<class T>
     struct Value
     {
-        double wavelength;
+        double w; // wavelength
         T value;
-        bool operator< (const Value& rhs) const { return wavelength < rhs.wavelength; };
+        bool operator< (const Value& rhs) const { return w < rhs.w; };
     };
 
     template<class T>
     using Distribution = std::set<Value<T>>;
 
-    // Advances iterator it such that it->wavelength <= w < next(it)->wavelength.
+    // Advances iterator it such that it->w <= w < next(it)->w.
     template<class T>
     bool advance(typename Distribution<T>::iterator &it,
                  typename Distribution<T>::iterator end, double w)
     {
-        if (it->wavelength >= w && std::next(it) != end)
+        if (it->w >= w && std::next(it) != end)
         {
             return true;
         }
         for ( ; std::next(it) != end; it++)
         {
-            if (it->wavelength <= w && std::next(it)->wavelength > w) return true;
+            if (it->w <= w && std::next(it)->w > w) return true;
         }
         return false;
     };
 
     template<class T>
-    constexpr T interpolate(const Value<T> &s0, const Value<T> &s1, double wavelength)
+    constexpr T interpolate(const Value<T> &s0, const Value<T> &s1, double w)
     {
-        double lerp = (wavelength - s0.wavelength) / (s1.wavelength - s0.wavelength);
+        double lerp = (w - s0.w) / (s1.w - s0.w);
+        if (lerp < 0.0 || lerp > 1.0) return T(0);
         return s0.value + lerp * (s1.value - s0.value);
     }
 
-    template<class T, unsigned SIZE>
+    template<class T, size_t SIZE>
     struct EvenDistribution
     {
         static_assert(SIZE >= 2, "Even spectral distribution must have at least 2 elements.");
 
         constexpr EvenDistribution(const std::array<Value<T>, SIZE> &S)
-            : S(S), STEP(S[1].wavelength - S[0].wavelength)
+            : S(S), dw(S[1].w - S[0].w), a(S[0].w), b(S[SIZE - 1].w)
         {
-            if (STEP <= 0.0) throw std::invalid_argument("");
+            if (dw <= 0.0) throw std::invalid_argument("");
 
             for (int i = 0; i < SIZE - 1; i++)
             {
-                double dw = S[i + 1].wavelength - S[i].wavelength;
-                double delta = dw < STEP ? STEP - dw : dw - STEP;
-                if (dw <= 0.0 || delta > C::EPSILON)
+                double step = S[i + 1].w - S[i].w;
+                double delta = step < dw ? dw - step : step - dw;
+                if (step <= 0.0 || delta > C::EPSILON)
                 {
                     throw std::invalid_argument("");
                 }
             }
         }
 
-        constexpr T operator()(double wavelength) const
+        constexpr T operator()(double w) const
         {
-            if (wavelength < S[0].wavelength || wavelength > S[SIZE - 1].wavelength)
-            {
-                return T(0);
-            }
+            if (w < a || w > b) return T(0);
 
-            unsigned idx = static_cast<unsigned>((wavelength - S[0].wavelength) / STEP);
+            size_t i = static_cast<size_t>((w - a) / dw);
 
-            if (idx < SIZE - 1)
-            {
-                return interpolate(S[idx], S[idx + 1], wavelength);
-            }
-
-            return S[idx].value;
+            return i < SIZE - 1 ? interpolate(S[i], S[i + 1], w) : S[i].value;
         }
 
-        constexpr unsigned size() const { return SIZE; }
-        constexpr double dw() const { return STEP; }
-        constexpr double min_w() const { return S[0].wavelength; }
-        constexpr double max_w() const { return S[SIZE-1].wavelength; }
+        const double a;  // Start wavelength
+        const double b;  // End wavelength
+        const double dw; // Wavelength step size
+
+        const size_t size = SIZE;
+
+        // Common start Riemann sum midpoint wavelength aligned with this distribution
+        constexpr double aMid(double second_a) const
+        {
+            return a + (cfloor((cmax(second_a, a) - a) / dw) + 0.5) * dw;
+        }
 
     private:
         const std::array<Value<T>, SIZE> S;
-        const double STEP;
     };
 }

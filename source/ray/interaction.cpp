@@ -11,7 +11,7 @@ Interaction::Interaction(const Intersection &isect, const Ray &ray, double envir
     : t(isect.t), position(ray(t)), normal(isect.surface->normal(position)), 
       material(isect.surface->material), out(-ray.direction), n1(ray.medium_ior)
 {
-    if (std::abs(n1 - environment_ior) < C::EPSILON)
+    if (std::abs(n1 - environment_ior) < C::EPSILON || material->ior < 1.0)
     {
         exit_object = false;
         n2 = material->ior;
@@ -62,7 +62,7 @@ void Interaction::selectType(const glm::dvec3 &specular_normal)
 {
     if (material->perfect_mirror || material->complex_ior)
     {
-        type = REFLECT; 
+        type = REFLECT;
         return;
     }
 

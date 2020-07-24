@@ -56,3 +56,14 @@ constexpr glm::dvec3 mult(const glm::dvec3 &v, double a)
 {
     return { v[0] * a, v[1] * a, v[2] * a };
 }
+
+constexpr double cfloor(double x)
+{
+    return static_cast<double>(static_cast<intmax_t>(x));
+}
+
+template <class T>
+constexpr T cmax(T x, T y)
+{
+    return x > y ? x : y;
+}

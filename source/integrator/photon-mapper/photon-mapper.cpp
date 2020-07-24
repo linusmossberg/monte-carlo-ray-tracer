@@ -243,23 +243,15 @@ void PhotonMapper::emitPhoton(const Ray& ray, const glm::dvec3& flux, size_t thr
     Ray new_ray = interaction.getNewRay();
     glm::dvec3 BRDF = interaction.BRDF(new_ray.direction);
 
-    if (ray_depth == 0)
-    {
-        if (interaction.type != Interaction::Type::REFRACT && Random::trial(non_caustic_reject))
-        {
-            createShadowPhotons(Ray(interaction.position - interaction.normal * C::EPSILON, interaction.position + ray.direction), thread);
-
-            if (interaction.type == Interaction::Type::DIFFUSE)
-            {
-                direct_vecs[thread].emplace_back(flux / non_caustic_reject, interaction.position, ray.direction);
-            }
-        }
-    }
-    else if (interaction.type == Interaction::Type::DIFFUSE)
+    if (interaction.type == Interaction::Type::DIFFUSE)
     {
         BRDF *= C::PI;
-
-        if (ray.specular)
+        if (ray_depth == 0 && Random::trial(non_caustic_reject))
+        {
+            direct_vecs[thread].emplace_back(flux / non_caustic_reject, interaction.position, ray.direction);
+            createShadowPhotons(Ray(interaction.position - interaction.normal * C::EPSILON, interaction.position + ray.direction), thread);
+        }
+        else if (ray.specular)
         {
             caustic_vecs[thread].emplace_back(flux, interaction.position, ray.direction);
         }
@@ -267,6 +259,10 @@ void PhotonMapper::emitPhoton(const Ray& ray, const glm::dvec3& flux, size_t thr
         {
             indirect_vecs[thread].emplace_back(flux / non_caustic_reject, interaction.position, ray.direction);
         }
+    }
+    else if (interaction.type == Interaction::Type::REFLECT && ray_depth == 0 && Random::trial(non_caustic_reject))
+    {
+        createShadowPhotons(Ray(interaction.position - interaction.normal * C::EPSILON, interaction.position + ray.direction), thread);
     }
 
     glm::dvec3 new_flux = flux * BRDF;
@@ -284,12 +280,7 @@ void PhotonMapper::emitPhoton(const Ray& ray, const glm::dvec3& flux, size_t thr
 
 void PhotonMapper::createShadowPhotons(const Ray& ray, size_t thread, size_t depth)
 {
-    if (!use_shadow_photons)
-    {
-        return;
-    }
-
-    if (depth > max_ray_depth)
+    if (!use_shadow_photons || depth > max_ray_depth)
     {
         return;
     }

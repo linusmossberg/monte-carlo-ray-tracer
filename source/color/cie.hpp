@@ -26,35 +26,31 @@ namespace CIE
     constexpr glm::dvec3 XYZ(const Spectral::EvenDistribution<double, SIZE> &L)
     {
         glm::dvec3 result(0.0);
-        for (double w = CMF.min_w() + CMF.dw() / 2.0; w < CMF.max_w(); w += CMF.dw())
+        for (double w = CMF.aMid(L.a); w < CMF.b; w += CMF.dw)
         {
             result += L(w) * CMF(w);
         }
-        return CMF.dw() * result;
+        return CMF.dw * result;
     }
 
     // Equal energy illuminant
-    inline constexpr Spectral::EvenDistribution<double, 2> E({{{ CMF.min_w(), 1.0 },
-                                                               { CMF.max_w(), 1.0 }}});
+    inline constexpr Spectral::EvenDistribution<double, 2> E({{{ CMF.a, 1.0 },
+                                                               { CMF.b, 1.0 }}});
 
     // Compile-time integrated tristimulus of spectral radiance from illuminants
-    inline constexpr glm::dvec3 D65_XYZ = XYZ<D65.size()>(D65);
-    inline constexpr glm::dvec3 E_XYZ = XYZ<E.size()>(E);
+    inline constexpr glm::dvec3 D65_XYZ = XYZ<D65.size>(D65);
+    inline constexpr glm::dvec3 E_XYZ = XYZ<E.size>(E);
 
     // Spectral reflectance or radiance distribution to XYZ using midpoint Riemann sum
     inline glm::dvec3 XYZ(const Spectral::Distribution<double> &distribution, Spectral::Type type)
     {
-        bool is_reflectance = type == Spectral::REFLECTANCE;
-        auto it = distribution.begin(), end = distribution.end();
-
         glm::dvec3 result(0.0);
-        for (double w = CMF.min_w() + CMF.dw() / 2.0; w < CMF.max_w(); w += CMF.dw())
+        auto i = distribution.begin(), end = distribution.end();
+        for (double w = CMF.aMid(i->w); w < CMF.b && Spectral::advance<double>(i, end, w); w += CMF.dw)
         {
-            if (!Spectral::advance<double>(it, end, w)) break;
-            auto v = interpolate(*it, *std::next(it), w) * CMF(w);
-            result += is_reflectance ? v * D65(w) : v;
+            auto v = interpolate(*i, *std::next(i), w) * CMF(w);
+            result += type == Spectral::RADIANCE ? v : v * D65(w);
         }
-
-        return (CMF.dw() * result) / (is_reflectance ? D65_XYZ.y : E_XYZ.y);
+        return (CMF.dw * result) / (type == Spectral::RADIANCE ? E_XYZ.y : D65_XYZ.y);
     }
 }
