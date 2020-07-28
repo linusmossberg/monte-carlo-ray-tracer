@@ -238,7 +238,7 @@ void PhotonMapper::emitPhoton(const Ray& ray, const glm::dvec3& flux, size_t thr
         return;
     }
 
-    Interaction interaction(intersection, ray, scene.ior);
+    Interaction interaction(intersection, ray);
 
     Ray new_ray = interaction.getNewRay();
     glm::dvec3 BRDF = interaction.BRDF(new_ray.direction);
@@ -330,7 +330,7 @@ glm::dvec3 PhotonMapper::sampleRay(Ray ray, size_t ray_depth)
         return glm::dvec3(0.0);
     }
 
-    Interaction interaction(intersection, ray, scene.ior);
+    Interaction interaction(intersection, ray);
 
     glm::dvec3 emittance = (ray_depth == 0 || ray.specular) ? interaction.material->emittance : glm::dvec3(0.0);
 

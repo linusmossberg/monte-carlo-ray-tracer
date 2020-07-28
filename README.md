@@ -11,7 +11,7 @@ This is a physically based renderer with Path Tracing and Photon Mapping.
   <a rel="license" href="https://creativecommons.org/licenses/by/4.0/"></a>
 </div>
 <div about="renders/caustics.jpg">
-  <img src="renders/caustics.jpg" alt="Photon mapped render of caustics, 6.6 million triangles and 157 million photon particles. Original scene by Benedikt Bitterli." title="Photon mapped render of caustics, 6.6 million triangles and 157 million photon particles. Original scene by Benedikt Bitterli." />
+  <img src="renders/caustics.jpg" alt="Photon mapped render of caustics, 6.6 million triangles and 164 million photon particles. Original scene by Benedikt Bitterli." title="Photon mapped render of caustics, 6.6 million triangles and 164 million photon particles. Original scene by Benedikt Bitterli." />
   <a rel="license" href="https://creativecommons.org/licenses/by/4.0/"></a>
 </div>
 
@@ -207,8 +207,13 @@ Example:
       "imaginary": [4.52084303, 3.61703254, 2.59526494]
     }
   },
+  "water": {
+    "ior": 1.333,
+    "transparency": 1.0
+  }
   "crystal": {
     "ior": 2.0,
+    "external_medium": "water",
     "transparency":  1.0,
     "transmittance": [ 0.5, 1.0, 0.9 ],
     "specular_roughness": 0.1
@@ -234,7 +239,7 @@ The material fields are:
 
 | field                  | type        | default | interval    |
 | ---------------------- | ----------- | ------- | ----------- |
-| `reflectance`          | RGB         | 0       | [0, 1]      |
+| `reflectance`          | RGB         | 1       | [0, 1]      |
 | `specular_reflectance` | RGB         | 1       | [0, 1]      |
 | `transmittance`        | RGB         | 1       | [0, 1]      |
 | `emittance`            | RGB         | 0       | [0, ∞)      |
@@ -242,6 +247,7 @@ The material fields are:
 | `specular_roughness`   | scalar      | 0       | [0, 1]      |
 | `transparency`         | scalar      | 0       | [0, 1]      |
 | `perfect_mirror`       | bool        | 0       | {0, 1}      |
+| `external_medium`      | string      | "scene" | keys        |
 | `ior`                  | [IOR](#ior) | 0       | [IOR](#ior) |
 
 These fields are all optional and any combination of fields can be used. A material can for example be a combination of diffusely reflecting, specularly reflecting, emissive, transmissive (specularly refracting) and rough. If set to true, the `perfect_mirror` field overrides most other fields to simulate a perfect mirror with infinite IOR.
@@ -249,6 +255,8 @@ These fields are all optional and any combination of fields can be used. A mater
 The `reflectance`, `specular_reflectance` and `transmittance` fields specifies the amount of radiance that should be diffusely reflected and specularly reflected/transmitted for each RGB channel. This is a simplification since these are spectral properties that varies with wavelength and not by the resulting tristimulus values of the virtual camera, but this is computationally cheaper and simpler. These properties now take gamma-corrected values and linearizes them internally to make it easier to pick colors via color pickers.
 
 The `emittance` field defines the radiant flux of each RGB channel in watts. This means that surfaces with different surface areas will emit the same amount of radiant energy if they are assigned the same emissive material. It's also possible to set this field to a [CIE standard illuminant](https://en.wikipedia.org/wiki/Standard_illuminant) by specifying an object with an `illuminant` and a `scale` field.
+
+The `external_medium` field can be used to specify the key string of the material that the material is enclosed in. This is required to correctly render scenes with layered transmissive objects (eg. ice cubes with air bubbles in a glass of water). This field is only needed when a ray exits a transmissive object that is enclosed in another transmissive object, and is therefore not required for opaque materials or transmissive materials that only has the scene as external medium.
 
 #### IOR
 

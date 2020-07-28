@@ -106,6 +106,7 @@ void Material::computeProperties()
 
     rough = roughness > C::EPSILON;
     rough_specular = specular_roughness > C::EPSILON;
+    opaque = transparency < C::EPSILON;
 
     double variance = pow2(roughness);
     A = 1.0 - 0.5 * (variance / (variance + 0.33));
@@ -116,6 +117,10 @@ void Material::computeProperties()
     if (complex_ior)
     {
         reflect_probability = glm::compMax(specular_reflectance * Fresnel::conductor(1.0, complex_ior.get(), cos_45));
+    }
+    else if (glm::compMax(emittance) > C::EPSILON)
+    {
+        reflect_probability = 0.8;
     }
     else
     {

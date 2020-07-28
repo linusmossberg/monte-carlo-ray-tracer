@@ -7,11 +7,13 @@
 #include "../common/coordinate-system.hpp"
 #include "../surface/surface.hpp"
 
-Interaction::Interaction(const Intersection &isect, const Ray &ray, double environment_ior)
+Interaction::Interaction(const Intersection &isect, const Ray &ray)
     : t(isect.t), position(ray(t)), normal(isect.surface->normal(position)), 
       material(isect.surface->material), out(-ray.direction), n1(ray.medium_ior)
 {
-    if (std::abs(n1 - environment_ior) < C::EPSILON || material->ior < 1.0)
+    double cos_theta = glm::dot(ray.direction, normal);
+
+    if (cos_theta < 0.0 || material->opaque)
     {
         exit_object = false;
         n2 = material->ior;
@@ -19,10 +21,8 @@ Interaction::Interaction(const Intersection &isect, const Ray &ray, double envir
     else
     {
         exit_object = true;
-        n2 = environment_ior;
+        n2 = material->external_ior;
     }
-
-    double cos_theta = glm::dot(ray.direction, normal);
 
     glm::dvec3 shading_normal;
     if (isect.interpolate)

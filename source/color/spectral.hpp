@@ -41,7 +41,8 @@ namespace Spectral
     constexpr T interpolate(const Value<T> &s0, const Value<T> &s1, double w)
     {
         double lerp = (w - s0.w) / (s1.w - s0.w);
-        if (lerp < 0.0 || lerp > 1.0) return T(0);
+        if (lerp < 0.0) return s0.value;
+        if (lerp > 0.0) return s1.value;
         return s0.value + lerp * (s1.value - s0.value);
     }
 
@@ -68,7 +69,8 @@ namespace Spectral
 
         constexpr T operator()(double w) const
         {
-            if (w < a || w > b) return T(0);
+            if (w < a) return S[0].value;
+            if (w > b) return S[SIZE - 1].value;
 
             size_t i = static_cast<size_t>((w - a) / dw);
 
@@ -80,12 +82,6 @@ namespace Spectral
         const double dw; // Wavelength step size
 
         const size_t size = SIZE;
-
-        // Common start Riemann sum midpoint wavelength aligned with this distribution
-        constexpr double aMid(double second_a) const
-        {
-            return a + (cfloor((cmax(second_a, a) - a) / dw) + 0.5) * dw;
-        }
 
     private:
         const std::array<Value<T>, SIZE> S;

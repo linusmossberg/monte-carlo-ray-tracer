@@ -12,13 +12,9 @@ LinearOctree<Data>::LinearOctree(Octree<Data> &octree_root)
 
     if (octree_size == 0 || data_size == 0) return;
 
-    linear_tree = std::vector<LinearOctant>(octree_size, LinearOctant());
-    ordered_data.reserve(data_size);
-
     uint32_t df_idx = root_idx;
     uint64_t data_idx = 0;
     compact(&octree_root, df_idx, data_idx, true);
-    octree_root.octants.clear();
 }
 
 template <class Data>
@@ -184,6 +180,7 @@ void LinearOctree<Data>::compact(Octree<Data> *node, uint32_t &df_idx, uint64_t 
 {
     uint32_t idx = df_idx++;
 
+    linear_tree.emplace_back();
     linear_tree[idx].BB = node->BB;
     linear_tree[idx].leaf = (uint8_t)node->leaf();
     linear_tree[idx].start_data = data_idx;
@@ -208,5 +205,6 @@ void LinearOctree<Data>::compact(Octree<Data> *node, uint32_t &df_idx, uint64_t 
             compact(node->octants[i].get(), df_idx, data_idx, i == use.back());
         }
     }
+    node->octants.clear();
     linear_tree[idx].next_sibling = last ? null_idx : df_idx;
 }

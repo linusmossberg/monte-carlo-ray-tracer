@@ -26,7 +26,7 @@ namespace CIE
     constexpr glm::dvec3 XYZ(const Spectral::EvenDistribution<double, SIZE> &L)
     {
         glm::dvec3 result(0.0);
-        for (double w = CMF.aMid(L.a); w < CMF.b; w += CMF.dw)
+        for (double w = CMF.a + 0.5 * CMF.dw; w < CMF.b; w += CMF.dw)
         {
             result += L(w) * CMF(w);
         }
@@ -46,7 +46,7 @@ namespace CIE
     {
         glm::dvec3 result(0.0);
         auto i = distribution.begin(), end = distribution.end();
-        for (double w = CMF.aMid(i->w); w < CMF.b && Spectral::advance<double>(i, end, w); w += CMF.dw)
+        for (double w = CMF.a + 0.5 * CMF.dw; w < CMF.b && Spectral::advance<double>(i, end, w); w += CMF.dw)
         {
             auto v = interpolate(*i, *std::next(i), w) * CMF(w);
             result += type == Spectral::RADIANCE ? v : v * D65(w);

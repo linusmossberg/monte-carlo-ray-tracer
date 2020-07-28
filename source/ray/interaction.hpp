@@ -13,7 +13,7 @@ struct Interaction
 {
     Interaction() {}
 
-    Interaction(const Intersection &intersection, const Ray &ray, double environment_ior);
+    Interaction(const Intersection &intersection, const Ray &ray);
 
     enum Type
     {

@@ -82,7 +82,7 @@ double Image::getExposure() const
     {
         double t = get_t(p);
         if (t < 0) return 1.0;
-        histogram[static_cast<size_t>(std::floor(t / bin_size))]++;
+        histogram[std::min((size_t)(t / bin_size), histogram.size() - 1)]++;
     }
 
     size_t half_of_pixels = static_cast<size_t>(blob.size() * 0.5);
@@ -127,7 +127,7 @@ double Image::getGain(double exposure_factor) const
     {
         double t = get_t(p);
         if (t < 0) return 1.0;
-        histogram[static_cast<size_t>(std::floor(t / bin_size))]++;
+        histogram[std::min((size_t)(t / bin_size), histogram.size() - 1)]++;
     }
 
     size_t num_clipped_pixels = static_cast<size_t>(blob.size() * 0.01);

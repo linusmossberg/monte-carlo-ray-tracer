@@ -31,7 +31,7 @@ glm::dvec3 PathTracer::sampleRay(Ray ray, size_t ray_depth)
         return glm::dvec3(0.0);
     }
 
-    Interaction interaction(intersection, ray, scene.ior);
+    Interaction interaction(intersection, ray);
 
     glm::dvec3 emittance = (ray_depth == 0 || ray.specular || naive) ? interaction.material->emittance : glm::dvec3(0.0);
 

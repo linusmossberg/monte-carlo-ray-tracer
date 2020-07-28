@@ -19,6 +19,12 @@ Scene::Scene(const nlohmann::json& j)
     auto vertices = getOptional(j, "vertices", std::unordered_map<std::string, std::vector<glm::dvec3>>());
     ior = getOptional(j, "ior", 1.0);
 
+    for (const auto& m : j.at("materials").items())
+    {
+        std::string external_medium = getOptional<std::string>(m.value(), "external_medium", "scene");
+        materials.at(m.key())->external_ior = external_medium == "scene" ? ior : materials.at(external_medium)->ior;
+    }
+
     for (const auto& s : j.at("surfaces"))
     {
         std::string material_str = "default";
