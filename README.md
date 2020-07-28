@@ -210,7 +210,7 @@ Example:
   "water": {
     "ior": 1.333,
     "transparency": 1.0
-  }
+  },
   "crystal": {
     "ior": 2.0,
     "external_medium": "water",
@@ -477,3 +477,4 @@ The following resources have been useful the project:
 * [Introduction to Acceleration Structures - Scratchapixel](https://www.scratchapixel.com/lessons/advanced-rendering/introduction-acceleration-structure/bounding-volume-hierarchy-BVH-part1)
 * [Refractive index database - Mikhail Polyanskiy](https://refractiveindex.info/)
 * [The Stanford 3D Scanning Repository](http://graphics.stanford.edu/data/3Dscanrep/)
+* [Rendering Resources - Benedikt Bitterli](https://benedikt-bitterli.me/resources/)
