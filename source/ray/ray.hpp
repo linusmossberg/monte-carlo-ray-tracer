@@ -10,7 +10,7 @@ class Ray
 {
 public:
     Ray();
-    Ray(const glm::dvec3& start);
+    Ray(const glm::dvec3& start, uint8_t depth, uint8_t diffuse_depth);
     Ray(const glm::dvec3& start, const glm::dvec3& end, double medium_ior = 1.0);
 
     glm::dvec3 operator()(double t) const;
@@ -23,4 +23,5 @@ public:
     glm::dvec3 start, direction;
     double medium_ior;
     bool specular = false;
+    uint8_t depth = 0, diffuse_depth = 0;
 };

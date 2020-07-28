@@ -112,15 +112,17 @@ void Material::computeProperties()
     A = 1.0 - 0.5 * (variance / (variance + 0.33));
     B = 0.45 * (variance / (variance + 0.09));
 
+    if (glm::compMax(emittance) > C::EPSILON)
+    {
+        reflect_probability = 0.8;
+        return;
+    }
+
     // Using fresnel at 45 degree incidence and n1 in vacuum to determine Russian roulette reflect probability
     double cos_45 = std::cos(C::PI / 4.0);
     if (complex_ior)
     {
         reflect_probability = glm::compMax(specular_reflectance * Fresnel::conductor(1.0, complex_ior.get(), cos_45));
-    }
-    else if (glm::compMax(emittance) > C::EPSILON)
-    {
-        reflect_probability = 0.8;
     }
     else
     {

@@ -9,9 +9,9 @@
 #include "../../surface/surface.hpp"
 #include "../../ray/interaction.hpp"
 
-glm::dvec3 PathTracer::sampleRay(Ray ray, size_t ray_depth)
+glm::dvec3 PathTracer::sampleRay(Ray ray)
 {
-    if (ray_depth == Integrator::max_ray_depth)
+    if (ray.depth == Integrator::max_ray_depth)
     {
         Log("Bias introduced: Max ray depth reached in PathTracer::sampleRay()");
         return glm::dvec3(0.0);
@@ -24,19 +24,18 @@ glm::dvec3 PathTracer::sampleRay(Ray ray, size_t ray_depth)
         return scene.skyColor(ray);
     }
 
-    double absorb = ray_depth > Integrator::min_ray_depth ? 1.0 - intersection.surface->material->reflect_probability : 0.0;
-
-    if (Random::trial(absorb))
+    double survive;
+    if (absorb(ray, intersection, survive))
     {
         return glm::dvec3(0.0);
     }
 
     Interaction interaction(intersection, ray);
 
-    glm::dvec3 emittance = (ray_depth == 0 || ray.specular || naive) ? interaction.material->emittance : glm::dvec3(0.0);
+    glm::dvec3 emittance = (ray.depth == 0 || ray.specular || naive) ? interaction.material->emittance : glm::dvec3(0.0);
 
     Ray new_ray = interaction.getNewRay();
-    glm::dvec3 radiance = sampleRay(new_ray, ray_depth + 1);
+    glm::dvec3 radiance = sampleRay(new_ray);
 
     if (interaction.type == Interaction::Type::DIFFUSE)
     {
@@ -47,5 +46,5 @@ glm::dvec3 PathTracer::sampleRay(Ray ray, size_t ray_depth)
         }       
     }
 
-    return (emittance + interaction.BRDF(new_ray.direction) * radiance) / (1.0 - absorb);
+    return (emittance + interaction.BRDF(new_ray.direction) * radiance) / survive;
 }

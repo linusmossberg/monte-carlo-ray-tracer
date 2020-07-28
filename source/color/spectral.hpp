@@ -42,7 +42,7 @@ namespace Spectral
     {
         double lerp = (w - s0.w) / (s1.w - s0.w);
         if (lerp < 0.0) return s0.value;
-        if (lerp > 0.0) return s1.value;
+        if (lerp > 1.0) return s1.value;
         return s0.value + lerp * (s1.value - s0.value);
     }
 

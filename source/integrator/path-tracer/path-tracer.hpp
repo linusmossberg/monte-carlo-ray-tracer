@@ -10,5 +10,5 @@ class PathTracer : public Integrator
 public:
     PathTracer(const nlohmann::json& j) : Integrator(j) { }
 
-    virtual glm::dvec3 sampleRay(Ray ray, size_t ray_depth = 0);
+    virtual glm::dvec3 sampleRay(Ray ray);
 };

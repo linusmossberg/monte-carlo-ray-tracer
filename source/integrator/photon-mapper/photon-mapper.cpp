@@ -223,9 +223,9 @@ PhotonMapper::PhotonMapper(const nlohmann::json& j) : Integrator(j)
     }
 }
 
-void PhotonMapper::emitPhoton(const Ray& ray, const glm::dvec3& flux, size_t thread, size_t ray_depth)
+void PhotonMapper::emitPhoton(const Ray& ray, const glm::dvec3& flux, size_t thread)
 {
-    if (ray_depth == Integrator::max_ray_depth)
+    if (ray.depth == Integrator::max_ray_depth)
     {
         Log("Bias introduced: Max ray depth reached in PhotonMap::emitPhoton()");
         return;
@@ -246,7 +246,7 @@ void PhotonMapper::emitPhoton(const Ray& ray, const glm::dvec3& flux, size_t thr
     if (interaction.type == Interaction::Type::DIFFUSE)
     {
         BRDF *= C::PI;
-        if (ray_depth == 0 && Random::trial(non_caustic_reject))
+        if (ray.depth == 0 && Random::trial(non_caustic_reject))
         {
             direct_vecs[thread].emplace_back(flux / non_caustic_reject, interaction.position, ray.direction);
             createShadowPhotons(Ray(interaction.position - interaction.normal * C::EPSILON, interaction.position + ray.direction), thread);
@@ -260,7 +260,7 @@ void PhotonMapper::emitPhoton(const Ray& ray, const glm::dvec3& flux, size_t thr
             indirect_vecs[thread].emplace_back(flux / non_caustic_reject, interaction.position, ray.direction);
         }
     }
-    else if (interaction.type == Interaction::Type::REFLECT && ray_depth == 0 && Random::trial(non_caustic_reject))
+    else if (interaction.type == Interaction::Type::REFLECT && ray.depth == 0 && Random::trial(non_caustic_reject))
     {
         createShadowPhotons(Ray(interaction.position - interaction.normal * C::EPSILON, interaction.position + ray.direction), thread);
     }
@@ -268,11 +268,11 @@ void PhotonMapper::emitPhoton(const Ray& ray, const glm::dvec3& flux, size_t thr
     glm::dvec3 new_flux = flux * BRDF;
 
     // Based on slide 13 of https://cgg.mff.cuni.cz/~jaroslav/teaching/2015-npgr010/slides/11%20-%20npgr010-2015%20-%20PM.pdf
-    double survive = std::min(ray_depth > min_ray_depth ? 0.9 : 1.0, glm::compMax(new_flux) / glm::compMax(flux));
+    double survive = std::min(ray.depth > min_ray_depth ? 0.9 : 1.0, glm::compMax(new_flux) / glm::compMax(flux));
 
     if (Random::trial(survive))
     {
-        emitPhoton(new_ray, new_flux / survive, thread, ray_depth + 1);
+        emitPhoton(new_ray, new_flux / survive, thread);
     }
 
     return;
@@ -308,9 +308,9 @@ void PhotonMapper::createShadowPhotons(const Ray& ray, size_t thread, size_t dep
     createShadowPhotons(Ray(pos, pos + ray.direction), thread, depth + 1);
 }
 
-glm::dvec3 PhotonMapper::sampleRay(Ray ray, size_t ray_depth)
+glm::dvec3 PhotonMapper::sampleRay(Ray ray)
 {
-    if (ray_depth == Integrator::max_ray_depth)
+    if (ray.depth == Integrator::max_ray_depth)
     {
         Log("Bias introduced: Max ray depth reached in PhotonMap::sampleRay()");
         return glm::dvec3(0.0);
@@ -323,24 +323,23 @@ glm::dvec3 PhotonMapper::sampleRay(Ray ray, size_t ray_depth)
         return glm::dvec3(0.0);
     }
 
-    double absorb = ray_depth > min_ray_depth ? 1.0 - intersection.surface->material->reflect_probability : 0.0;
-    
-    if (Random::trial(absorb))
+    double survive;
+    if (absorb(ray, intersection, survive))
     {
         return glm::dvec3(0.0);
     }
 
     Interaction interaction(intersection, ray);
 
-    glm::dvec3 emittance = (ray_depth == 0 || ray.specular) ? interaction.material->emittance : glm::dvec3(0.0);
+    glm::dvec3 emittance = (ray.depth == 0 || ray.specular) ? interaction.material->emittance : glm::dvec3(0.0);
 
     if (interaction.type != Interaction::Type::DIFFUSE)
     {
         // Ray originated from diffuse reflection
-        if (ray_depth != 0 && !ray.specular) return emittance / (1.0 - absorb);
+        if (ray.depth != 0 && !ray.specular) return emittance / survive;
 
         Ray new_ray = interaction.getNewRay();
-        return (emittance + sampleRay(new_ray, ray_depth + 1) * interaction.BRDF(new_ray.direction)) / (1.0 - absorb);
+        return (emittance + sampleRay(new_ray) * interaction.BRDF(new_ray.direction)) / survive;
     }
     else
     {
@@ -358,11 +357,11 @@ glm::dvec3 PhotonMapper::sampleRay(Ray ray, size_t ray_depth)
         {
             Ray new_ray = interaction.getNewRay();
             glm::dvec3 BRDF = interaction.BRDF(new_ray.direction);
-            glm::dvec3 indirect = sampleRay(new_ray, ray_depth + 1) * C::PI;
-            return (emittance + caustics + (evaluateDirect() + indirect) * BRDF) / (1.0 - absorb);
+            glm::dvec3 indirect = sampleRay(new_ray) * C::PI;
+            return (emittance + caustics + (evaluateDirect() + indirect) * BRDF) / survive;
         };
 
-        if (!direct_visualization && (ray_depth == 0 || ray.specular || interaction.t >= min_bounce_distance))
+        if (!direct_visualization && (ray.depth == 0 || ray.specular || interaction.t >= min_bounce_distance))
         {
             return evaluateDiffuse();
         }
@@ -383,7 +382,7 @@ glm::dvec3 PhotonMapper::sampleRay(Ray ray, size_t ray_depth)
                     return evaluateDiffuse();
                 }
                 glm::dvec3 indirect = estimateRadiance(interaction, indirect_photons);
-                return (emittance + caustics + direct + indirect) / (1.0 - absorb);
+                return (emittance + caustics + direct + indirect) / survive;
             }
             else
             {

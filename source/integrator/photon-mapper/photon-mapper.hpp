@@ -14,11 +14,11 @@ class PhotonMapper : public Integrator
 public:
     PhotonMapper(const nlohmann::json& j);
 
-    void emitPhoton(const Ray& ray, const glm::dvec3& flux, size_t thread, size_t ray_depth = 0);
+    void emitPhoton(const Ray& ray, const glm::dvec3& flux, size_t thread);
 
     void createShadowPhotons(const Ray& ray, size_t thread, size_t depth = 0);
 
-    virtual glm::dvec3 sampleRay(Ray ray, size_t ray_depth = 0);
+    virtual glm::dvec3 sampleRay(Ray ray);
     
     glm::dvec3 estimateRadiance(const Interaction& interaction, const std::vector<SearchResult<Photon>> &photons);
     glm::dvec3 estimateCausticRadiance(const Interaction& interaction);

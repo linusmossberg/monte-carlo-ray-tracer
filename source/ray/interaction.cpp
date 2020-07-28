@@ -9,7 +9,7 @@
 
 Interaction::Interaction(const Intersection &isect, const Ray &ray)
     : t(isect.t), position(ray(t)), normal(isect.surface->normal(position)), 
-      material(isect.surface->material), out(-ray.direction), n1(ray.medium_ior)
+      material(isect.surface->material), out(-ray.direction), n1(ray.medium_ior), ray(ray)
 {
     double cos_theta = glm::dot(ray.direction, normal);
 
@@ -108,7 +108,7 @@ glm::dvec3 Interaction::BRDF(const glm::dvec3 &in) const
 
 Ray Interaction::getNewRay() const
 {
-    Ray new_ray(position);
+    Ray new_ray(position, ray.depth, ray.diffuse_depth);
     switch (type)
     {
         case REFLECT:

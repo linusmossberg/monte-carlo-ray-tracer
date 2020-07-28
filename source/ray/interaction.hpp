@@ -31,6 +31,7 @@ struct Interaction
     glm::dvec3 position, normal, out;
     CoordinateSystem cs;
     bool exit_object;
+    Ray ray;
 
     Ray getNewRay() const;
 

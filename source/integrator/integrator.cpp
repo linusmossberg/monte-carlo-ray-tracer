@@ -71,3 +71,18 @@ glm::dvec3 Integrator::sampleDirect(const Interaction& interaction) const
     }
     return glm::dvec3(0.0);
 }
+
+bool Integrator::absorb(const Ray &ray, const Intersection &isect, double &survive) const
+{
+    if (ray.diffuse_depth <= min_ray_depth && ray.depth <= min_priority_ray_depth)
+    {
+        survive = 1.0;
+        return false;
+    }
+    else
+    {
+        survive = isect.surface->material->reflect_probability;
+    }
+
+    return Random::trial(1.0 - survive);
+}
