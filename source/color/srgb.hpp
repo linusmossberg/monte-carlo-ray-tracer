@@ -12,9 +12,9 @@ namespace sRGB
     {
         constexpr glm::dmat3 primaries
         {
-            CIE::XYZ({ 0.64, 0.33 }, 1.0), // Red
-            CIE::XYZ({ 0.30, 0.60 }, 1.0), // Green
-            CIE::XYZ({ 0.15, 0.06 }, 1.0)  // Blue
+            CIE::XYZ({ 0.64, 0.33 }), // Red
+            CIE::XYZ({ 0.30, 0.60 }), // Green
+            CIE::XYZ({ 0.15, 0.06 })  // Blue
         };
 
         constexpr glm::dvec3 white_point = CIE::D65_XYZ / CIE::D65_XYZ[1];

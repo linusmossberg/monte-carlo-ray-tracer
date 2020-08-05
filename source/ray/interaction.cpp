@@ -15,12 +15,12 @@ Interaction::Interaction(const Intersection &isect, const Ray &ray)
 
     if (cos_theta < 0.0 || material->opaque)
     {
-        exit_object = false;
+        inside = false;
         n2 = material->ior;
     }
     else
     {
-        exit_object = true;
+        inside = true;
         n2 = material->external_ior;
     }
 
@@ -93,7 +93,7 @@ glm::dvec3 Interaction::BRDF(const glm::dvec3 &in) const
     if (type != DIFFUSE)
     {
         glm::dvec3 local_out = cs.to(out);
-        glm::dvec3 brdf = material->SpecularBRDF(local_in, local_out, exit_object);
+        glm::dvec3 brdf = material->SpecularBRDF(local_in, local_out, inside);
         if (material->complex_ior)
         {
             brdf *= Fresnel::conductor(n1, material->complex_ior.get(), local_out.z);
@@ -104,28 +104,4 @@ glm::dvec3 Interaction::BRDF(const glm::dvec3 &in) const
     {
         return material->DiffuseBRDF(local_in, cs.to(out));
     }
-}
-
-Ray Interaction::getNewRay() const
-{
-    Ray new_ray(position, ray.depth, ray.diffuse_depth);
-    switch (type)
-    {
-        case REFLECT:
-        {
-            new_ray.reflectSpecular(-out, *this); 
-            break;
-        }
-        case REFRACT:
-        {
-            new_ray.refractSpecular(-out, *this); 
-            break;
-        }
-        case DIFFUSE:
-        {
-            new_ray.reflectDiffuse(*this);
-            break;
-        }
-    }
-    return new_ray;
 }

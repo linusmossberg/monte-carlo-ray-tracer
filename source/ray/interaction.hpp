@@ -11,8 +11,6 @@ class Material;
 
 struct Interaction
 {
-    Interaction() {}
-
     Interaction(const Intersection &intersection, const Ray &ray);
 
     enum Type
@@ -30,10 +28,8 @@ struct Interaction
     std::shared_ptr<Material> material;
     glm::dvec3 position, normal, out;
     CoordinateSystem cs;
-    bool exit_object;
+    bool inside;
     Ray ray;
-
-    Ray getNewRay() const;
 
 private:
     void selectType(const glm::dvec3 &specular_normal);

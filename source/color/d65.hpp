@@ -4,7 +4,7 @@
 
 namespace CIE
 {
-    inline constexpr Spectral::EvenDistribution<double, 107> D65
+    inline constexpr Spectral::LinearDistribution<double, 107> D65
     (
         {
             {

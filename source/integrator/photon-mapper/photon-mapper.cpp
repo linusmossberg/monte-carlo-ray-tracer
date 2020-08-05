@@ -240,7 +240,7 @@ void PhotonMapper::emitPhoton(const Ray& ray, const glm::dvec3& flux, size_t thr
 
     Interaction interaction(intersection, ray);
 
-    Ray new_ray = interaction.getNewRay();
+    Ray new_ray(interaction);
     glm::dvec3 BRDF = interaction.BRDF(new_ray.direction);
 
     if (interaction.type == Interaction::Type::DIFFUSE)
@@ -338,7 +338,7 @@ glm::dvec3 PhotonMapper::sampleRay(Ray ray)
         // Ray originated from diffuse reflection
         if (ray.depth != 0 && !ray.specular) return emittance / survive;
 
-        Ray new_ray = interaction.getNewRay();
+        Ray new_ray(interaction);
         return (emittance + sampleRay(new_ray) * interaction.BRDF(new_ray.direction)) / survive;
     }
     else
@@ -355,7 +355,7 @@ glm::dvec3 PhotonMapper::sampleRay(Ray ray)
 
         auto evaluateDiffuse = [&]()
         {
-            Ray new_ray = interaction.getNewRay();
+            Ray new_ray(interaction);
             glm::dvec3 BRDF = interaction.BRDF(new_ray.direction);
             glm::dvec3 indirect = sampleRay(new_ray) * C::PI;
             return (emittance + caustics + (evaluateDirect() + indirect) * BRDF) / survive;

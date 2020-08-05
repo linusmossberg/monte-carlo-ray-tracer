@@ -19,12 +19,12 @@ glm::dvec3 Material::DiffuseBRDF(const glm::dvec3 &i, const glm::dvec3 &o)
     return rough ? OrenNayarBRDF(i, o) : LambertianBRDF();
 }
 
-glm::dvec3 Material::SpecularBRDF(const glm::dvec3 &i, const glm::dvec3 &o, bool exit_object)
+glm::dvec3 Material::SpecularBRDF(const glm::dvec3 &i, const glm::dvec3 &o, bool inside)
 {
     if (i.z < 0.0) // Transmission
     {
         double factor = rough_specular ? GGXFactor(-i.z, o.z) : 1.0;
-        return (exit_object ? glm::dvec3(factor) : factor * transmittance) * specular_reflectance;
+        return inside ? glm::dvec3(factor) : factor * transmittance;
     }
     else
     {

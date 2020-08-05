@@ -26,7 +26,7 @@ public:
     }
 
     glm::dvec3 DiffuseBRDF(const glm::dvec3 &i, const glm::dvec3 &o);
-    glm::dvec3 SpecularBRDF(const glm::dvec3 &i, const glm::dvec3 &o, bool exit_object = false);
+    glm::dvec3 SpecularBRDF(const glm::dvec3 &i, const glm::dvec3 &o, bool inside = false);
     glm::dvec3 LambertianBRDF();
     glm::dvec3 OrenNayarBRDF(const glm::dvec3 &i, const glm::dvec3 &o);
     double GGXFactor(double cos_i, double cos_o);

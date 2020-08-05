@@ -47,11 +47,11 @@ namespace Spectral
     }
 
     template<class T, size_t SIZE>
-    struct EvenDistribution
+    struct LinearDistribution
     {
-        static_assert(SIZE >= 2, "Even spectral distribution must have at least 2 elements.");
+        static_assert(SIZE >= 2, "Linear spectral distribution must have at least 2 elements.");
 
-        constexpr EvenDistribution(const std::array<Value<T>, SIZE> &S)
+        constexpr LinearDistribution(const std::array<Value<T>, SIZE> &S)
             : S(S), dw(S[1].w - S[0].w), a(S[0].w), b(S[SIZE - 1].w)
         {
             if (dw <= 0.0) throw std::invalid_argument("");

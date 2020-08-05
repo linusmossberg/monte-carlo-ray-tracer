@@ -34,7 +34,7 @@ glm::dvec3 PathTracer::sampleRay(Ray ray)
 
     glm::dvec3 emittance = (ray.depth == 0 || ray.specular || naive) ? interaction.material->emittance : glm::dvec3(0.0);
 
-    Ray new_ray = interaction.getNewRay();
+    Ray new_ray(interaction);
     glm::dvec3 radiance = sampleRay(new_ray);
 
     if (interaction.type == Interaction::Type::DIFFUSE)

@@ -15,9 +15,9 @@ This is a physically based renderer with Path Tracing and Photon Mapping.
   <a rel="license" href="https://creativecommons.org/licenses/by/4.0/"></a>
 </div>
 
-This program was initially developed over a period of about 2 months for the course [Advanced Global Illumination and Rendering (TNCG15)](https://liu.se/studieinfo/kurs/tncg15) at Linköpings Universitet. I have however continued developing it by adding features such as depth of field and quadric surfaces. 
+This program was initially developed over a period of about 2 months for the course [Advanced Global Illumination and Rendering (TNCG15)](https://liu.se/studieinfo/kurs/tncg15) at Linköpings Universitet. I have however added additional features such as depth of field and quadric surfaces since then.
 
-The program is written in C++ and requires a compiler with C++17 support. The only dependencies are the header-only libraries [GLM](https://glm.g-truc.net/) and [nlohmann::json](https://github.com/nlohmann/json), which are included in the repository.
+The program is written in C++ and requires a compiler with C++17 support. The only dependencies are the header-only libraries [GLM](https://glm.g-truc.net/) and [nlohmann::json](https://github.com/nlohmann/json), which are included in the repository. 
 
 ## Building
 Clone the repository using the following [git](https://git-scm.com/) command:

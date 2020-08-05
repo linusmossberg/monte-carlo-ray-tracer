@@ -19,7 +19,7 @@ public:
     size_t num_threads;
     Scene scene;
 
-    const size_t min_ray_depth = 3;
-    const size_t min_priority_ray_depth = 16;
-    const size_t max_ray_depth = 96; // prevent call stack overflow
+    const uint8_t min_ray_depth = 3;
+    const uint8_t min_priority_ray_depth = 16;
+    const uint8_t max_ray_depth = 96; // prevent call stack overflow
 };

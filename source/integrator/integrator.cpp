@@ -79,10 +79,6 @@ bool Integrator::absorb(const Ray &ray, const Intersection &isect, double &survi
         survive = 1.0;
         return false;
     }
-    else
-    {
-        survive = isect.surface->material->reflect_probability;
-    }
-
+    survive = isect.surface->material->reflect_probability;
     return Random::trial(1.0 - survive);
 }
