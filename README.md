@@ -56,7 +56,7 @@ The basic outline of the scene format is the following JSON object:
 
 The `num_render_threads` field specifies the number of rendering threads to use. This is limited between 1 and the number of concurrent threads available on the system. All concurrent threads are used if the specified value is outside of this range.
 
-The `ior` field specifies the scene IOR (index of refraction). This can be used to simulate different types of environment mediums to see the effects this has on the angle of refraction and the Fresnel factor.
+The `ior` field specifies the scene index of refraction. This can be used to simulate different types of environment mediums to see the effects this has on the angle of refraction and the Fresnel factor.
 
 The `photon_map`, `bvh`, `cameras`, `materials`, `vertices`, and `surfaces` objects specifies different render settings and scene contents. I go through each of these in the following sections. Click the summaries for more details.
 
@@ -246,7 +246,7 @@ The material fields are:
 | `roughness`            | scalar      | 0       | [0, ∞)      |
 | `specular_roughness`   | scalar      | 0       | [0, 1]      |
 | `transparency`         | scalar      | 0       | [0, 1]      |
-| `perfect_mirror`       | bool        | 0       | {0, 1}      |
+| `perfect_mirror`       | bool        | false   | {f, t}      |
 | `external_medium`      | string      | "scene" | keys        |
 | `ior`                  | [IOR](#ior) | 0       | [IOR](#ior) |
 
