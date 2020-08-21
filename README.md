@@ -2,8 +2,8 @@
 
 This is a physically based renderer with Path Tracing and Photon Mapping.
 
-<div about="renders/stanford_dragon.jpg">
-  <img src="renders/stanford_dragon.jpg" alt="Path traced render of the Stanford dragon." title="Path traced render of the Stanford dragon." />
+<div about="renders/stanford_dragon_frosted_2.jpg">
+  <img src="renders/stanford_dragon_frosted_2.jpg" alt="Path traced render of the Stanford dragon with a rough transmissive material, 871 414 triangles." title="Path traced render of the Stanford dragon with a rough transmissive material, 871 414 triangles." />
   <a rel="license" href="https://creativecommons.org/licenses/by/4.0/"></a>
 </div>
 <div about="renders/quadric.jpg">
@@ -452,8 +452,8 @@ ___
   <img src="renders/hexagon-room-flint-glass.jpg" alt="Path traced render of hexagon room suspended in flint glass (1.75 scene IOR)." title="Path traced render of hexagon room suspended in flint glass (1.75 scene IOR)." />
   <a rel="license" href="https://creativecommons.org/licenses/by/4.0/"></a>
 </div>
-<div about="renders/stanford_dragon_frosted_2.jpg">
-  <img src="renders/stanford_dragon_frosted_2.jpg" alt="Path traced render of the Stanford dragon with a frosted glass material, backlit by an incandescent sphere. 871 414 triangles." title="Path traced render of the Stanford dragon with a frosted glass material, backlit by an incandescent sphere. 871 414 triangles." />
+<div about="renders/stanford_dragon.jpg">
+  <img src="renders/stanford_dragon.jpg" alt="Path traced render of the Stanford dragon, 871 414 triangles." title="Path traced render of the Stanford dragon, 871 414 triangles." />
   <a rel="license" href="https://creativecommons.org/licenses/by/4.0/"></a>
 </div>
 <div about="renders/metal_bunnies.jpg">
