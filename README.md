@@ -383,7 +383,7 @@ Example:
   },
   {
     "type": "sphere",
-    "origin": [ 9.25261, -3.70517, -0.58328 ],
+    "position": [ 9.25261, -3.70517, -0.58328 ],
     "radius": 1.15485
   },
   {
@@ -400,17 +400,19 @@ Example:
     "material": "one_sheet_hyperboloid",
     "XX": -1, "YY": 1, "ZZ": 1, "R": -1,
     "bound_dimensions": [1.0, 0.2, 0.2],
-    "origin": [0.3, 0.3, 0.125],
+    "position": [0.3, 0.3, 0.125],
     "scale": 0.025,
-    "orientation": { "axis": [1,0,0], "angle": 45 }
+    "rotation": [45, 0, 0]
   }
 ]
 ```
 
-Each surface has a `type` field which can be either `sphere`, `triangle`, `object` or `quadric`. All surfaces also has an optional `material` field, which specifies the material that the surface should use by material key string. The remaining fields are type specific.
+Each surface has a `type` field which can be either `sphere`, `triangle`, `object` or `quadric`. All surfaces also has an optional `material` field, which specifies the material that the surface should use by material key string. 
+
+All surface types can also be transformed using the optional `position`, `rotation` (degrees) and `scale` fields specified as xyz-vectors. The remaining fields are type specific.
 
 #### Sphere
-The sphere position is defined by the `origin` field, while the sphere radius is defined by the `radius` field.
+The sphere radius is defined by the `radius` field.
 
 #### Triangle
 The triangle is simply defined by its vertices, which is defined by the 3 vertices in the vertex array `vertices` in xyz-coordinates. The order of the vertices defines the normal direction.
@@ -436,8 +438,6 @@ with constants J=-1, A=E=H=1 and the rest 0. This is achieved in the program by 
 Instead of the usual constant names, I've opted for more descriptive field names that correspond to the expression that the field value is multiplied with in the quadric equation. The `R` field corresponds to J in the quadric equation, i.e. the scalar constant added at the end. The value of unspecified constants are set to 0.
 
 The `bound_dimensions` field specifies the dimensions of the axis-aligned bounding box that the quadric surface is confined to.
-
-The `origin`, `scale` and `orientation` fields are optional and they are used to transform the quadric surface. The `axis` field of the `orientation` object specifies the vector that the surface should be rotated about `angle` degrees (curl right hand rule).
 
 Quadric surfaces currently do not support emissive materials (the emissive part is simply ignored).
 

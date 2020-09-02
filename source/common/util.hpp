@@ -1,6 +1,7 @@
 #pragma once
 
 #include <glm/vec3.hpp>
+#include <glm/mat4x4.hpp>
 
 #include <nlohmann/json.hpp>
 
@@ -17,6 +18,14 @@ inline glm::dvec3 intToColor(uint32_t i)
 void Log(const std::string& message);
 
 void waitForInput();
+
+struct Transform
+{
+    Transform(glm::dvec3 position, glm::dvec3 scale, glm::dvec3 rotation);
+
+    glm::dmat4 matrix, rotation_matrix;
+    const glm::dvec3 position, scale, rotation;
+};
 
 namespace glm
 {

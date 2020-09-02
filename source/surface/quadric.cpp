@@ -33,24 +33,7 @@ Surface::Quadric::Quadric(const nlohmann::json &j, std::shared_ptr<Material> mat
 
     glm::dvec3 bound_dimensions = getOptional(j, "bound_dimensions", glm::dvec3(1.0));
 
-    BB_ = BoundingBox(origin - bound_dimensions / 2.0, origin + bound_dimensions / 2.0);
-
-    glm::dmat4 scale = glm::scale(glm::dmat4(1.0), glm::dvec3(getOptional(j, "scale", 1.0)));
-    glm::dmat4 translate = glm::translate(glm::dmat4(1.0), origin);
-    glm::dmat4 rotate(1.0);
-
-    if (j.find("orientation") != j.end())
-    {
-        glm::dvec3 axis = glm::normalize(j.at("orientation").at("axis").get<glm::dvec3>());
-        double angle = glm::radians(j.at("orientation").at("angle").get<double>());
-        rotate = glm::rotate(rotate, angle, axis);
-    }
-
-    glm::dmat4 M = translate * rotate * scale;
-
-    glm::dmat4 M_inv = glm::inverse(M);
-
-    Q = glm::transpose(M_inv) * Q * M_inv;
+    BB_ = BoundingBox(-bound_dimensions / 2.0, bound_dimensions / 2.0);
 
     double Ga[12]{
         Q[0][0], Q[0][1], Q[0][2],
@@ -141,6 +124,28 @@ bool Surface::Quadric::intersect(const Ray& ray, Intersection& intersection) con
     intersection = Intersection(t);
     
     return true;
+}
+
+void Surface::Quadric::transform(const Transform &T)
+{
+    glm::dmat4 M_inv = glm::inverse(T.matrix);
+
+    Q = glm::transpose(M_inv) * Q * M_inv;
+
+    double Ga[12]{
+        Q[0][0], Q[0][1], Q[0][2],
+        Q[1][0], Q[1][1], Q[1][2],
+        Q[2][0], Q[2][1], Q[2][2],
+        Q[3][0], Q[3][1], Q[3][2]
+    };
+
+    G = 2.0 * glm::make_mat4x3(Ga);
+
+    BB_.min += T.position;
+    BB_.max += T.position;
+
+    computeArea();
+    computeBoundingBox();
 }
 
 glm::dvec3 Surface::Quadric::operator()(double u, double v) const

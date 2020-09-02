@@ -1,5 +1,6 @@
 #include "scene.hpp"
 
+#include "glm/glm.hpp"
 #include "glm/gtx/component_wise.hpp"
 
 #include "../common/util.hpp"
@@ -34,6 +35,16 @@ Scene::Scene(const nlohmann::json& j)
         }
         auto& material = materials.at(material_str);
 
+        std::unique_ptr<Transform> transform;
+        if (s.find("position") != s.end() || s.find("scale") != s.end() || s.find("rotation") != s.end())
+        {
+            transform = std::make_unique<Transform>(
+                getOptional(s, "position", glm::dvec3(0.0)),
+                getOptional(s, "scale", glm::dvec3(1.0)),
+                glm::radians(getOptional(s, "rotation", glm::dvec3(0.0)))
+            );
+        }
+
         std::string type = s.at("type");
         if (type == "object")
         {
@@ -56,12 +67,6 @@ Scene::Scene(const nlohmann::json& j)
             {
                 generateVertexNormals(n, v, triangles_v);
                 triangles_vn = triangles_v;
-            }
-
-            if (s.find("origin") != s.end())
-            {
-                glm::dvec3 origin = s.at("origin");
-                for (auto &p : v) p += origin;
             }
 
             bool is_emissive = glm::compMax(material->emittance) > C::EPSILON;
@@ -106,28 +111,33 @@ Scene::Scene(const nlohmann::json& j)
                         v.at(t.at(0)), v.at(t.at(1)), v.at(t.at(2)), mat)
                     );
                 }
+                if (transform) surfaces.back()->transform(*transform);
             }
         }
-        else if (type == "triangle")
+        else
         {
-            const auto& v = s.at("vertices");
-            surfaces.push_back(std::make_shared<Surface::Triangle>(v.at(0), v.at(1), v.at(2), material));
-        }
-        else if (type == "sphere")
-        {
-            surfaces.push_back(std::make_shared<Surface::Sphere>(s.at("origin"), s.at("radius"), material));
-        }
-        else if (type == "quadric")
-        {
-            // Emittance is not supported for general quadrics 
-            // (no parameterization -> no uniform surface sampling or surface area integral)
-            std::shared_ptr<Material> mat = material;
-            if (glm::compMax(material->emittance) > C::EPSILON)
+            if (type == "triangle")
             {
-                mat = std::make_shared<Material>(*material);
-                mat->emittance = glm::dvec3(0.0);
+                const auto& v = s.at("vertices");
+                surfaces.push_back(std::make_shared<Surface::Triangle>(v.at(0), v.at(1), v.at(2), material));
             }
-            surfaces.push_back(std::make_shared<Surface::Quadric>(s, mat));
+            else if (type == "sphere")
+            {
+                surfaces.push_back(std::make_shared<Surface::Sphere>(s.at("radius"), material));
+            }
+            else if (type == "quadric")
+            {
+                // Emittance is not supported for general quadrics 
+                // (no parameterization -> no uniform surface sampling or surface area integral)
+                std::shared_ptr<Material> mat = material;
+                if (glm::compMax(material->emittance) > C::EPSILON)
+                {
+                    mat = std::make_shared<Material>(*material);
+                    mat->emittance = glm::dvec3(0.0);
+                }
+                surfaces.push_back(std::make_shared<Surface::Quadric>(s, mat));
+            }
+            if (transform) surfaces.back()->transform(*transform);
         }
     }
 

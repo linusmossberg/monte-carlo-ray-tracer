@@ -1,6 +1,8 @@
 #include <fstream>
 #include <iostream>
 
+#include <glm/gtx/transform.hpp>
+
 #include "util.hpp"
 #include "format.hpp"
 
@@ -10,6 +12,18 @@ void glm::from_json(const nlohmann::json &j, dvec3 &v)
         for (int i = 0; i < 3; i++) j.at(i).get_to(v[i]);
     else
         for (int i = 0; i < 3; i++) j.get_to(v[i]);
+}
+
+Transform::Transform(glm::dvec3 position, glm::dvec3 scale, glm::dvec3 rotation)
+    : position(position), scale(scale), rotation(rotation)
+{
+    rotation_matrix = glm::rotate(rotation.z, glm::dvec3(0.0, 0.0, 1.0)) *
+                      glm::rotate(rotation.y, glm::dvec3(0.0, 1.0, 0.0)) *
+                      glm::rotate(rotation.x, glm::dvec3(1.0, 0.0, 0.0));
+
+    matrix = glm::translate(glm::dmat4(1.0), position) *
+             rotation_matrix *
+             glm::scale(glm::dmat4(1.0), scale);
 }
 
 void waitForInput()

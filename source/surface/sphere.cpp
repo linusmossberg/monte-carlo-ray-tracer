@@ -3,8 +3,8 @@
 #include "../common/constexpr-math.hpp"
 #include "../common/constants.hpp"
 
-Surface::Sphere::Sphere(const glm::dvec3& origin, double radius, std::shared_ptr<Material> material)
-    : Base(material), origin(origin), radius(radius) 
+Surface::Sphere::Sphere(double radius, std::shared_ptr<Material> material)
+    : Base(material), origin(0.0), radius(radius)
 {
     computeArea();
     computeBoundingBox();
@@ -36,6 +36,15 @@ bool Surface::Sphere::intersect(const Ray& ray, Intersection& intersection) cons
     intersection = Intersection(t);
 
     return true;
+}
+
+void Surface::Sphere::transform(const Transform &T)
+{
+    origin = T.position;
+    radius = radius * ((T.scale.x + T.scale.y + T.scale.z) / 3.0);
+
+    computeArea();
+    computeBoundingBox();
 }
 
 glm::dvec3 Surface::Sphere::operator()(double u, double v) const

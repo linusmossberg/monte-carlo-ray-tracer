@@ -7,6 +7,7 @@
 #include "../ray/ray.hpp"
 #include "../ray/intersection.hpp"
 #include "../common/bounding-box.hpp"
+#include "../common/util.hpp"
 
 class Material;
 
@@ -23,6 +24,7 @@ namespace Surface
         virtual bool intersect(const Ray& ray, Intersection& intersection) const = 0;
         virtual glm::dvec3 operator()(double u, double v) const = 0;
         virtual glm::dvec3 normal(const glm::dvec3& pos) const = 0;
+        virtual void transform(const Transform &T) = 0;
 
         virtual glm::dvec3 interpolatedNormal(const glm::dvec2& uv) const 
         { 
@@ -51,11 +53,12 @@ namespace Surface
     class Sphere : public Base
     {
     public:
-        Sphere(const glm::dvec3& origin, double radius, std::shared_ptr<Material> material);
+        Sphere(double radius, std::shared_ptr<Material> material);
 
         virtual bool intersect(const Ray& ray, Intersection& intersection) const;
         virtual glm::dvec3 operator()(double u, double v) const;
         virtual glm::dvec3 normal(const glm::dvec3& pos) const;
+        virtual void transform(const Transform &T);
 
     protected:
         virtual void computeArea();
@@ -78,6 +81,7 @@ namespace Surface
         virtual glm::dvec3 operator()(double u, double v) const;
         virtual glm::dvec3 normal(const glm::dvec3& pos) const;
         virtual glm::dvec3 interpolatedNormal(const glm::dvec2& uv) const;
+        virtual void transform(const Transform &T);
 
         glm::dvec3 normal() const;
 
@@ -85,11 +89,11 @@ namespace Surface
         virtual void computeArea();
         virtual void computeBoundingBox();
 
-        const glm::dvec3 v0, v1, v2;
-        const std::unique_ptr<const glm::dmat3> N; // vertex normals
+        glm::dvec3 v0, v1, v2;
+        const std::unique_ptr<glm::dmat3> N; // vertex normals
 
         // Pre-computed edges and normal
-        const glm::dvec3 E1, E2, normal_;
+        glm::dvec3 E1, E2, normal_;
     };
 
     class Quadric : public Base
@@ -100,6 +104,7 @@ namespace Surface
         virtual bool intersect(const Ray& ray, Intersection& intersection) const;
         virtual glm::dvec3 operator()(double u, double v) const;
         virtual glm::dvec3 normal(const glm::dvec3& pos) const;
+        virtual void transform(const Transform &T);
 
     protected:
         virtual void computeArea();

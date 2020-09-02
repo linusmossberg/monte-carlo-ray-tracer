@@ -1,5 +1,7 @@
 #include "surface.hpp"
 
+#include <glm/gtx/transform.hpp>
+
 #include "../common/constants.hpp"
 
 Surface::Triangle::Triangle(const glm::dvec3& v0, const glm::dvec3& v1, const glm::dvec3& v2, std::shared_ptr<Material> material)
@@ -12,7 +14,7 @@ Surface::Triangle::Triangle(const glm::dvec3& v0, const glm::dvec3& v1, const gl
 Surface::Triangle::Triangle(const glm::dvec3& v0, const glm::dvec3& v1, const glm::dvec3& v2,
                             const glm::dvec3& n0, const glm::dvec3& n1, const glm::dvec3& n2, std::shared_ptr<Material> material)
     : Base(material), v0(v0), v1(v1), v2(v2), E1(v1 - v0), E2(v2 - v0), normal_(glm::normalize(glm::cross(E1, E2))), 
-      N(std::make_unique<const glm::dmat3>(glm::normalize(n0), glm::normalize(n1), glm::normalize(n2)))
+      N(std::make_unique<glm::dmat3>(glm::normalize(n0), glm::normalize(n1), glm::normalize(n2)))
 {
     computeArea();
     computeBoundingBox();
@@ -60,6 +62,28 @@ bool Surface::Triangle::intersect(const Ray& ray, Intersection& intersection) co
     return true;
 }
 
+void Surface::Triangle::transform(const Transform &T)
+{
+    v0 = T.matrix * glm::dvec4(v0, 1.0);
+    v1 = T.matrix * glm::dvec4(v1, 1.0);
+    v2 = T.matrix * glm::dvec4(v2, 1.0);
+
+    E1 = v1 - v0;
+    E2 = v2 - v0;
+    normal_ = glm::normalize(glm::cross(E1, E2));
+
+    if (N)
+    {
+        auto &vn = *N;
+        vn[0] = T.rotation_matrix * glm::dvec4(glm::normalize(vn[0] / T.scale), 1.0);
+        vn[1] = T.rotation_matrix * glm::dvec4(glm::normalize(vn[1] / T.scale), 1.0);
+        vn[2] = T.rotation_matrix * glm::dvec4(glm::normalize(vn[2] / T.scale), 1.0);
+    }
+
+    computeArea();
+    computeBoundingBox();
+}
+
 glm::dvec3 Surface::Triangle::operator()(double u, double v) const
 {
     double su = std::sqrt(u);
@@ -84,6 +108,7 @@ glm::dvec3 Surface::Triangle::interpolatedNormal(const glm::dvec2& uv) const
 
 void Surface::Triangle::computeBoundingBox()
 {
+    BB_ = BoundingBox();
     for (const auto &v : {v0, v1, v2})
     {
         BB_.merge(v);
