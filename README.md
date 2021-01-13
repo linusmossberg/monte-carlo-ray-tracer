@@ -2,9 +2,9 @@
 
 This is a physically based renderer with Path Tracing and Photon Mapping.
 
-![Path traced render of baroque table, 3.8 million triangles. Original scene by 1DInc.](https://user-images.githubusercontent.com/15798094/104470709-4c75d200-55ba-11eb-9f37-a3651a64cd1a.jpg)
-![Path traced render of lego bulldozer, 2 million triangles. Original model by Heinzelnisse.](https://user-images.githubusercontent.com/15798094/104470739-55ff3a00-55ba-11eb-8213-3171b954c3ed.jpg)
-![Photon mapped render of caustics, 6.9 million triangles and 172 million photon particles. Original scene by Benedikt Bitterli.](https://user-images.githubusercontent.com/15798094/104514606-d2f9d600-55f1-11eb-8362-d8bd1c1481b0.jpg)
+![Path traced render of baroque table, 3.8 million triangles. Original scene by 1DInc.](https://user-images.githubusercontent.com/15798094/104470709-4c75d200-55ba-11eb-9f37-a3651a64cd1a.jpg "Path traced render of baroque table, 3.8 million triangles. Original scene by 1DInc.")
+![Path traced render of lego bulldozer, 2 million triangles. Original model by Heinzelnisse.](https://user-images.githubusercontent.com/15798094/104470739-55ff3a00-55ba-11eb-8213-3171b954c3ed.jpg "Path traced render of lego bulldozer, 2 million triangles. Original model by Heinzelnisse.")
+![Photon mapped render of caustics, 6.9 million triangles and 172 million photon particles. Original scene by Benedikt Bitterli.](https://user-images.githubusercontent.com/15798094/104514606-d2f9d600-55f1-11eb-8362-d8bd1c1481b0.jpg "Photon mapped render of caustics, 6.9 million triangles and 172 million photon particles. Original scene by Benedikt Bitterli.")
 
 This renderer was originally developed for the course [Advanced Global Illumination and Rendering (TNCG15)](https://liu.se/studieinfo/kurs/tncg15) at Linköpings Universitet, but I've continued to add features and make improvements since then.
 
@@ -300,7 +300,7 @@ Note that I implicitly use a constant illuminant `I(λ)` and stepsize `Δλ`, wh
 
 and the same for `Y` and `Z`. The constant illuminant is also the reason why the equal energy white point is used for `xyz2rgb`. A few metal materials based on measured data are available in *scenes/metals.json*.
 
-![Metals with complex IOR based on measured data. Au, Ag, Cu, Fe, Al, Hg, Ni, Pd.](https://user-images.githubusercontent.com/15798094/104471328-010ff380-55bb-11eb-8f04-1f550129c28f.jpg)
+![Metals with complex IOR based on measured data. Au, Ag, Cu, Fe, Al, Hg, Ni, Pd.](https://user-images.githubusercontent.com/15798094/104471328-010ff380-55bb-11eb-8f04-1f550129c28f.jpg "Metals with complex IOR based on measured data. Au, Ag, Cu, Fe, Al, Hg, Ni, Pd.")
 
 </details>
 
@@ -436,10 +436,10 @@ ___
 
 ## Renders
 
-![Path traced render of coffee maker, 235 049 triangles. Original scene by cekuhnen.](https://user-images.githubusercontent.com/15798094/104470841-716a4500-55ba-11eb-814e-a00b0b604714.jpg)
-![Path traced render of a scene containing only quadric surfaces.](https://user-images.githubusercontent.com/15798094/104470916-847d1500-55ba-11eb-99df-e600d248f495.jpg)
-![Path traced render of the Stanford bunny with different rough metal materials, 864 348 triangles.](https://user-images.githubusercontent.com/15798094/104470964-919a0400-55ba-11eb-8462-9525c668177f.jpg)
-![Path traced render of the Stanford dragon with a rough transmissive material, 871 414 triangles.](https://user-images.githubusercontent.com/15798094/104471005-9e1e5c80-55ba-11eb-98c7-11923b130b2e.jpg)
+![Path traced render of coffee maker, 235 049 triangles. Original scene by cekuhnen.](https://user-images.githubusercontent.com/15798094/104470841-716a4500-55ba-11eb-814e-a00b0b604714.jpg "Path traced render of coffee maker, 235 049 triangles. Original scene by cekuhnen.")
+![Path traced render of a scene containing only quadric surfaces.](https://user-images.githubusercontent.com/15798094/104470916-847d1500-55ba-11eb-99df-e600d248f495.jpg "Path traced render of a scene containing only quadric surfaces.")
+![Path traced render of the Stanford bunny with different rough metal materials, 864 348 triangles.](https://user-images.githubusercontent.com/15798094/104470964-919a0400-55ba-11eb-8462-9525c668177f.jpg "Path traced render of the Stanford bunny with different rough metal materials, 864 348 triangles.")
+![Path traced render of the Stanford dragon with a rough transmissive material, 871 414 triangles.](https://user-images.githubusercontent.com/15798094/104471005-9e1e5c80-55ba-11eb-98c7-11923b130b2e.jpg "Path traced render of the Stanford dragon with a rough transmissive material, 871 414 triangles.")
 
 ## Resources
 
