@@ -3,7 +3,7 @@
 This is a physically based renderer with Path Tracing and Photon Mapping.
 
 ![Path traced render of baroque table, 3.8 million triangles. Original scene by 1DInc.](https://user-images.githubusercontent.com/15798094/104470709-4c75d200-55ba-11eb-9f37-a3651a64cd1a.jpg "Path traced render of baroque table, 3.8 million triangles. Original scene by 1DInc.")
-![Path traced render of lego bulldozer, 2 million triangles. Original model by Heinzelnisse.](https://user-images.githubusercontent.com/15798094/104470739-55ff3a00-55ba-11eb-8213-3171b954c3ed.jpg "Path traced render of lego bulldozer, 2 million triangles. Original model by Heinzelnisse.")
+![Path traced render of lego bulldozer, 2 million triangles. Original scene by Heinzelnisse.](https://user-images.githubusercontent.com/15798094/104470739-55ff3a00-55ba-11eb-8213-3171b954c3ed.jpg "Path traced render of lego bulldozer, 2 million triangles. Original scene by Heinzelnisse.")
 ![Photon mapped render of caustics, 6.9 million triangles and 172 million photon particles. Original scene by Benedikt Bitterli.](https://user-images.githubusercontent.com/15798094/104514606-d2f9d600-55f1-11eb-8362-d8bd1c1481b0.jpg "Photon mapped render of caustics, 6.9 million triangles and 172 million photon particles. Original scene by Benedikt Bitterli.")
 
 This renderer was originally developed for the course [Advanced Global Illumination and Rendering (TNCG15)](https://liu.se/studieinfo/kurs/tncg15) at Linköpings Universitet, but I've continued to add features and make improvements since then.

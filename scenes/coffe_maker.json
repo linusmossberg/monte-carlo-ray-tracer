@@ -1,5 +1,5 @@
 {
-  "num_render_threads": 2,
+  "num_render_threads": -1,
   "ior": 1.0,   
 
   "cameras": [

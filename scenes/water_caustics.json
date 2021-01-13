@@ -102,16 +102,16 @@
       "material": "left-bunny",
       "scale": [-0.4, 0.4, 0.4],
       "rotation": [0.0, 180.0, 0.0],
-      "position": [0.6,0.0,0.4],
+      "position": [0.6,0.0,0.4]
     },
     {
       "type": "object",
       "file": "data/bunny.obj",
       "smooth": true,
+      "material": "right-bunny",
       "position": [-0.55,0.0,-0.1],
       "rotation": [0.0, 180.0, 0.0],
-      "scale": 0.5,
-      "material": "right-bunny"
+      "scale": 0.5
     }
   ]
 }
