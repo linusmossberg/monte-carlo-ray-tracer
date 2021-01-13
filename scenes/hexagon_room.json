@@ -1,0 +1,306 @@
+{
+  "num_render_threads": -1,
+  "naive": false,
+  "ior": 1.75,
+
+  "photon_map": {
+    "emissions": 2e6,
+    "caustic_factor": 50.0,
+    "k_nearest_photons": 50,
+    "max_radius": 0.1,
+    "max_caustic_radius": 0.05,
+    "max_photons_per_octree_leaf": 200,
+    "use_shadow_photons": false,
+    "direct_visualization": false
+  },
+
+  "cameras": [
+    {
+      "focal_length": 23,
+      "sensor_width": 35,
+      "eye": [ -2, 0, 0 ],
+      "look_at": [ 13, -0.55, 0 ],
+      "image" : { 
+        "width": 960,
+        "height": 720,
+        "exposure_compensation": -0.25
+      },
+      "sqrtspp": 4,
+      "savename": "c1b"
+    },
+    {
+      "focal_length": 24,
+      "sensor_width": 35,
+      "eye": [ -1, 0, 0 ],
+      "look_at": [ 13, -2.14, 0 ],
+      "image" : { "width": 960, "height": 720 },
+      "sqrtspp": 1,
+      "savename": "c2"
+    }
+  ],
+
+  "materials": {
+    "default": {
+      "reflectance": [ 0.73, 0.73, 0.73 ]
+    },
+    "red": {
+      "reflectance": [ 1.0, 0.5, 0.5 ]
+    },
+    "green": {
+      "ior": 1.460,
+      "specular_reflectance": 1,
+      "reflectance": [ 0.5, 1.0, 0.5 ]
+    },
+    "blue": {
+      "reflectance": [ 0.5, 0.882, 1.0 ]
+    },
+    "crystal": {
+      "ior": 3.5,
+      "transparency":  1.0,
+      "specular_reflectance": 1,
+      "transmittance": [ 0.5, 1.0, 0.9 ]
+    },
+    "transparent-2.4": {
+      "transparency": 1,
+      "specular_reflectance": [ 1, 1, 1 ],
+      "ior": 2.4
+    },
+    "transparent-1.17": {
+      "transparency": 1.0,
+      "specular_reflectance": [ 1, 1, 1 ],
+      "ior": 1.17
+    },
+    "mirror": {
+      "perfect_mirror": true,
+      "specular_reflectance": [ 1, 1, 1 ]
+    },
+    "rough-blue": {
+      "reflectance": [ 0.66, 0.929, 1.0 ],
+      "roughness": 10.0
+    },
+    "rough-red": {
+      "reflectance": [ 1.0, 0.66, 0.66 ],
+      "roughness": 10.0
+    },
+    "light": {
+      "reflectance": [ 0.9, 0.9, 0.9 ],
+      "emittance": { "illuminant": "E", "scale": 250 }
+    }
+  },
+
+  "vertices": {
+    "room": [
+      [ -3, 5, 0 ],
+      [ 0, 5, -6 ],
+      [ 10, 5, -6 ],
+      [ 13, 5, 0 ],
+      [ 10, 5, 6 ],
+      [ 0, 5, 6 ],
+      [ -3, -5, 0 ],
+      [ 0, -5, -6 ],
+      [ 10, -5, -6 ],
+      [ 13, -5, 0 ],
+      [ 10, -5, 6 ],
+      [ 0, -5, 6 ]
+    ],
+    "light": [
+      [ 8, 4.9, -2.5 ],
+      [ 9, 4.9, -2.5 ],
+      [ 9, 4.9, -1.5 ],
+      [ 8, 4.9, -1.5 ]
+    ],
+    "crystal": [
+      [ 8.28362, -5.0, -4.78046 ],
+      [ 6.47867, -0.90516, -3.67389 ],
+      [ 7.97071, -0.85108, -2.79588 ],
+      [ 7.93553, -0.41379, -4.47145 ],
+      [ 6.63966, 3.55331, -2.51368 ]
+    ]
+  },
+
+  "surfaces": [
+    {
+      "type": "object",
+      "vertex_set": "room",
+      "triangles": [
+        [ 0, 4, 5 ],
+        [ 0, 3, 4 ],
+        [ 0, 1, 3 ],
+        [ 1, 2, 3 ]
+      ]
+    },
+    {
+      "type": "object",
+      "vertex_set": "room",
+      "triangles": [
+        [ 6, 11, 10 ],
+        [ 6, 10, 9 ],
+        [ 6, 9, 7 ],
+        [ 7, 9, 8 ]
+      ]
+    },
+    {
+      "type": "object",
+      "material": "red",
+      "vertex_set": "room",
+      "triangles": [
+        [ 0, 6, 7 ],
+        [ 0, 7, 1 ]
+      ]
+    },
+    {
+      "type": "object",
+      "material": "blue",
+      "vertex_set": "room",
+      "triangles": [
+        [ 1, 7, 8 ],
+        [ 1, 8, 2 ]
+      ]
+    },
+    {
+      "type": "object",
+      "material": "red",
+      "vertex_set": "room",
+      "triangles": [
+        [ 2, 9, 3 ],
+        [ 2, 8, 9 ]
+      ]
+    },
+    {
+      "type": "object",
+      "material": "blue",
+      "vertex_set": "room",
+      "triangles": [
+        [ 3, 10, 4 ],
+        [ 3, 9, 10 ]
+      ]
+    },
+    {
+      "type": "object",
+      "material": "red",
+      "vertex_set": "room",
+      "triangles": [
+        [ 5, 4, 10 ],
+        [ 5, 10, 11 ]
+      ]
+    },
+    {
+      "type": "object",
+      "material": "blue",
+      "vertex_set": "room",
+      "triangles": [
+        [ 0, 5, 11 ],
+        [ 0, 11, 6 ]
+      ]
+    },
+    {
+      "type": "object",
+      "material": "light",
+      "vertex_set": "light",
+      "triangles": [
+        [ 0, 1, 2 ],
+        [ 0, 2, 3 ]
+      ]
+    },
+    {
+      "type": "object",
+      "material": "crystal",
+      "vertex_set": "crystal",
+      "triangles": [
+        [ 0, 2, 1 ],
+        [ 0, 3, 2 ],
+        [ 0, 1, 3 ],
+        [ 2, 4, 1 ],
+        [ 1, 4, 3 ],
+        [ 3, 4, 2 ]
+      ]
+    },
+    {
+      "position": [ 9.25261, -3.70517, -0.58328 ],
+      "radius": 1.15485,
+      "type": "sphere"
+    },
+    {
+      "position": [ 7.21849, -3.4637, 0.227686 ],
+      "radius": 1.02716,
+      "material": "rough-blue",
+      "type": "sphere"
+    },
+    {
+      "position": [ 8.7205, -3.49102, 1.5892 ],
+      "radius": 0.981088,
+      "type": "sphere"
+    },
+    {
+      "position": [ 9.256029, -1.71069, 2.54759 ],
+      "radius": 1.09025,
+      "type": "sphere"
+    },
+    {
+      "position": [ 7.55212, -2.93652, -1.7454 ],
+      "radius": 1.02156,
+      "material": "rough-red",
+      "type": "sphere"
+    },
+    {
+      "position": [ 7.09813, -1.92594, 1.82701 ],
+      "radius": 1.17274,
+      "type": "sphere"
+    },
+    {
+      "position": [ 9.06232, -1.56227, -2.54071 ],
+      "radius": 1.14786,
+      "type": "sphere"
+    },
+    {
+      "position": [ 10.1611, 0.149198, 1.6561 ],
+      "radius": 1.14014,
+      "type": "sphere"
+    },
+    {
+      "position": [ 6.18854, -1.62134, -0.284392 ],
+      "material": "transparent-2.4",
+      "radius": 1.12403,
+      "type": "sphere"
+    },
+    {
+      "position": [ 7.06462, -0.811435, -2.08262 ],
+      "material": "transparent-2.4",
+      "radius": 1.01406,
+      "type": "sphere"
+    },
+    {
+      "position": [ 8.169, 0.0437421, 2.37892 ],
+      "material": "transparent-1.17",
+      "radius": 0.960547,
+      "type": "sphere"
+    },
+    {
+      "position": [ 7.7036, -0.0232834, 0.315095 ],
+      "radius": 1.13617,
+      "material": "green",
+      "type": "sphere"
+    },
+    {
+      "position": [ 10.4942, 0.0102916, -1.49261 ],
+      "radius": 1.10891,
+      "type": "sphere"
+    },
+    {
+      "position": [ 8.4163, 0.772444, -1.66188 ],
+      "radius": 1.08972,
+      "type": "sphere"
+    },
+    {
+      "position": [ 9.88182, 1.38977, -0.0443936 ],
+      "radius": 0.962415,
+      "type": "sphere"
+    },
+    {
+      "position": [ 9.5, -4.2, 4.7 ],
+      "radius": 0.8,
+      "material": "mirror",
+      "type": "sphere"
+    }
+  ]
+}

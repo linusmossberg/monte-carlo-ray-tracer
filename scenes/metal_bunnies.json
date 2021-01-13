@@ -1,0 +1,141 @@
+{
+  "num_render_threads": -1,
+  "naive": false,
+  "ior": 1,
+
+  "cameras": [
+    {
+      "focal_length": 50,
+      "sensor_width": 35,
+      "eye": [ -0.23, 2.2, 9.7 ],
+      "look_at": [ -0.23, 1.71, 0 ],
+      "image":  { "width": 1280, "height": 720, "exposure_compensation": -1.5, "gain_compensation": 0.0, "tonemapper": "ACES" },
+      "sqrtspp": 4,
+      "savename": "metal_bunnies"
+    }
+  ],
+
+  "bvh": {
+    "type": "octree",
+    "bins_per_axis": 16
+  },
+
+  "materials": {
+    "default": {
+      "reflectance": 0.95
+    },
+    "light": {
+      "emittance": [235.1913,195.1469,144.3919]
+    },
+    "shelf": {
+      "reflectance": "#decbb1"
+    },
+    "floor": {
+      "reflectance": "#804000"
+    },
+    "ceiling": {
+      "reflectance": "#E0AC69"
+    },
+    "gold": {
+      "specular_roughness": 0.15,
+      "ior": {
+        "real": [0.03344755, 0.36314684, 1.61295201],
+        "imaginary": [3.90181846, 2.43300728, 1.79303367]
+      }
+    },
+    "nickel": {
+      "specular_roughness": 0.17,
+      "ior": {
+        "real": [2.02840832, 1.90465356, 1.72136251],
+        "imaginary": [4.20416428, 3.57426042, 2.87298213]
+      }
+    },
+    "copper": {
+      "specular_roughness": 0.25,
+      "ior": {
+        "real": [-0.16968940, 0.79400849, 1.10737582],
+        "imaginary": [3.53627871, 2.59968455, 2.37851486]
+      }
+    },
+    "iron": {
+      "specular_roughness": 0.19,
+      "ior": {
+        "real": [2.91679227, 2.92517616, 2.53774810],
+        "imaginary": [3.08474983, 2.93861411, 2.74620057]
+      }
+    },
+    "brass": {
+      "specular_roughness": 0.21,
+      "ior": {
+        "real": [0.18876745, 0.57522280, 1.03318002],
+		    "imaginary": [3.38620319, 2.38383535, 1.87526994]
+      }
+    },
+    "palladium": {
+      "specular_roughness": 0.23,
+      "ior": {
+        "real": [1.79598558, 1.62313143, 1.38800161],
+        "imaginary": [4.37307307, 3.81575961, 3.19347675]
+      }
+    }
+  },
+
+  "surfaces": [
+    {
+      "type": "object",
+      "material": "brass",
+      "smooth":  true,
+      "file": "data/bunny.obj"
+    },
+    {
+      "type": "object",
+      "smooth":  true,
+      "material": "gold",
+      "position": [1.75, 0, 0],
+      "file": "data/bunny.obj"
+    },
+    {
+      "type": "object",
+      "smooth":  true,
+      "material": "palladium",
+      "position": [-1.75, 0, 0],
+      "file": "data/bunny.obj"
+    },
+    {
+      "type": "object",
+      "smooth":  true,
+      "material": "nickel",
+      "position": [0, 1.77, 0],
+      "file": "data/bunny.obj"
+    },
+    {
+      "type": "object",
+      "smooth":  true,
+      "material": "iron",
+      "position": [1.75, 1.77, 0],
+      "file": "data/bunny.obj"
+    },
+    {
+      "type": "object",
+      "smooth":  true,
+      "material": "copper",
+      "position": [-1.75, 1.77, 0],
+      "file": "data/bunny.obj"
+    },
+    {
+      "type": "object",
+      "file": "data/backwall.obj"
+    },
+    {
+      "type": "object",
+      "material": "shelf",
+      "file": "data/shelf.obj"
+    },
+    {
+      "type": "sphere",
+      "material": "light",
+      "radius": 0.5,
+      "position": [1, 5.1, 4.15]
+    }
+  ]
+}

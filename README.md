@@ -2,37 +2,27 @@
 
 This is a physically based renderer with Path Tracing and Photon Mapping.
 
-<div about="renders/stanford_dragon_frosted_2.jpg">
-  <img src="renders/stanford_dragon_frosted_2.jpg" alt="Path traced render of the Stanford dragon with a rough transmissive material, 871 414 triangles." title="Path traced render of the Stanford dragon with a rough transmissive material, 871 414 triangles." />
-  <a rel="license" href="https://creativecommons.org/licenses/by/4.0/"></a>
-</div>
-<div about="renders/quadric.jpg">
-  <img src="renders/quadric.jpg" alt="Path traced render of a scene containing only quadric surfaces." title="Path traced render of a scene containing only quadric surfaces" />
-  <a rel="license" href="https://creativecommons.org/licenses/by/4.0/"></a>
-</div>
-<div about="renders/caustics.jpg">
-  <img src="renders/caustics.jpg" alt="Photon mapped render of caustics, 6.6 million triangles and 164 million photon particles. Original scene by Benedikt Bitterli." title="Photon mapped render of caustics, 6.6 million triangles and 164 million photon particles. Original scene by Benedikt Bitterli." />
-  <a rel="license" href="https://creativecommons.org/licenses/by/4.0/"></a>
-</div>
+![Path traced render of baroque table, 3.8 million triangles. Original scene by 1DInc.](https://user-images.githubusercontent.com/15798094/104470709-4c75d200-55ba-11eb-9f37-a3651a64cd1a.jpg)
+![Path traced render of lego bulldozer, 2 million triangles. Original model by Heinzelnisse.](https://user-images.githubusercontent.com/15798094/104470739-55ff3a00-55ba-11eb-8213-3171b954c3ed.jpg)
+![Photon mapped render of caustics, 6.9 million triangles and 172 million photon particles. Original scene by Benedikt Bitterli.](https://user-images.githubusercontent.com/15798094/104514606-d2f9d600-55f1-11eb-8362-d8bd1c1481b0.jpg)
 
-This program was initially developed over a period of about 2 months for the course [Advanced Global Illumination and Rendering (TNCG15)](https://liu.se/studieinfo/kurs/tncg15) at Linköpings Universitet. I have however added additional features such as depth of field and quadric surfaces since then.
+This renderer was originally developed for the course [Advanced Global Illumination and Rendering (TNCG15)](https://liu.se/studieinfo/kurs/tncg15) at Linköpings Universitet, but I've continued to add features and make improvements since then.
 
-The program is written in C++ and requires a compiler with C++17 support. The only dependencies are the header-only libraries [GLM](https://glm.g-truc.net/) and [nlohmann::json](https://github.com/nlohmann/json), which are included in the repository. 
+The program is written in C++ and requires a compiler with C++17 support. The only dependencies are the header-only libraries [GLM](https://glm.g-truc.net/) and [nlohmann::json](https://github.com/nlohmann/json), which are included in the repository.
 
 ## Building
-Clone the repository using the following [git](https://git-scm.com/) command:
+
+Install [git](https://git-scm.com/) and [CMake](https://cmake.org/download/) and run the following commands:
 ```
 git clone https://github.com/linusmossberg/monte-carlo-ray-tracer
+cd monte-carlo-ray-tracer
+cmake .
 ```
-Next, install [CMake](https://cmake.org/download/) and open the included GUI application. Enter the `monte-carlo-ray-tracer` directory as source directory and select a build directory. Click `Configure` and continue with the instructions for your platform:
-
-**Linux/macOS:** Select the `Unix Makefiles` generator and click `Finish`. Click `Generate` to generate a makefile, which then can be built by running the command `make` in the build directory.
-
-**Windows:** Select the `Visual Studio 15 2017` generator or later with the `x64` platform and click `Finish`. Click `Generate` to generate a visual studio solution file, which then can be opened and built in visual studio.
+This will generate build files for your platform in the root folder of the cloned repository, which can be used to build the program.
 
 ## Usage
 
-For basic use, just run the program in the directory that contains the *scenes* directory, i.e. the root folder of this repository. The program will then parse all scene files and create several rendering options to choose from in the terminal. It is also possible to supply a command line argument with the path to the scenes directory. For more advanced use, see [scene format](#scene-format).
+For basic use, just run the program in the directory that contains the *scenes* directory, i.e. the root folder of this repository. The program will then parse all scene files and create several rendering options to choose from in the terminal. It is also possible to supply a command line argument with the path to the scenes directory. Information about the included scenes is given in the [readme of the scenes directory](scenes/README.md).
 
 ## Scene Format
 
@@ -310,10 +300,7 @@ Note that I implicitly use a constant illuminant `I(λ)` and stepsize `Δλ`, wh
 
 and the same for `Y` and `Z`. The constant illuminant is also the reason why the equal energy white point is used for `xyz2rgb`. A few metal materials based on measured data are available in *scenes/metals.json*.
 
-<div about="renders/metals.jpg">
-  <img src="renders/metals.jpg" alt="Metals with complex IOR based on measured data. Au, Ag, Cu, Fe, Al, Hg, Ni, Pd." title="Metals with complex IOR based on measured data. Au, Ag, Cu, Fe, Al, Hg, Ni, Pd." />
-  <a rel="license" href="https://creativecommons.org/licenses/by/4.0/"></a>
-</div>
+![Metals with complex IOR based on measured data. Au, Ag, Cu, Fe, Al, Hg, Ni, Pd.](https://user-images.githubusercontent.com/15798094/104471328-010ff380-55bb-11eb-8f04-1f550129c28f.jpg)
 
 </details>
 
@@ -420,22 +407,22 @@ The triangle is simply defined by its vertices, which is defined by the 3 vertic
 #### Object
 The object surface type defines a triangle mesh object that consists of multiple triangles. The `vertex_set` field can be used to specify the key string of the vertex set to pull vertices from, and the `triangles` field then specifies the array of triangles of the object. Each triangle of the array consists of 3 indices that references the corresponding vertex index in the vertex set. Alternatively, the `file` field can be used to specify a path to an OBJ-file to load instead. The path should be relative to the scenes directory. 
 
-The program uses normal interpolation for smooth shading if the `smooth` field is set to true. This will either compute area-weighted vertex normals or use the vertex normals from the OBJ file if they exist.
+The program uses normal interpolation for smooth shading if the `smooth` field is set to true. This will either compute area+angle weighted vertex normals or use the vertex normals from the OBJ file if they exist.
 
 #### Quadric
-A quadric surface consists of all points (x,y,z) that satisfies the quadric equation<sup>1</sup>:
+A quadric surface consists of all points `(x,y,z)` that satisfies the quadric equation<sup>1</sup>:
 
-<p align="center"><img  src="renders/quadric_eq.svg" height="20" /></p>
+<pre><code>Ax<sup>2</sup> + Bxy + Cxz + Dx + Ey<sup>2</sup> + Fyz + Gy + Hz<sup>2</sup> + Iz + J = 0</code></pre>
 
-where A, B, C etc. are real constants. A sphere with radius 1 can for example be defined by:
+where `A`, `B`, `C` etc. are real constants. A sphere with radius 1 can for example be defined by:
 
-<p align="center"><img  src="renders/sphere_eq.svg" height="20" /></p>
+<pre><code>x<sup>2</sup> + y<sup>2</sup> + z<sup>2</sup> - 1 = 0</code></pre>
 
-with constants J=-1, A=E=H=1 and the rest 0. This is achieved in the program by specifying the following fields for a quadric surface:
+with constants `J=-1`, `A=E=H=1` and the rest 0. This is achieved in the program by specifying the following fields for a quadric surface:
 ```json
 "XX": 1, "YY": 1, "ZZ": 1, "R": -1,
 ```
-Instead of the usual constant names, I've opted for more descriptive field names that correspond to the expression that the field value is multiplied with in the quadric equation. The `R` field corresponds to J in the quadric equation, i.e. the scalar constant added at the end. The value of unspecified constants are set to 0.
+Instead of the usual constant names, I've opted for more descriptive field names that correspond to the expression that the field value is multiplied with in the quadric equation. The `R` field corresponds to `J` in the quadric equation, i.e. the scalar constant added at the end. The value of unspecified constants are set to 0.
 
 The `bound_dimensions` field specifies the dimensions of the axis-aligned bounding box that the quadric surface is confined to.
 
@@ -448,33 +435,24 @@ ___
 ___
 
 ## Renders
-<div about="renders/hexagon-room-flint-glass.jpg">
-  <img src="renders/hexagon-room-flint-glass.jpg" alt="Path traced render of hexagon room suspended in flint glass (1.75 scene IOR)." title="Path traced render of hexagon room suspended in flint glass (1.75 scene IOR)." />
-  <a rel="license" href="https://creativecommons.org/licenses/by/4.0/"></a>
-</div>
-<div about="renders/stanford_dragon.jpg">
-  <img src="renders/stanford_dragon.jpg" alt="Path traced render of the Stanford dragon, 871 414 triangles." title="Path traced render of the Stanford dragon, 871 414 triangles." />
-  <a rel="license" href="https://creativecommons.org/licenses/by/4.0/"></a>
-</div>
-<div about="renders/metal_bunnies.jpg">
-  <img src="renders/metal_bunnies.jpg" alt="Path traced render of the Stanford bunny with different rough metal materials, 864 348 triangles." title="Path traced render of the Stanford bunny with different rough metal materials, 864 348 triangles." />
-  <a rel="license" href="https://creativecommons.org/licenses/by/4.0/"></a>
-</div>
+
+![Path traced render of coffee maker, 235 049 triangles. Original scene by cekuhnen.](https://user-images.githubusercontent.com/15798094/104470841-716a4500-55ba-11eb-814e-a00b0b604714.jpg)
+![Path traced render of a scene containing only quadric surfaces.](https://user-images.githubusercontent.com/15798094/104470916-847d1500-55ba-11eb-99df-e600d248f495.jpg)
+![Path traced render of the Stanford bunny with different rough metal materials, 864 348 triangles.](https://user-images.githubusercontent.com/15798094/104470964-919a0400-55ba-11eb-8462-9525c668177f.jpg)
+![Path traced render of the Stanford dragon with a rough transmissive material, 871 414 triangles.](https://user-images.githubusercontent.com/15798094/104471005-9e1e5c80-55ba-11eb-98c7-11923b130b2e.jpg)
 
 ## Resources
 
-The following resources have been useful the project:
-* [Physically Based Rendering - Matt Pharr, Wenzel Jakob and Greg Humphreys](http://www.pbr-book.org/)
-* [Global Illumination using Photon Maps - Henrik Wann Jensen](http://graphics.stanford.edu/~henrik/papers/ewr7/ewr7.html)
-* [A Simpler and Exact Sampling Routine for the GGX Distribution of Visible Normals - Eric Heitz](https://hal.archives-ouvertes.fr/hal-01509746/document)
-* [Importance Sampling techniques for GGX with Smith Masking-Shadowing - Joe Schutte](https://schuttejoe.github.io/post/ggximportancesamplingpart2/)
-* [PBR Diffuse Lighting for GGX+Smith Microsurfaces - Earl Hammon](https://twvideo01.ubm-us.net/o1/vault/gdc2017/Presentations/Hammon_Earl_PBR_Diffuse_Lighting.pdf)
-* [Memo on Fresnel Equations - Sébastien Lagarde](https://seblagarde.wordpress.com/2013/04/29/memo-on-fresnel-equations/)
-* [Useful Color Equations - Bruce Lindbloom](http://www.brucelindbloom.com/)
-* [Filmic Tonemapping Operators - John Hable](http://filmicworlds.com/blog/filmic-tonemapping-operators/)
-* [Automatic Exposure - Krzysztof Narkowicz](https://knarkowicz.wordpress.com/2016/01/09/automatic-exposure/)
-* [Better Sampling - Rory Driscoll](http://www.rorydriscoll.com/2009/01/07/better-sampling/)
-* [Introduction to Acceleration Structures - Scratchapixel](https://www.scratchapixel.com/lessons/advanced-rendering/introduction-acceleration-structure/bounding-volume-hierarchy-BVH-part1)
-* [Refractive index database - Mikhail Polyanskiy](https://refractiveindex.info/)
-* [The Stanford 3D Scanning Repository](http://graphics.stanford.edu/data/3Dscanrep/)
-* [Rendering Resources - Benedikt Bitterli](https://benedikt-bitterli.me/resources/)
+The following resources have been useful for the project:
+* [Physically Based Rendering](http://www.pbr-book.org/) - Matt Pharr, Wenzel Jakob and Greg Humphreys
+* [Global Illumination using Photon Maps](http://graphics.stanford.edu/~henrik/papers/ewr7/ewr7.html) - Henrik Wann Jensen
+* [A Simpler and Exact Sampling Routine for the GGX Distribution of Visible Normals](https://hal.archives-ouvertes.fr/hal-01509746/document) - Eric Heitz
+* [Importance Sampling techniques for GGX with Smith Masking-Shadowing](https://schuttejoe.github.io/post/ggximportancesamplingpart2/) - Joe Schutte
+* [PBR Diffuse Lighting for GGX+Smith Microsurfaces](https://twvideo01.ubm-us.net/o1/vault/gdc2017/Presentations/Hammon_Earl_PBR_Diffuse_Lighting.pdf) - Earl Hammon
+* [Memo on Fresnel Equations](https://seblagarde.wordpress.com/2013/04/29/memo-on-fresnel-equations/) - Sébastien Lagarde
+* [Useful Color Equations](http://www.brucelindbloom.com/) - Bruce Lindbloom
+* [Filmic Tonemapping Operators](http://filmicworlds.com/blog/filmic-tonemapping-operators/) - John Hable
+* [Automatic Exposure](https://knarkowicz.wordpress.com/2016/01/09/automatic-exposure/) - Krzysztof Narkowicz
+* [Better Sampling](http://www.rorydriscoll.com/2009/01/07/better-sampling/) - Rory Driscoll
+* [Introduction to Acceleration Structures](https://www.scratchapixel.com/lessons/advanced-rendering/introduction-acceleration-structure/bounding-volume-hierarchy-BVH-part1) - Scratchapixel
+* [Scenes and assets](scenes/README.md)

@@ -1,0 +1,169 @@
+{
+  "num_render_threads": -1,
+  "naive": false,
+  "ior": 1.0,
+
+  "cameras": [
+    {
+      "focal_length": 75,
+      "sensor_width": 35,
+      "eye": [ -0.5, 0.6, -2 ],
+      "look_at": [ 0, 0.145, 0.125 ],
+      "f_stop": 1.8,
+      "image" : { "width": 960, "height": 720, "tonemapper": "Hable", "exposure_compensation": -1 },
+      "sqrtspp": 4,
+      "savename": "quadric"
+    }
+  ],
+
+  "materials": {
+    "default": {
+      "reflectance": 0.5
+    },
+    "ellipsoid": {
+      "transmittance": "#FF884D",
+      "ior": 1.333,
+      "transparency": 1.0
+    },
+    "hyperbolic_paraboloid": {
+      "specular_roughness": 0.02,
+      "ior": 1.333,
+      "reflectance": "#C98686"
+    },
+    "paraboloid": {
+      "specular_roughness": 0.02,
+      "ior": 1.333,
+      "reflectance": "#966B9D"
+    },
+    "two_sheet_hyperboloid": {
+      "specular_roughness": 0.02,
+      "ior": 1.333,
+      "reflectance": "#FB8072"
+    },
+    "one_sheet_hyperboloid": {
+      "specular_roughness": 0.02,
+      "ior": 1.333,
+      "reflectance": "#80B1D3"
+    },
+    "cylinder": {
+      "specular_roughness": 0.02,
+      "ior": 1.333,
+      "reflectance": "#FDB462"
+    },
+    "red": {
+      "reflectance": 0.5
+    },
+    "blue": {
+      "reflectance": 0.73
+    }
+  },
+
+  "surfaces": [
+    {
+      "type": "quadric",
+      "material": "red",
+      "YY": 1, "Z": 0.15,
+      "bound_dimensions": [0.592, 11, 11],
+      "position": [-0.6, 0.32, 5],
+      "rotation": [4.5, 0, 0]
+    },
+    {
+      "type": "quadric",
+      "material": "blue",
+      "YY": 1, "Z": 0.15,
+      "bound_dimensions": [0.592, 12, 12],
+      "position": [0, 0.32, 5],
+      "rotation": [4.5, 0, 0]
+    },
+    {
+      "type": "quadric",
+      "material": "red",
+      "YY": 1, "Z": 0.15,
+      "bound_dimensions": [0.592, 13, 13],
+      "position": [0.6, 0.32, 5],
+      "rotation": [4.5, 0, 0]
+    },
+    {
+      "type": "quadric",
+      "material": "blue",
+      "YY": 1, "Z": 0.15,
+      "bound_dimensions": [0.592, 14, 14],
+      "position": [1.2, 0.32, 5],
+      "rotation": [4.5, 0, 0]
+    },
+    {
+      "type": "quadric",
+      "material": "red",
+      "YY": 1, "Z": 0.15,
+      "bound_dimensions": [0.592, 15, 15],
+      "position": [1.8, 0.32, 5],
+      "rotation": [4.5, 0, 0]
+    },
+    {
+      "type": "quadric",
+      "material": "blue",
+      "YY": 1, "Z": 0.15,
+      "bound_dimensions": [0.592, 16, 16],
+      "position": [2.4, 0.32, 5],
+      "rotation": [4.5, 0, 0]
+    },
+    {
+      "type": "quadric",
+      "material": "red",
+      "YY": 1, "Z": 0.15,
+      "bound_dimensions": [0.592, 17, 17],
+      "position": [3.0, 0.32, 5],
+      "rotation": [4.5, 0, 0]
+    },
+
+
+    {
+      "type": "quadric",
+      "material": "two_sheet_hyperboloid",
+      "XX": 1, "YY": -1, "ZZ": 1, "R": 0.2,
+      "bound_dimensions": 0.2,
+      "position": [0.0, 0.3, 0.125],
+      "scale": 0.025
+    },
+    {
+      "type": "quadric",
+      "material": "cylinder",
+      "XX": 1, "ZZ": 1, "R": -1,
+      "bound_dimensions": 0.25,
+      "position": [0.3, 0, 0.125],
+      "scale": 0.124
+    },
+    {
+      "type": "quadric",
+      "material": "paraboloid",
+      "XX": 1.5, "ZZ": 1.5, "Y": -2.0,
+      "bound_dimensions": [0.25, 1.0, 0.25],
+      "position": [-0.3, -0.13, 0.125],
+      "scale": 0.1
+    },
+    {
+      "type": "quadric",
+      "material": "hyperbolic_paraboloid",
+      "XX": 0.5, "Y": -1, "ZZ": -0.5,
+      "bound_dimensions": 0.2,
+      "position": [-0.3, 0.3, 0.125],
+      "scale": 0.02
+    },
+    {
+      "type": "quadric",
+      "material": "ellipsoid",
+      "XX": 0.7, "YY": 1.5, "ZZ": 1.5, "R": -1,
+      "bound_dimensions": 0.25,
+      "position": [0.0, -0.05, 0.125],
+      "scale": 0.1
+    },
+    {
+      "type": "quadric",
+      "material": "one_sheet_hyperboloid",
+      "XX": -1, "YY": 1, "ZZ": 1, "R": -1,
+      "bound_dimensions": [1.0, 0.2, 0.2],
+      "position": [0.3, 0.3, 0.125],
+      "scale": 0.025
+    }
+  ]
+}

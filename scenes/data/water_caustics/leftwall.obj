@@ -1,0 +1,10 @@
+v 1 0 1
+v 1 2 1
+v 1 0 -1
+v 1 2 -1
+# 4 vertices
+
+o leftwall
+usemtl default
+f 4 3 1
+f 2 4 1

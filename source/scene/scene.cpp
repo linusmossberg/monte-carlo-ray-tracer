@@ -299,15 +299,24 @@ void Scene::generateVertexNormals(std::vector<glm::dvec3> &normals,
 {
     normals.resize(vertices.size(), glm::dvec3(0.0));
 
+    auto angleBetween = [](const auto& v0, const auto& v1)
+    {
+        return std::acos(glm::dot(glm::normalize(v0), glm::normalize(v1)));
+    };
+
     for (const auto &t : triangles)
     {
-        auto triangle = Surface::Triangle(vertices.at(t.at(0)), vertices.at(t.at(1)), vertices.at(t.at(2)), nullptr);
+        const auto &v0 = vertices.at(t.at(0));
+        const auto &v1 = vertices.at(t.at(1));
+        const auto &v2 = vertices.at(t.at(2));
 
-        glm::dvec3 weighted_normal = triangle.normal() * triangle.area();
+        auto triangle = Surface::Triangle(v0, v1, v2, nullptr);
 
-        normals.at(t.at(0)) += weighted_normal;
-        normals.at(t.at(1)) += weighted_normal;
-        normals.at(t.at(2)) += weighted_normal;
+        glm::dvec3 area_weighted_normal = triangle.normal() * triangle.area();
+
+        normals.at(t.at(0)) += area_weighted_normal * angleBetween(v0 - v1, v0 - v2);
+        normals.at(t.at(1)) += area_weighted_normal * angleBetween(v1 - v0, v1 - v2);
+        normals.at(t.at(2)) += area_weighted_normal * angleBetween(v2 - v0, v2 - v1);
     }
 
     for (auto &n : normals)

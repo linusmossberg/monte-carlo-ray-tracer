@@ -1,0 +1,132 @@
+{
+  "num_render_threads": -1,
+  "naive": false,
+  "ior": 1.0,
+
+  "cameras": [
+    {
+      "focal_length": 550,
+      "sensor_width": 35,
+      "eye": [ 0, 75, 255 ],
+      "look_at": [ 0, 1, 0 ],
+      "image": { "width": 1280, "height": 240, "tonemapper": "ACES" },
+      "sqrtspp": 4,
+      "savename": "metals"
+    }
+  ],
+
+  "materials": {
+    "default": {
+      "reflectance": 1.0
+    },
+    "light": {     
+      "emittance": [110340, 106240, 87830]
+    },
+    "gold": {
+      "specular_roughness": 0.03,
+      "ior": "data/spectral-distributions/gold.csv"
+    },
+    "silver": {
+      "specular_roughness": 0.06,
+      "ior": "data/spectral-distributions/silver.csv"
+    },
+    "copper": {
+      "specular_roughness": 0.1,
+      "ior": "data/spectral-distributions/copper.csv"
+    },
+    "iron": {
+      "specular_roughness": 0.08,
+      "ior": "data/spectral-distributions/iron.csv"
+    },
+    "aluminium": {
+      "specular_roughness": 0.06,
+      "ior": "data/spectral-distributions/aluminium.csv"
+    },
+    "mercury": {
+      "specular_roughness": 0.04,
+      "ior": "data/spectral-distributions/mercury.csv"
+    },
+    "nickel": {
+      "specular_roughness": 0.09,
+      "ior": "data/spectral-distributions/nickel.csv"
+    },
+    "palladium": {
+      "specular_roughness": 0.065,
+      "ior": "data/spectral-distributions/palladium.csv"
+    }
+  },
+
+  "vertices": {
+    "floor": [
+      [ -160, 0, 160 ],
+      [ 160, 0, 160 ],
+      [ 160, 0, -160 ],
+      [ -160, 0, -160 ]
+    ]
+  },
+
+  "surfaces": [
+    {
+      "type": "object",
+      "vertex_set": "floor",
+      "triangles": [
+        [ 0, 2, 3 ],
+        [ 0, 1, 2 ]
+      ]
+    },
+    {
+      "type": "sphere",
+      "radius": 1,
+      "position": [ -7.105, 1, 0 ],
+      "material": "gold"
+    },
+    {
+      "type": "sphere",
+      "radius": 1,
+      "position": [ -5.075, 1, 0 ],
+      "material": "silver"
+    },
+    {
+      "type": "sphere",
+      "radius": 1,
+      "position": [ -3.045, 1, 0 ],
+      "material": "copper"
+    },
+    {
+      "type": "sphere",
+      "radius": 1,
+      "position": [ -1.015, 1, 0 ],
+      "material": "iron"
+    },
+    {
+      "type": "sphere",
+      "radius": 1,
+      "position": [ 1.015, 1, 0 ],
+      "material": "aluminium"
+    },
+    {
+      "type": "sphere",
+      "radius": 1,
+      "position": [ 3.045, 1, 0 ],
+      "material": "mercury"
+    },
+    {
+      "type": "sphere",
+      "radius": 1,
+      "position": [ 5.075, 1, 0 ],
+      "material": "nickel"
+    },
+    {
+      "type": "sphere",
+      "radius": 1,
+      "position": [ 7.105, 1, 0 ],
+      "material": "palladium"
+    },
+    {
+      "type": "sphere",
+      "radius": 1,
+      "position": [ 0, 50, 20 ],
+      "material": "light"
+    }
+  ]
+}

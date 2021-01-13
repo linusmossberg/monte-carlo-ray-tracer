@@ -44,7 +44,7 @@ glm::dvec3 Integrator::sampleDirect(const Interaction& interaction) const
             return glm::dvec3(0.0);
         }
 
-        double cos_theta = glm::dot(shadow_ray.direction, interaction.normal);
+        double cos_theta = glm::dot(shadow_ray.direction, interaction.cs.normal);
 
         if (cos_theta <= 0)
         {

@@ -1,0 +1,117 @@
+{
+  "num_render_threads": -1,
+  "ior": 1.0,
+
+  "cameras": [
+    {
+      "focal_length": 102.25,
+      "sensor_width": 35,
+      "eye": [ 0, 1, -6.83879 ],
+      "look_at": [ 0, 1, 0 ],
+      "image":  { "width": 1000, "height": 1000, "exposure_compensation": -1.0, "gain_compensation": -0.55, "tonemapper": "Hable" },
+      "sqrtspp": 4,
+      "savename": "water_caustics"
+    }
+  ],
+
+  "photon_map": {
+    "emissions": 1e6,
+    "caustic_factor": 10.0,
+    "k_nearest_photons": 50,
+    "max_radius": 0.025,
+    "max_caustic_radius": 0.02,
+    "max_photons_per_octree_leaf": 200,
+    "use_shadow_photons": true,
+    "direct_visualization": false
+  },
+
+  "bvh": {
+    "type": "octree",
+    "bins_per_axis": 16
+  },
+
+  "materials": {
+    "default": {
+      "reflectance": 0.8
+    },
+    "right-bunny": {
+      "reflectance": "#a6b398"
+    },
+    "left-bunny": {
+      "reflectance": "#a3b3bf"
+    },
+    "leftwall": {
+      "reflectance": "#a2bf82"
+    },
+    "rightwall": {
+      "reflectance": "#8caabf"
+    },
+    "water": {
+      "transparency": 1.0,
+      "ior": 1.8
+    },
+    "light": {
+      "reflectance": 1,
+      "emittance": { "illuminant": "F9", "scale": 25 }
+    }
+  },
+
+  "surfaces": [
+    {
+      "type": "object",
+      "material": "water",
+      "smooth": true,
+      "file": "data/water_caustics/water.obj"
+    },
+    {
+      "type": "object",
+      "material": "water",
+      "file": "data/water_caustics/water-front.obj"
+    },
+    {
+      "type": "object",
+      "material": "leftwall",
+      "file": "data/water_caustics/leftwall.obj"
+    },
+    {
+      "type": "object",
+      "material": "rightwall",
+      "file": "data/water_caustics/rightwall.obj"
+    },
+    {
+      "type": "object",
+      "file": "data/water_caustics/backwall.obj"
+    },
+    {
+      "type": "object",
+      "file": "data/water_caustics/ceiling.obj"
+    },
+    {
+      "type": "object",
+      "file": "data/water_caustics/floor.obj"
+    },
+    {
+      "type": "object",
+      "material": "light",
+      "file": "data/water_caustics/light.obj"
+    },
+    {
+      "type": "object",
+      "file": "data/bunny.obj",
+      "smooth": true,
+      "material": "left-bunny",
+      "scale": [-0.4, 0.4, 0.4],
+      "rotation": [0.0, 180.0, 0.0],
+      "position": [0.6,0.0,0.4],
+    },
+    {
+      "type": "object",
+      "file": "data/bunny.obj",
+      "smooth": true,
+      "position": [-0.55,0.0,-0.1],
+      "rotation": [0.0, 180.0, 0.0],
+      "scale": 0.5,
+      "material": "right-bunny"
+    }
+  ]
+}

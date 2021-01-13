@@ -1,0 +1,209 @@
+{
+  "num_render_threads": -1,
+  "ior": 1.0,
+
+  "cameras": [
+    {
+      "focal_length": 41,
+      "sensor_width": 35,
+      "eye": [ -12, -0.05, 2 ],
+      "look_at": [ 8, -2, -0.4 ],
+      "image":  { "width": 960, "height": 540, "exposure_compensation": -2.0, "gain_compensation": 0.0, "tonemapper": "ACES" },
+      "focus_distance": 17,
+      "f_stop": 1.8,
+      "sqrtspp": 4,
+      "savename": "stanford_dragon_frosted"
+    }
+  ],
+
+  "bvh": {
+    "type": "octree",
+    "bins_per_axis": 32
+  },
+
+  "vertices": {
+    "room": [
+      [-15.25069427490234,  -4.98, -4.3179931640625],
+      [-15.25069427490234,   2.61, -4.3179931640625],
+      [11.25910472869873,  -4.98, -7.49927568435669],
+      [11.25910472869873,   2.61, -7.49927568435669],
+      [-13.65409564971924,  -4.98, 8.98655033111572],
+      [-13.65409564971924,   2.61, 8.98655033111572],
+      [12.85570335388184,  -4.98, 5.80526781082153],
+      [12.85570335388184,   2.61, 5.80526781082153]
+    ],
+    "light": [
+      [4.23229265213013, 2.5, -0.97021371126175],
+      [4.48362302780151, 2.5, 1.12413489818573],
+      [6.32664108276367, 2.5, -1.2215439081192],
+      [6.57797145843506, 2.5, 0.87280458211899]
+    ]
+  },
+
+  "materials": {
+    "default": {
+      "specular_roughness": 0.02,
+      "reflectance": 0.9,
+      "ior": 1.5
+    },
+    "floor": {
+      "reflectance": 0.9
+    },
+    "roof": {
+      "reflectance": 0.9
+    },
+    "backwall": {
+      "reflectance": 0.9
+    },
+    "leftwall": {
+      "reflectance": "#b3cc99"
+    },
+    "rightwall": {
+      "reflectance": "#99b5cc"
+    },
+    "brass":     { 
+      "specular_roughness": 0.02, 
+      "ior": "data/spectral-distributions/brass.csv" 
+    },
+    "graphite":  { 
+      "specular_roughness": 0.02, 
+      "ior": "data/spectral-distributions/graphite.csv" 
+    },
+    "copper": { 
+      "specular_roughness": 0.02, 
+      "ior": "data/spectral-distributions/copper.csv" 
+    },
+    "glass": {
+      "ior": 1.5,
+      "transparency": 1.0
+    },
+    "smallsphere": {
+      "specular_roughness": 0.25,
+      "roughness": 0.3,
+      "reflectance": 1.0,
+      "ior": 1.6
+    },
+    "rough-ice": { 
+      "specular_roughness": 0.25, 
+      "transparency": 1.0, 
+      "ior": 1.33 
+    },
+    "dragon": {
+      "transmittances": "#ff9d47",
+      "transmittancebluegreen": "#59b39c",
+      "transmittance": "#ff9d47",
+      "transparency": 1.0,
+      "specular_reflectance": 1.0,
+      "specular_roughness": 0.2,
+      "ior": 1.5
+    },
+    "light": {
+      "emittance": { "illuminant": "D65", "scale": 35 }
+    },
+    "glow-sphere": {
+      "emittance": { "illuminant": "D65", "scale": 15 }
+    }
+  },
+
+  "surfaces": [
+    {
+      "type": "object",
+      "vertex_set": "light",
+      "position": [0.0, 0.1, 0.0],
+      "material": "light",
+      "triangles": [
+        [0, 2, 3],
+        [0, 3, 1]
+      ]
+    },
+    {
+      "type": "object",
+      "vertex_set": "room",
+      "material": "floor",
+      "triangles": [
+        [4, 0, 2],
+        [6, 4, 2]
+      ]
+    },
+    {
+      "type": "object",
+      "vertex_set": "room",
+      "material": "rightwall",
+      "triangles": [
+        [6, 7, 4],
+        [7, 5, 4]
+      ]
+    },
+    {
+      "type": "object",
+      "vertex_set": "room",
+      "material": "leftwall",
+      "triangles": [
+        [0, 1, 2],
+        [1, 3, 2]
+      ]
+    },
+    {
+      "type": "object",
+      "vertex_set": "room",
+      "material": "backwall",
+      "triangles": [
+        [2, 3, 6],
+        [3, 7, 6]
+      ]
+    },
+    {
+      "type": "object",
+      "vertex_set": "room",
+      "material": "backwall",
+      "triangles": [
+        [4, 0, 1],
+        [5, 4, 1]
+      ]
+    },
+    {
+      "type": "object",
+      "vertex_set": "room",
+      "material": "roof",
+      "triangles": [
+        [5, 7, 1],
+        [7, 3, 1]
+      ]
+    },
+    {
+      "type": "object",
+      "material": "dragon",
+      "smooth":  true,
+      "file": "data/stanford_dragon_fullres.obj"
+    },
+    {
+      "type": "sphere",
+      "radius": 1.5,
+      "material": "glow-sphere",
+      "position": [9.5, -3.48, -3.25]
+    },
+    {
+      "type": "sphere",
+      "radius": 1.25,
+      "material": "brass",
+      "position": [5.72, -3.73, 3.5]
+    },
+    {
+      "type": "sphere",
+      "radius": 0.76,
+      "material": "glass",
+      "position": [4.33, -4.21, 2.115]
+    },
+    {
+      "type": "sphere",
+      "radius": 0.48,
+      "material": "smallsphere",
+      "position": [3.7, -4.5, 1.08]
+    },
+    { "type": "sphere", "radius": 0.75, "material": "rough-ice", "position": [6.5, -4.23, -4.6] },
+
+    { "type": "sphere", "radius": 0.2, "material": "brass", "position": [6.5, -4.095, -4.83383] },
+    { "type": "sphere", "radius": 0.2, "material": "copper", "position": [6.5, -4.50, -4.6] },
+    { "type": "sphere", "radius": 0.2, "material": "graphite", "position": [6.5, -4.095, -4.36617] }
+  ]
+}

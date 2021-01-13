@@ -1,0 +1,83 @@
+{
+  "num_render_threads": -1,
+  "ior": 1.0,   
+
+  "cameras": [
+    {
+      "focal_length": 60,
+      "sensor_width": 35,
+      "eye": [ 0.02125, -0.605, 1.85 ],
+      "look_at": [ 0.02125, -0.605, 0.85 ],
+      "focus_distance": 1.15,
+      "image":  { "width": 1280, "height": 720, "exposure_compensation": -3.0, "gain_compensation": 0.0, "tonemapper": "ACES" },
+      "sqrtspp": 8,
+      "savename": "baroque_table"
+    }
+  ],
+
+  "bvh": {
+    "type": "quaternary_sah",
+    "bins_per_axis": 8
+  },
+
+  "materials": {
+    "default": {
+      "reflectance": 0.8
+    },
+    "Floor": {
+      "reflectance": "#6A4D41",
+      "specular_roughness": 0.1,
+      "specular_reflectance": 0.5,
+      "ior": 1.5
+    },
+    "MAINWHITE": {
+      "reflectance": "#f2f2f0",
+      "specular_roughness": 0.03,
+      "specular_reflectance": 0.5,
+      "ior": 1.5
+    },
+    "METAL": {
+      "specular_roughness": 0.1,
+      "ior": "data/spectral-distributions/brass.csv"
+    },
+    "Wall": {
+      "reflectance": "#BA9E72"
+    },
+    "orange_light": {
+      "emittance": { "illuminant": "D50", "scale": 12 }
+    }
+  },
+
+  "surfaces": [
+    {
+      "type": "object",
+      "smooth":  false,
+      "file": "data/baroque_table/Floor.obj",
+      "material": "Floor"
+    },
+    {
+      "type": "object",
+      "smooth":  true,
+      "file": "data/baroque_table/MAINWHITE.obj",
+      "material": "MAINWHITE"
+    },
+    {
+      "type": "object",
+      "smooth":  true,
+      "file": "data/baroque_table/METAL.obj",
+      "material": "METAL"
+    },
+    {
+      "type": "object",
+      "smooth":  false,
+      "file": "data/baroque_table/Wall.obj",
+      "material": "Wall"
+    },
+    {
+      "type": "object",
+      "smooth":  false,
+      "file": "data/baroque_table/left_light.obj",
+      "material": "orange_light"
+    }
+  ]
+}

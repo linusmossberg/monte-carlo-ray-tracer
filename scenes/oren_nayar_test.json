@@ -1,0 +1,125 @@
+{
+  "num_render_threads": -1,
+  "naive": false,
+  "ior": 1.0,
+
+  "cameras": [
+    {
+      "focal_length": 317.5,
+      "sensor_width": 35,
+      "eye": [ -80, 40, 80 ],
+      "look_at": [ 0, 1, 0 ],
+      "f_stop": -0.1,
+      "image": { "width": 1920, "height": 960 },
+      "sqrtspp": 4,
+      "savename": "oren_nayar_test_c1"
+    }
+  ],
+
+  "materials": {
+    "default": {
+      "roughness": 0.0,
+      "reflectance": [ 0.9, 0.9, 0.9 ]
+    },
+    "gray_0.0": {
+      "roughness": 0,
+      "reflectance": [ 0.9, 0.9, 0.9 ]
+    },
+    "gray_0.25": {
+      "roughness": 0.25,
+      "reflectance": [ 0.9, 0.9, 0.9 ]
+    },
+    "gray_0.5": {
+      "roughness": 0.5,
+      "reflectance": [ 0.9, 0.9, 0.9 ]
+    },
+    "gray_1.0": {
+      "roughness": 1.0,
+      "reflectance": [ 0.9, 0.9, 0.9 ]
+    },
+    "gray_2.0": {
+      "roughness": 2.0,
+      "reflectance": [ 0.9, 0.9, 0.9 ]
+    },
+    "gray_4.0": {
+      "roughness": 4.0,
+      "reflectance": [ 0.9, 0.9, 0.9 ]
+    },
+    "gray_8.0": {
+      "roughness": 8.0,
+      "reflectance": [ 0.9, 0.9, 0.9 ]
+    },
+    "gray_16.0": {
+      "roughness": 16.0,
+      "reflectance": [ 0.9, 0.9, 0.9 ]
+    }
+  },
+
+  "vertices": {
+    "floor": [
+      [ -16, 0, 1 ],
+      [ 16, 0, 1 ],
+      [ 16, 0, -1 ],
+      [ -16, 0, -1 ]
+    ]
+  },
+
+  "surfaces": [
+    {
+      "type": "object",
+      "vertex_set": "floor",
+      "triangles": [
+        [ 0, 2, 3 ],
+        [ 0, 1, 2 ]
+      ]
+    },
+    {
+      "type": "sphere",
+      "radius": 1,
+      "position": [ -7, 1, 0 ],
+      "material": "gray_0.0"
+    },
+    {
+      "type": "sphere",
+      "radius": 1,
+      "position": [ -5, 1, 0 ],
+      "material": "gray_0.25"
+    },
+    {
+      "type": "sphere",
+      "radius": 1,
+      "position": [ -3, 1, 0 ],
+      "material": "gray_0.5"
+    },
+    {
+      "type": "sphere",
+      "radius": 1,
+      "position": [ -1, 1, 0 ],
+      "material": "gray_1.0"
+    },
+    {
+      "type": "sphere",
+      "radius": 1,
+      "position": [ 1, 1, 0 ],
+      "material": "gray_2.0"
+    },
+    {
+      "type": "sphere",
+      "radius": 1,
+      "position": [ 3, 1, 0 ],
+      "material": "gray_4.0"
+    },
+    {
+      "type": "sphere",
+      "radius": 1,
+      "position": [ 5, 1, 0 ],
+      "material": "gray_8.0"
+    },
+    {
+      "type": "sphere",
+      "radius": 1,
+      "position": [ 7, 1, 0 ],
+      "material": "gray_16.0"
+    }
+  ]
+}

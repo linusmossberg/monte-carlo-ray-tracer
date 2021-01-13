@@ -1,0 +1,107 @@
+{
+  "num_render_threads": -1,
+  "naive": false,
+  "ior": 1.0,
+
+  "cameras": [
+    {
+      "focal_length": 50,
+      "sensor_width": 35,
+      "eye": [ 0, 0, -3.5 ],
+      "look_at": 0,
+      "f_stop": 0.5,
+      "focus_distance": 3.5,
+      "image" : { 
+        "width": 512,
+        "height": 512
+      },
+      "sqrtspp": 16,
+      "savename": "ior_test"
+    }
+  ],
+
+  "materials": {
+    "default": {
+      "reflectance": 0.73
+    },
+    "bright": {
+      "reflectance": 0.9
+    },
+    "dark": {
+      "reflectance": 0.1
+    },
+    "ior1": {
+      "transparency": 1.0,
+      "transmittance": [0.5, 0.5, 1.0],
+      "external_medium": "scene",
+      "ior": 1.3
+    },
+    "ior2": {
+      "transparency": 1.0,
+      "transmittance": [0.5, 1.0, 0.5],
+      "external_medium": "ior1",
+      "ior": 1.2
+    },
+    "ior3": {
+      "transparency": 1.0,
+      "transmittance": [1.0, 0.5, 0.5],
+      "external_medium": "ior2",
+      "ior": 1.1
+    },
+    "ior4": {
+      "transparency": 1.0,
+      "external_medium": "ior3",
+      "ior": 1.3
+    },
+    "light": {
+      "emittance": 10000
+    }
+  },
+
+  "surfaces": [
+    {
+      "radius": 1,
+      "material": "ior1",
+      "type": "sphere"
+    },
+    {
+      "radius": 0.6,
+      "material": "ior2",
+      "type": "sphere"
+    },
+    {
+      "radius": 0.4,
+      "material": "ior3",
+      "type": "sphere"
+    },
+    {
+      "radius": 0.2,
+      "material": "ior4",
+      "type": "sphere"
+    },
+    {
+      "position": [-10, 10, -10],
+      "radius": 0.5,
+      "material": "light",
+      "type": "sphere"
+    },
+    {
+      "type": "triangle",
+      "material": "dark",
+      "vertices": [
+        [1000, 0, 100],
+        [0, 1000, 100],
+        [-1000, 0, 100]
+      ]
+    },
+    {
+      "type": "triangle",
+      "material": "bright",
+      "vertices": [
+        [1000, 0, 10],
+        [-1000, 0, 10],
+        [0, -1000, 10]
+      ]
+    }
+  ]
+}

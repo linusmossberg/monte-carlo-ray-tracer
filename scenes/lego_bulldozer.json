@@ -1,0 +1,161 @@
+{
+  "num_render_threads": -1,
+  "ior": 1.0,   
+
+  "cameras": [
+    {
+      "focal_length": 56,
+      "sensor_width": 35,
+      "eye": [ 1.05, 0.32, 0.4 ],
+      "look_at": [ 0.03, 0.073, 0.06 ],
+      "focus_distance": 1.15,
+      "image":  { "width": 1280, "height": 720, "exposure_compensation": -2.0, "gain_compensation": 0.0, "tonemapper": "ACES" },
+      "sqrtspp": 4,
+      "savename": "lego_bulldozer"
+    }
+  ],
+
+  "bvh": {
+    "type": "quaternary_sah",
+    "bins_per_axis": 8
+  },
+
+  "materials": {
+    "default": {
+      "reflectance": 0.8
+    },
+    "Background": {
+      "reflectance": 0.4,
+      "specular_reflectance": 0.5,
+      "specular_roughness": 0.35,
+      "ior": 1.45
+    },
+    "Black": {
+      "reflectance": "#090909",
+      "specular_roughness": 0.05,
+      "ior": 1.5
+    },
+    "Brown": {
+      "reflectance": "#583927",
+      "specular_roughness": 0.05,
+      "ior": 1.5
+    },
+    "Gray": {
+      "reflectance": "#949AA8",
+      "specular_roughness": 0.05,
+      "ior": 1.5
+    },
+    "Light_brown": {
+      "reflectance": "#7C5034",
+      "specular_roughness": 0.05,
+      "ior": 1.5
+    },
+    "blue_light": {
+      "emittance": { "illuminant": "D75", "scale": 80000 }
+    },
+    "orange_light": {
+      "emittance": { "illuminant": "D55", "scale": 80000 }
+    },
+    "Red_Glass": {
+      "transmittance": "#FF210B",
+      "transparency": 1.0,
+      "specular_roughness": 0.05,
+      "ior": 1.460
+    },
+    "RubberBand": {
+      "reflectance": "#242424",
+      "specular_roughness": 0.1,
+      "ior": 1.5
+    },
+    "Sand": {
+      "reflectance": "#C0B089",
+      "specular_roughness": 0.05,
+      "ior": 1.5
+    },
+    "transparent": {
+      "specular_roughness": 0.05,
+      "transparency": 1.0,
+      "ior": 1.460
+    },
+    "Yellow": {
+      "reflectance": "#E7BC30",
+      "specular_roughness": 0.05,
+      "ior": 1.5
+    }
+  },
+
+  "surfaces": [
+    {
+      "type": "object",
+      "smooth":  true,
+      "file": "data/lego_bulldozer/Background.obj",
+      "material": "Background"
+    },
+    {
+      "type": "object",
+      "smooth":  true,
+      "file": "data/lego_bulldozer/Black.obj",
+      "material": "Black"
+    },
+    {
+      "type": "object",
+      "smooth":  true,
+      "file": "data/lego_bulldozer/Brown.obj",
+      "material": "Brown"
+    },
+    {
+      "type": "object",
+      "smooth":  true,
+      "file": "data/lego_bulldozer/Gray.obj",
+      "material": "Gray"
+    },
+    {
+      "type": "object",
+      "smooth":  true,
+      "file": "data/lego_bulldozer/Light_brown.obj",
+      "material": "Light_brown"
+    },
+    {
+      "type": "object",
+      "smooth":  false,
+      "file": "data/lego_bulldozer/left_light.obj",
+      "material": "blue_light"
+    },
+    {
+      "type": "object",
+      "smooth":  false,
+      "file": "data/lego_bulldozer/right_light.obj",
+      "material": "orange_light"
+    },
+    {
+      "type": "object",
+      "smooth":  true,
+      "file": "data/lego_bulldozer/Red_Glass.obj",
+      "material": "Red_Glass"
+    },
+    {
+      "type": "object",
+      "smooth":  true,
+      "file": "data/lego_bulldozer/RubberBand.obj",
+      "material": "RubberBand"
+    },
+    {
+      "type": "object",
+      "smooth":  true,
+      "file": "data/lego_bulldozer/Sand.obj",
+      "material": "Sand"
+    },
+    {
+      "type": "object",
+      "smooth":  true,
+      "file": "data/lego_bulldozer/transparent.obj",
+      "material": "transparent"
+    },
+    {
+      "type": "object",
+      "smooth":  true,
+      "file": "data/lego_bulldozer/Yellow.obj",
+      "material": "Yellow"
+    }
+  ]
+}

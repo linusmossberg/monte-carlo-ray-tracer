@@ -1,0 +1,149 @@
+{
+  "num_render_threads": -1,
+  "naive": false,
+  "ior": 1.0,
+
+  "cameras": [
+    {
+      "focal_length": 317.5,
+      "sensor_width": 35,
+      "eye": [ -80, 40, 80 ],
+      "look_at": [ 0, 1, 0 ],
+      "f_stop": -0.1,
+      "image": { "width": 1920, "height": 960 },
+      "sqrtspp": 8,
+      "savename": "gxx_test"
+    }
+  ],
+
+  "materials": {
+    "default": {
+      "emittance": [500.0, 500.0, 500.0]
+    },
+    "light": {
+      "emittance": [2000.0, 2000.0, 2000.0]
+    },
+    "gray_0.0": {
+      "specular_roughness": 0,
+      "ior": 2.0,
+      "reflectance": "#333333",
+      "specular_reflectance": "#FFFFFF"
+    },
+    "gray_0.25": {
+      "specular_roughness": 0.02040816326,
+      "ior": 2.0,
+      "reflectance": "#333333",
+      "specular_reflectance": "#FFFFFF"
+    },
+    "gray_0.5": {
+      "specular_roughness": 0.08163265305,
+      "ior": 2.0,
+      "reflectance": "#333333",
+      "specular_reflectance": "#FFFFFF"
+    },
+    "gray_1.0": {
+      "specular_roughness": 0.18367346938,
+      "ior": 2.0,
+      "reflectance": "#333333",
+      "specular_reflectance": "#FFFFFF"
+    },
+    "gray_2.0": {
+      "specular_roughness": 0.32653061223,
+      "ior": 2.0,
+      "reflectance": "#333333",
+      "specular_reflectance": "#FFFFFF"
+    },
+    "gray_4.0": {
+      "specular_roughness": 0.51020408162,
+      "ior": 2.0,
+      "reflectance": "#333333",
+      "specular_reflectance": "#FFFFFF"
+    },
+    "gray_8.0": {
+      "specular_roughness": 0.73469387754,
+      "ior": 2.0,
+      "reflectance": "#333333",
+      "specular_reflectance": "#FFFFFF"
+    },
+    "gray_16.0": {
+      "specular_roughness": 1.0,
+      "ior": 2.0,
+      "reflectance": "#333333",
+      "specular_reflectance": "#FFFFFF"
+    }
+  },
+
+  "vertices": {
+    "floor": [
+      [ -16, 0, 1 ],
+      [ 16, 0, 1 ],
+      [ 16, 0, -1 ],
+      [ -16, 0, -1 ]
+    ]
+  },
+
+  "surfaces": [
+    {
+      "type": "object",
+      "vertex_set": "floor",
+      "triangles": [
+        [ 0, 2, 3 ],
+        [ 0, 1, 2 ]
+      ]
+    },
+    {
+      "type": "sphere",
+      "radius": 1,
+      "position": [ -7, 1, 0 ],
+      "material": "gray_0.0"
+    },
+    {
+      "type": "sphere",
+      "radius": 1,
+      "position": [ -5, 1, 0 ],
+      "material": "gray_0.25"
+    },
+    {
+      "type": "sphere",
+      "radius": 1,
+      "position": [ -3, 1, 0 ],
+      "material": "gray_0.5"
+    },
+    {
+      "type": "sphere",
+      "radius": 1,
+      "position": [ -1, 1, 0 ],
+      "material": "gray_1.0"
+    },
+    {
+      "type": "sphere",
+      "radius": 1,
+      "position": [ 1, 1, 0 ],
+      "material": "gray_2.0"
+    },
+    {
+      "type": "sphere",
+      "radius": 1,
+      "position": [ 3, 1, 0 ],
+      "material": "gray_4.0"
+    },
+    {
+      "type": "sphere",
+      "radius": 1,
+      "position": [ 5, 1, 0 ],
+      "material": "gray_8.0"
+    },
+    {
+      "type": "sphere",
+      "radius": 1,
+      "position": [ 7, 1, 0 ],
+      "material": "gray_16.0"
+    },
+    {
+      "type": "sphere",
+      "radius": 1.0,
+      "position": [ -1, 10, 10 ],
+      "material": "light"
+    }
+  ]
+}
