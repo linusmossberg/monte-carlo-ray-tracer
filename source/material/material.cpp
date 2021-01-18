@@ -183,9 +183,18 @@ void from_json(const nlohmann::json &j, Material &m)
         if (e.type() == nlohmann::json::value_t::object)
         {
             double scale = getOptional(e, "scale", 1.0);
-            std::string illuminant = getOptional<std::string>(e, "illuminant", "D65");
-            std::transform(illuminant.begin(), illuminant.end(), illuminant.begin(), toupper);
-            m.emittance = sRGB::RGB(CIE::Illuminant::whitePoint(illuminant.c_str()) * scale);
+            double temperature = getOptional<double>(e, "temperature", -1.0);
+
+            if (temperature > 0.0)
+            {
+                m.emittance = sRGB::RGB(CIE::Illuminant::blackbody(temperature) * scale);
+            }
+            else
+            {
+                std::string illuminant = getOptional<std::string>(e, "illuminant", "D65");
+                std::transform(illuminant.begin(), illuminant.end(), illuminant.begin(), toupper);
+                m.emittance = sRGB::RGB(CIE::Illuminant::whitePoint(illuminant.c_str()) * scale);
+            }
         }
         else
         {

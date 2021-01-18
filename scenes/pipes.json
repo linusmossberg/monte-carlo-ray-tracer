@@ -1,0 +1,257 @@
+{
+  "num_render_threads": -1,
+  "ior": 1.0,   
+
+  "cameras": [
+    {
+      "focal_length": 330,
+      "sensor_width": 35,
+      "eye": [ 9.09465, 8.0, -10.25742 ],
+      "look_at": [ 0.16, 0.045, -0.42 ],
+      "image":  { "width": 960, "height": 600, "exposure_compensation": -3.0, "gain_compensation": 0.0, "tonemapper": "ACES" },
+      "sqrtspp": 4,
+      "savename": "pipes"
+    }
+  ],
+
+  "bvh": {
+    "type": "quaternary_sah",
+    "bins_per_axis": 8
+  },
+
+  "vertices": {
+    "backdrop": [
+      [-39.236, 78.436, -30.208],
+      [39.236, 78.436, -30.208],
+      [39.236, -0.0359497, -30.208],
+      [-39.236, -0.0359497, -30.208]
+    ]
+  },
+
+  "materials": {
+    "default": {
+      "reflectance": 0.8
+    },
+    "background": {
+      "reflectance": 0.3,
+      "ior": 1.5,
+      "specular_roughness": 0.4
+    },
+    "Body_and_operator": {
+      "reflectance": "#4d6399",
+      "specular_roughness": 0.3,
+      "ior": 1.5
+    },
+    "Brass": {
+      "ior": "data/spectral-distributions/brass.csv",
+      "specular_roughness": 0.1
+    },
+    "Chrome": {
+      "perfect_mirror": true,
+      "specular_roughness": 0.2,
+      "specular_reflectance": 0.5
+    },
+    "EZ_Control_valve": {
+      "reflectance": "#408046",
+      "specular_roughness": 0.3,
+      "ior": 1.5
+    },
+    "Flex_conduit": {
+      "reflectance": 0.1,
+      "specular_roughness": 0.1,
+      "ior": 1.5
+    },
+    "Gage_dial_image": {
+      "reflectance": 0.8
+    },
+    "Gasket": {
+      "reflectance": "#9EAEBB"
+    },
+    "Gasket_guide_rings": {
+      "reflectance": "#E7E37B",
+      "specular_roughness": 0.4,
+      "ior": 1.5
+    },
+    "Glass_clear": {
+      "ior": 1.5,
+      "transparency": 1.0
+    },
+    "Material": {
+      "reflectance": "#37466D"
+    },
+    "light_bulb": {
+      "emittance": { "illuminant": "A", "scale": 2 }
+    },
+    "Painted_gray": {
+      "reflectance": 0.5,
+      "ior": 1.5,
+      "specular_roughness": 0.2
+    },
+    "Plate": {
+      "perfect_mirror": true,
+      "specular_roughness": 0.1,
+      "specular_reflectance": 0.8
+    },
+    "Sight_glass_gasket": {
+      "reflectance": "#96E794",
+      "ior": 1.5,
+      "specular_roughness": 0.4
+    },
+    "Stainless_steel": {
+      "ior": "data/spectral-distributions/iron.csv",
+      "specular_reflectance": 0.75,
+      "specular_roughness": 0.4
+    },
+    "Structural_steel": {
+      "reflectance": "#A16B67",
+      "ior": 1.5,
+      "specular_roughness": 0.4
+    },
+    "Stud_and_nut": {
+      "reflectance": 0.4,
+      "ior": 1.5,
+      "specular_roughness": 0.4
+    },
+    "Valve_seat": {
+      "reflectance": "#199E1A",
+      "ior": 1.5,
+      "specular_roughness": 0.4
+    },
+    "blue_light": {
+      "emittance": { "illuminant": "D75", "scale": 20000 }
+    },
+    "orange_light": {
+      "emittance": { "illuminant": "D55", "scale": 80000 }
+    }
+  },
+
+  "surfaces": [
+    {
+      "type": "object",
+      "smooth":  true,
+      "file": "data/pipes/background.obj",
+      "material": "background"
+    },
+    {
+      "type": "object",
+      "smooth":  true,
+      "file": "data/pipes/Body_and_operator.obj",
+      "material": "Body_and_operator"
+    },
+    {
+      "type": "object",
+      "smooth":  true,
+      "file": "data/pipes/Brass.obj",
+      "material": "Brass"
+    },
+    {
+      "type": "object",
+      "smooth":  true,
+      "file": "data/pipes/Chrome.obj",
+      "material": "Chrome"
+    },
+    {
+      "type": "object",
+      "smooth":  true,
+      "file": "data/pipes/EZ_Control_valve.obj",
+      "material": "EZ_Control_valve"
+    },
+    {
+      "type": "object",
+      "smooth":  true,
+      "file": "data/pipes/Flex_conduit.obj",
+      "material": "Flex_conduit"
+    },
+    {
+      "type": "object",
+      "smooth":  true,
+      "file": "data/pipes/Gage_dial_image.obj",
+      "material": "Gage_dial_image"
+    },
+    {
+      "type": "object",
+      "smooth":  true,
+      "file": "data/pipes/Gasket.obj",
+      "material": "Gasket"
+    },
+    {
+      "type": "object",
+      "smooth":  true,
+      "file": "data/pipes/Gasket_guide_rings.obj",
+      "material": "Gasket_guide_rings"
+    },
+    {
+      "type": "object",
+      "smooth":  true,
+      "file": "data/pipes/Glass_clear.obj",
+      "material": "Glass_clear"
+    },
+    {
+      "type": "object",
+      "smooth":  false,
+      "file": "data/pipes/left_light.obj",
+      "material": "blue_light"
+    },
+    {
+      "type": "object",
+      "smooth":  true,
+      "file": "data/pipes/Material.obj",
+      "material": "Material"
+    },
+    {
+      "type": "object",
+      "smooth":  true,
+      "file": "data/pipes/Painted_gray.obj",
+      "material": "Painted_gray"
+    },
+    {
+      "type": "object",
+      "smooth":  true,
+      "file": "data/pipes/Plate.obj",
+      "material": "Plate"
+    },
+    {
+      "type": "object",
+      "smooth":  false,
+      "file": "data/pipes/right_light.obj",
+      "rotation": [0, 0, 0],
+      "material": "orange_light"
+    },
+    {
+      "type": "object",
+      "smooth":  true,
+      "file": "data/pipes/Sight_glass_gasket.obj",
+      "material": "Sight_glass_gasket"
+    },
+    {
+      "type": "object",
+      "smooth":  true,
+      "file": "data/pipes/Stainless_steel.obj",
+      "material": "Stainless_steel"
+    },
+    {
+      "type": "object",
+      "smooth":  true,
+      "file": "data/pipes/Structural_steel.obj",
+      "material": "Structural_steel"
+    },
+    {
+      "type": "object",
+      "smooth":  true,
+      "file": "data/pipes/Stud_and_nut.obj",
+      "material": "Stud_and_nut"
+    },
+    {
+      "type": "object",
+      "smooth":  true,
+      "file": "data/pipes/Valve_seat.obj",
+      "material": "Valve_seat"
+    },
+    {
+      "type": "object",
+      "smooth":  true,
+      "file": "data/pipes/light_bulb.obj",
+      "material": "light_bulb"
+    }
+  ]
+}

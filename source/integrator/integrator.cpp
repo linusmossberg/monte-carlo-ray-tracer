@@ -32,7 +32,10 @@ glm::dvec3 Integrator::sampleDirect(const Interaction& interaction) const
     // Pick one light source and divide with probability of picking light source
     if (!scene.emissives.empty())
     {
-        const auto& light = scene.emissives[Random::get<size_t>(0, scene.emissives.size() - 1)];
+        size_t emissive_idx = Random::weightedUIntSample(scene.emissives_importance);
+        double light_probability = scene.emissives_importance[emissive_idx];
+
+        const auto& light = scene.emissives[emissive_idx];
 
         glm::dvec3 light_pos = light->operator()(Random::unit(), Random::unit());
         Ray shadow_ray(interaction.position + interaction.normal * C::EPSILON, light_pos);
@@ -66,7 +69,7 @@ glm::dvec3 Integrator::sampleDirect(const Interaction& interaction) const
             // the solid angle PDF at the diffuse point that samples this direct contribution.
             double t = light->area() * cos_light_theta / pow2(shadow_intersection.t);
 
-            return light->material->emittance * t * cos_theta * static_cast<double>(scene.emissives.size());
+            return light->material->emittance * t * cos_theta / light_probability;
         }
     }
     return glm::dvec3(0.0);

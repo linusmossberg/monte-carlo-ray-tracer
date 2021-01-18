@@ -26,6 +26,7 @@ public:
 
     std::vector<std::shared_ptr<Surface::Base>> surfaces;
     std::vector<std::shared_ptr<Surface::Base>> emissives; // subset of surfaces
+    std::vector<double> emissives_importance; // fraction of the total flux emitted by each emissive
 
     BoundingBox BB() const
     {

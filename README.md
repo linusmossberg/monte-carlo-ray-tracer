@@ -4,25 +4,25 @@ This is a physically based renderer with Path Tracing and Photon Mapping.
 
 ![Path traced render of baroque table, 3.8 million triangles. Original scene by 1DInc.](https://user-images.githubusercontent.com/15798094/104470709-4c75d200-55ba-11eb-9f37-a3651a64cd1a.jpg "Path traced render of baroque table, 3.8 million triangles. Original scene by 1DInc.")
 ![Path traced render of lego bulldozer, 2 million triangles. Original scene by Heinzelnisse.](https://user-images.githubusercontent.com/15798094/104470739-55ff3a00-55ba-11eb-8213-3171b954c3ed.jpg "Path traced render of lego bulldozer, 2 million triangles. Original scene by Heinzelnisse.")
-![Photon mapped render of caustics, 6.9 million triangles and 172 million photon particles. Original scene by Benedikt Bitterli.](https://user-images.githubusercontent.com/15798094/104514606-d2f9d600-55f1-11eb-8362-d8bd1c1481b0.jpg "Photon mapped render of caustics, 6.9 million triangles and 172 million photon particles. Original scene by Benedikt Bitterli.")
+![Photon mapped render of caustics, 6.9 million triangles and 171 million photon particles. Original scene by Benedikt Bitterli.](https://user-images.githubusercontent.com/15798094/104966091-5fd0d500-59e0-11eb-9160-6d42dbc17050.jpg "Photon mapped render of caustics, 6.9 million triangles and 171 million photon particles. Original scene by Benedikt Bitterli.")
 
-This renderer was originally developed for the course [Advanced Global Illumination and Rendering (TNCG15)](https://liu.se/studieinfo/kurs/tncg15) at Linköpings Universitet, but I've continued to add features and make improvements since then.
+This renderer was originally developed for the course [Advanced Global Illumination and Rendering](https://liu.se/studieinfo/en/kurs/tncg15) (TNCG15) at Linköpings Universitet, but I've continued to add features and improvements since then.
 
 The program is written in C++ and requires a compiler with C++17 support. The only dependencies are the header-only libraries [GLM](https://glm.g-truc.net/) and [nlohmann::json](https://github.com/nlohmann/json), which are included in the repository.
 
 ## Building
 
-Install [git](https://git-scm.com/) and [CMake](https://cmake.org/download/) and run the following commands:
+Install [git](https://git-scm.com/), [CMake](https://cmake.org/download/) and a modern compiler/IDE for your platform and run the following commands:
 ```
 git clone https://github.com/linusmossberg/monte-carlo-ray-tracer
 cd monte-carlo-ray-tracer
 cmake .
 ```
-This will generate build files for your platform in the root folder of the cloned repository, which can be used to build the program.
+This will generate build files in the root folder of the cloned repository, which can be used to build the program.
 
 ## Usage
 
-For basic use, just run the program in the directory that contains the *scenes* directory, i.e. the root folder of this repository. The program will then parse all scene files and create several rendering options to choose from in the terminal. It is also possible to supply a command line argument with the path to the scenes directory. Information about the included scenes is given in the [readme of the scenes directory](scenes/README.md).
+For basic use, just run the program in the directory that contains the *scenes* directory, i.e. the root folder of this repository. The program will then parse all scene files and create several rendering options to choose from in the terminal. It is also possible to supply a command line argument with the path to the scenes directory.
 
 ## Scene Format
 
@@ -62,7 +62,7 @@ Example:
   "k_nearest_photons": 50,
   "max_radius": 0.01,
   "max_caustic_radius": 0.005,
-  "max_photons_per_octree_leaf": 190,
+  "max_photons_per_octree_leaf": 200,
   "use_shadow_photons": false,
   "direct_visualization": false
 }
@@ -74,11 +74,11 @@ The `caustic_factor` determines how many times more caustic photons should be ge
 
 The `k_nearest_photons` field specifies the number of nearest photons to search for and use in the radiance estimate each time a photon map is evaluated at a point. Larger values create better but less localized (blurrier) estimates since the search sphere is expanded to cover the target number of photons. The maximum radius of this search sphere is controlled with the `max_radius` field. This is useful to discard large parts of the search space and thereby increase performance. The global radiance evaluation is however delayed if the target number of photons doesn't fit in the search sphere to prevent bad estimates, so this should be set to a reasonable value. `max_caustic_radius` is the same but is used exclusively for caustic photons.
 
-The `max_photons_per_octree_leaf` field affects both the octree search performance and memory usage of the application. I cover this more in the report and this value can probably be left at 190 in most cases.
+The `max_photons_per_octree_leaf` field affects both the octree search performance and memory usage of the application. This value can probably be left at ~200 in most cases.
 
 The `use_shadow_photons` field specifies whether to use shadow photons. Shadow photons are used to determine if it's necessary to cast shadow rays or delay the global radiance evaluation in certain situations. This can improve performance and reduce artifacts in some scenes and do the opposite in other.
 
-The `direct_visualization` field can be used to visualize the photon maps directly. Setting this to true will make the program evaluate the global radiance from all photon maps at the first diffuse reflection. An example of this is in the report.
+The `direct_visualization` field can be used to visualize the photon maps directly. Setting this to true will make the program evaluate the global radiance from all photon maps at the first diffuse reflection.
 </details>
 
 ___
@@ -163,7 +163,7 @@ The `savename` property defines the name of the resulting saved image file. Imag
 
 #### Image
 
-The `image` object specifies the image properties of the camera. The `width` and `height` ´fields specifies the image resolution in pixels.
+The `image` object specifies the image properties of the camera. The `width` and `height` fields specifies the image resolution in pixels.
 
 The `tonemapper` field specifies which tonemapper to use. The available ones are `Hable` ([filmic tonemapper by John Hable](http://filmicworlds.com/blog/filmic-tonemapping-operators/)) and `ACES` ([fitted by Stephen Hill](https://twitter.com/self_shadow)).
 
@@ -219,6 +219,9 @@ Example:
   },
   "horizon-light": {
     "emittance": { "illuminant": "D50", "scale": 1000 }
+  },
+  "3000-kelvin-blackbody-radiator": {
+    "emittance": { "temperature": 3000, "scale": 1000 }
   }
 }
 ```
@@ -244,7 +247,7 @@ These fields are all optional and any combination of fields can be used. A mater
 
 The `reflectance`, `specular_reflectance` and `transmittance` fields specifies the amount of radiance that should be diffusely reflected and specularly reflected/transmitted for each RGB channel. This is a simplification since these are spectral properties that varies with wavelength and not by the resulting tristimulus values of the virtual camera, but this is computationally cheaper and simpler. These properties now take gamma-corrected values and linearizes them internally to make it easier to pick colors via color pickers.
 
-The `emittance` field defines the radiant flux of each RGB channel in watts. This means that surfaces with different surface areas will emit the same amount of radiant energy if they are assigned the same emissive material. It's also possible to set this field to a [CIE standard illuminant](https://en.wikipedia.org/wiki/Standard_illuminant) by specifying an object with an `illuminant` and a `scale` field.
+The `emittance` field defines the radiant flux of each RGB channel in watts. This means that surfaces with different surface areas will emit the same amount of radiant energy if they are assigned the same emissive material. It's also possible to set the emittance by specifying an object with either an `illuminant` or a `temperature` field, along with a `scale` field. The `illuminant` field is used to specify a [CIE standard illuminant](https://en.wikipedia.org/wiki/Standard_illuminant), while the `temperature` field is used to specify a blackbody radiator in kelvin.
 
 The `external_medium` field can be used to specify the key string of the material that the material is enclosed in. This is required to correctly render scenes with layered transmissive objects (eg. ice cubes with air bubbles in a glass of water). This field is only needed when a ray exits a transmissive object that is enclosed in another transmissive object, and is therefore not required for opaque materials or transmissive materials that only has the scene as external medium.
 
@@ -440,6 +443,7 @@ ___
 ![Path traced render of a scene containing only quadric surfaces.](https://user-images.githubusercontent.com/15798094/104470916-847d1500-55ba-11eb-99df-e600d248f495.jpg "Path traced render of a scene containing only quadric surfaces.")
 ![Path traced render of the Stanford bunny with different rough metal materials, 864 348 triangles.](https://user-images.githubusercontent.com/15798094/104470964-919a0400-55ba-11eb-8462-9525c668177f.jpg "Path traced render of the Stanford bunny with different rough metal materials, 864 348 triangles.")
 ![Path traced render of the Stanford dragon with a rough transmissive material, 871 414 triangles.](https://user-images.githubusercontent.com/15798094/104471005-9e1e5c80-55ba-11eb-98c7-11923b130b2e.jpg "Path traced render of the Stanford dragon with a rough transmissive material, 871 414 triangles.")
+![Path traced render of piping, 2.4 million triangles. Original scene by seeker47.](https://user-images.githubusercontent.com/15798094/104949124-b9280c80-59be-11eb-925c-eb6da552c849.jpg "Path traced render of piping, 2.4 million triangles. Original scene by seeker47.")
 
 ## Resources
 

@@ -186,9 +186,14 @@ void BVH::recursiveBuildBinarySAH(std::shared_ptr<BuildNode> bvh_node)
                         (extent_dims.x > extent_dims.z ? 0 : 2) : 
                         (extent_dims.y > extent_dims.z ? 1 : 2);
 
-    if (extent_dims[split_axis] <= 0.0)
+    if (extent_dims[split_axis] < C::EPSILON)
     {
-        if (S.size() <= max_leaf_surfaces) return;
+        if (S.size() > max_leaf_surfaces)
+        {
+            arbitrarySplit(bvh_node, 2);
+            for (const auto& child : bvh_node->children) recursiveBuildBinarySAH(child);
+        }
+        return;
     }
 
     auto getIdx = [&](const glm::dvec3 &centroid)
@@ -241,7 +246,12 @@ void BVH::recursiveBuildBinarySAH(std::shared_ptr<BuildNode> bvh_node)
 
     if (min_cost > S.size())
     {
-        if (S.size() <= max_leaf_surfaces) return;
+        if (S.size() > max_leaf_surfaces)
+        {
+            arbitrarySplit(bvh_node, 2);
+            for (const auto& child : bvh_node->children) recursiveBuildBinarySAH(child);
+        }
+        return;
     }
 
     for (const auto &s : S)
@@ -303,9 +313,14 @@ void BVH::recursiveBuildQuaternarySAH(std::shared_ptr<BuildNode> bvh_node)
                      (extent_dims.y > extent_dims.z ? glm::ivec2(0, 1) : glm::ivec2(0, 2)) :
                      (extent_dims.x > extent_dims.z ? glm::ivec2(0, 1) : glm::ivec2(1, 2));
     
-    if (extent_dims[axes.x] <= 0.0 || extent_dims[axes.y] <= 0.0)
+    if (extent_dims[axes.x] < C::EPSILON || extent_dims[axes.y] < C::EPSILON)
     {
-        if(S.size() <= max_leaf_surfaces) return;
+        if (S.size() > max_leaf_surfaces)
+        {
+            arbitrarySplit(bvh_node, 4);
+            for (const auto& child : bvh_node->children) recursiveBuildQuaternarySAH(child);
+        }
+        return;
     }
 
     glm::dvec2 axes_min(centroid_extent.min[axes.x], centroid_extent.min[axes.y]);
@@ -373,7 +388,12 @@ void BVH::recursiveBuildQuaternarySAH(std::shared_ptr<BuildNode> bvh_node)
 
     if (min_cost > S.size())
     {
-        if (S.size() <= max_leaf_surfaces) return;
+        if (S.size() > max_leaf_surfaces)
+        {
+            arbitrarySplit(bvh_node, 4);
+            for (const auto& child : bvh_node->children) recursiveBuildQuaternarySAH(child);
+        }
+        return;
     }
 
     std::vector<std::shared_ptr<BuildNode>> new_nodes(4, nullptr);
@@ -398,7 +418,6 @@ void BVH::recursiveBuildQuaternarySAH(std::shared_ptr<BuildNode> bvh_node)
     S.clear();
 
     size_t num_children = 0;
-
     for (const auto &child : new_nodes)
     {
         if (child)
@@ -432,6 +451,30 @@ void BVH::compact(std::shared_ptr<BuildNode> bvh_node, uint32_t next_sibling, ui
         }
         compact(bvh_node->children.back(), 0, surface_idx);
     }
+}
+
+void BVH::arbitrarySplit(std::shared_ptr<BuildNode> bvh_node, size_t N)
+{
+    auto& S = bvh_node->surfaces;
+
+    N = std::min(N, S.size());
+
+    for (int i = 0; i < N; i++)
+    {
+        bvh_node->children.push_back(std::make_shared<BuildNode>());
+    }
+
+    for (size_t i = 0; i < S.size(); i++)
+    {
+        size_t idx = i % N;
+
+        bvh_node->children[idx]->surfaces.push_back(S[i]);
+        bvh_node->children[idx]->BB.merge(S[i]->BB());
+    }
+
+    S.clear();
+
+    branching[N]++;
 }
 
 BVH::SurfaceCentroid::SurfaceCentroid(std::shared_ptr<Surface::Base> surface)

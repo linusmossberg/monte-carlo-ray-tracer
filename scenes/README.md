@@ -33,16 +33,30 @@ The following sections lists the free resources used for some of the scenes in t
 **License**: [CC-BY-NC](https://creativecommons.org/licenses/by-nc/3.0/)<br>
 **Scene file**: [lego_bulldozer.json](lego_bulldozer.json)
 
+## Pipes Scene
+
+**Original creator**: [seeker47](https://www.blendswap.com/profile/141258)<br>
+**URL**: https://www.blendswap.com/blend/18206<br>
+**License**: [CC-0](https://creativecommons.org/publicdomain/mark/1.0/)<br>
+**Scene file**: [pipes.json](pipes.json)
+
+## Spaceship Scene
+
+**Original creator**: [thecali](https://blendswap.com/profile/215428)<br>
+**URL**: https://blendswap.com/blend/13489<br>
+**License**: [CC-0](https://creativecommons.org/publicdomain/mark/1.0/)<br>
+**Scene file**: [spaceship.json](spaceship.json)<br>
+**Notes**: Scene conversion is work in process.
+
 ## Refractive Index Spectral Distributions
 
 **Original creator**: Mikhail Polyanskiy<br>
 **URL**: https://refractiveindex.info/<br>
 **Licence**: [CC-0](https://creativecommons.org/publicdomain/mark/1.0/)<br>
-**Notes**: This database of spectral distributions have been used to define all conductive materials used in a variety of scenes. More information is given under [Materials](../README.md#materials) in the main readme.
+**Notes**: This database of spectral distributions has been used to define all conductive materials used in a variety of scenes. More information is given under [Materials](../README.md#materials) in the main readme.
 
-## The Stanford 3D Scanning Repository Models
+## The Stanford Dragon and Bunny Models
 
 **Original creator**: Stanford University Computer Graphics Laboratory<br>
 **URL**: http://graphics.stanford.edu/data/3Dscanrep/<br>
-**License**: [non-standard](http://graphics.stanford.edu/data/3Dscanrep/)<br>
-**Notes**: The dragon and bunny models are used in a variety of scenes.
+**License**: [non-standard](http://graphics.stanford.edu/data/3Dscanrep/)

@@ -182,13 +182,23 @@ Intersection Scene::intersect(const Ray& ray) const
 
 void Scene::generateEmissives()
 {
+    double total_max_flux = 0.0;
     for (const auto& surface : surfaces)
     {
         if (glm::length(surface->material->emittance) >= C::EPSILON)
         {
+            double max_flux = glm::compMax(surface->material->emittance);
+            total_max_flux += max_flux;
             surface->material->emittance /= surface->area(); // flux to radiosity
             emissives.push_back(surface);
+            emissives_importance.push_back(max_flux);
         }
+    }
+
+    // Normalize emissive importance
+    for (auto& ei : emissives_importance)
+    {
+        ei /= total_max_flux;
     }
 }
 

@@ -101,6 +101,8 @@ private:
     void recursiveBuildQuaternarySAH(std::shared_ptr<BuildNode> bvh_node);
     void compact(std::shared_ptr<BuildNode> bvh_node, uint32_t next_sibling, uint32_t &surface_idx);
 
+    void arbitrarySplit(std::shared_ptr<BuildNode> bvh_node, size_t N);
+
     // Nodes stored in depth-first order
     std::vector<LinearNode> linear_tree;
 
