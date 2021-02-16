@@ -14,17 +14,10 @@ double Random::angle()
     return angle_distribution(engine);
 }
 
-size_t Random::weightedUIntSample(const std::vector<double>& weights)
+size_t Random::weightedIdxSample(const std::vector<double>& w)
 {
     double p = unit();
-    double prev = 0.0;
-    size_t i = 0;
-    for (; i < weights.size() - 1; i++)
-    {
-        prev += weights[i];
-        if (prev > p) return i;
-    }
-    return i;
+    return std::find_if(w.begin(), w.end() - 1, [p](const auto &v) { return v > p; }) - w.begin();
 }
 
 bool Random::trial(double probability)

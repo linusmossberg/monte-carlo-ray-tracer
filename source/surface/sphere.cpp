@@ -13,29 +13,16 @@ Surface::Sphere::Sphere(double radius, std::shared_ptr<Material> material)
 bool Surface::Sphere::intersect(const Ray& ray, Intersection& intersection) const
 {
     glm::dvec3 so = ray.start - origin;
-    double b = glm::dot(ray.direction, so);
+    double b = 2.0 * glm::dot(ray.direction, so);
     double c = glm::dot(so, so) - pow2(radius);
 
-    double discriminant = pow2(b) - c;
-    if (discriminant < 0.0)
+    double t_min, t_max;
+    if (solveQuadratic(1.0, b, c, t_min, t_max) && t_max >= 0.0)
     {
-        return false;
+        intersection = Intersection(t_min < 0.0 ? t_max : t_min);
+        return true;
     }
-
-    double v = std::sqrt(discriminant);
-    double t = -b - v;
-    if (t < 0.0)
-    {
-        t = v - b;
-        if (t < 0.0)
-        {
-            return false;
-        }
-    }
-
-    intersection = Intersection(t);
-
-    return true;
+    return false;
 }
 
 void Surface::Sphere::transform(const Transform &T)

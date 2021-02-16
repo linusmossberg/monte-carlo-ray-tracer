@@ -1,16 +1,12 @@
 {
   "num_render_threads": -1,
-  "naive": false,
-  "ior": 1,
+  "ior": 1.0,
 
   "photon_map": {
     "emissions": 1e7,
     "caustic_factor": 1.0,
     "k_nearest_photons": 50,
-    "max_radius": 0.2,
-    "max_caustic_radius": 0.05,
     "max_photons_per_octree_leaf": 200,
-    "use_shadow_photons": true,
     "direct_visualization": false
   },
 
@@ -21,8 +17,8 @@
       "eye": [ -2.9, 0, 0 ],
       "look_at": [ 13, -0.75, 0 ],
       "image":  { "width": 512, "height": 512 },
-      "sqrtspp": 3,
-      "savename": "c1_diffuse_naive"
+      "sqrtspp": 4,
+      "savename": "c1_diffuse"
     }
   ],
 

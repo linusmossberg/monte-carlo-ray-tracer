@@ -80,7 +80,7 @@
       "reflectance": "#37466D"
     },
     "light_bulb": {
-      "emittance": { "illuminant": "A", "scale": 2 }
+      "emittance": { "illuminant": "A", "scale": 10 }
     },
     "Painted_gray": {
       "reflectance": 0.5,

@@ -4,13 +4,13 @@
 
   "cameras": [
     {
-      "focal_length": 79,
+      "focal_length": 46,
       "sensor_width": 35,
-      "eye": [ -0.0029600381385535, 0.19830328226089478, 0.828150749206543 ],
-      "look_at": [ 0.002896534511819482, 0.16660931706428528, 0.022717338055372238 ],
-      "image":  { "width": 800, "height": 1000, "exposure_compensation": -2.0, "gain_compensation": 0.0, "tonemapper": "ACES" },
+      "eye": [ 0, 0.015, 0.42 ],
+      "look_at": [ 0, 0.048, 0 ],
+      "image":  { "width": 1104, "height": 400, "exposure_compensation": -2.0, "gain_compensation": 0.0, "tonemapper": "ACES" },
       "sqrtspp": 4,
-      "savename": "coffee_maker"
+      "savename": "shell"
     }
   ],
 
@@ -42,68 +42,63 @@
 
   "materials": {
     "default": {
-      "reflectance": 0.9
+      "reflectance": [0,1,0]
     },
-    "Plastic_Orange": {
-      "reflectance": [1.0, 0.3787, 0.0135],
-      "ior": 1.5
+    "brass": {
+      "ior": "data/spectral-distributions/brass.csv",
+      "specular_roughness": 0.2,
+      "specular_reflectance": 0.5
     },
-    "Plastic_Black": {
-      "reflectance": 0.0063,
+    "glass": {
       "ior": 1.5,
-      "specular_roughness": 0.1
-    },
-    "Glass": {
       "transparency": 1.0,
-      "ior": 1.5
+      "specular_roughness": 0.15
     },
-    "Metal": {
-      "perfect_mirror": true
+    "floor": {
+      "reflectance": 0.5,
+      "ior": 1.5,
+      "specular_roughness": 0.01
     },
-    "Floor": {
-      "reflectance": 0.5786,
-      "ior": 1.5
+    "light0": {
+      "emittance": { "temperature": 3000, "scale": 100000 }
     },
-    "Light": {
-      "emittance": 100000
+    "light1": {
+      "emittance": { "temperature": 10000, "scale": 100000 }
+    },
+    "light2": {
+      "emittance": { "scale": 10000 }
     }
   },
 
   "surfaces": [
     {
       "type": "object",
-      "smooth":  true,
-      "file": "data/coffee_maker/Plastic_Orange.obj",
-      "material": "Plastic_Orange"
+      "smooth": true,
+      "file": "data/shell/shell.obj",
+      "rotation": [-184.26, 185.79, 11.01],
+      "scale": 0.001,
+      "position": [-0.0592, 0.03848, 0],
+      "material": "glass"
+    },
+    {
+      "type": "object",
+      "smooth": true,
+      "file": "data/shell/shell.obj",
+      "rotation": [-175.74, 185.79, 168.99],
+      "scale": [0.001, -0.001, 0.001],
+      "position": [0.059, 0.03848, 0],
+      "material": "brass"
     },
     {
       "type": "object",
       "smooth":  true,
-      "file": "data/coffee_maker/Plastic_Black.obj",
-      "material": "Plastic_Black"
-    },
-    {
-      "type": "object",
-      "smooth":  true,
-      "file": "data/coffee_maker/Metal.obj",
-      "material": "Metal"
-    },
-    {
-      "type": "object",
-      "smooth":  true,
-      "file": "data/coffee_maker/Glass.obj",
-      "material": "Glass"
-    },
-    {
-      "type": "object",
-      "smooth":  true,
-      "file": "data/coffee_maker/Floor.obj",
-      "material": "Floor"
+      "file": "data/shell/Floor.obj",
+      "material": "floor"
     },
     {
       "type": "object",
       "vertex_set": "light0",
-      "material": "Light",
+      "material": "light0",
       "triangles": [
         [0, 1, 2],
         [0, 2, 3]
@@ -112,7 +107,7 @@
     {
       "type": "object",
       "vertex_set": "light1",
-      "material": "Light",
+      "material": "light1",
       "triangles": [
         [0, 1, 2],
         [0, 2, 3]
@@ -121,7 +116,7 @@
     {
       "type": "object",
       "vertex_set": "light2",
-      "material": "Light",
+      "material": "light2",
       "triangles": [
         [0, 1, 2],
         [0, 2, 3]

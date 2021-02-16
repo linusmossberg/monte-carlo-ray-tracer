@@ -24,7 +24,7 @@ bool Surface::Triangle::intersect(const Ray& ray, Intersection& intersection) co
 {
     glm::dvec3 P = glm::cross(ray.direction, E2);
     double determinant = glm::dot(P, E1);
-    if (std::abs(determinant) < C::EPSILON) // Ray parallel to triangle. 
+    if (determinant < C::EPSILON && determinant > -C::EPSILON) // Ray parallel to triangle. 
     {
         return false;
     }
@@ -64,20 +64,26 @@ bool Surface::Triangle::intersect(const Ray& ray, Intersection& intersection) co
 
 void Surface::Triangle::transform(const Transform &T)
 {
+    if (T.negative_determinant) std::swap(v1, v2);
+
     v0 = T.matrix * glm::dvec4(v0, 1.0);
     v1 = T.matrix * glm::dvec4(v1, 1.0);
     v2 = T.matrix * glm::dvec4(v2, 1.0);
 
     E1 = v1 - v0;
     E2 = v2 - v0;
+
     normal_ = glm::normalize(glm::cross(E1, E2));
 
     if (N)
     {
         auto &vn = *N;
-        vn[0] = T.rotation_matrix * glm::dvec4(glm::normalize(vn[0] / T.scale), 1.0);
-        vn[1] = T.rotation_matrix * glm::dvec4(glm::normalize(vn[1] / T.scale), 1.0);
-        vn[2] = T.rotation_matrix * glm::dvec4(glm::normalize(vn[2] / T.scale), 1.0);
+
+        if (T.negative_determinant) std::swap(vn[1], vn[2]);
+
+        vn[0] = T.transformNormal(vn[0]);
+        vn[1] = T.transformNormal(vn[1]);
+        vn[2] = T.transformNormal(vn[2]);
     }
 
     computeArea();

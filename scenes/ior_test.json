@@ -1,6 +1,5 @@
 {
   "num_render_threads": -1,
-  "naive": false,
   "ior": 1.0,
 
   "cameras": [
@@ -9,13 +8,13 @@
       "sensor_width": 35,
       "eye": [ 0, 0, -3.5 ],
       "look_at": 0,
-      "f_stop": 0.5,
-      "focus_distance": 3.5,
+      "f_stops": 0.5,
+      "focus_distances": 3.5,
       "image" : { 
         "width": 512,
         "height": 512
       },
-      "sqrtspp": 16,
+      "sqrtspp": 8,
       "savename": "ior_test"
     }
   ],
@@ -32,26 +31,23 @@
     },
     "ior1": {
       "transparency": 1.0,
-      "transmittance": [0.5, 0.5, 1.0],
       "external_medium": "scene",
-      "ior": 1.3
+      "ior": 1.4
     },
     "ior2": {
       "transparency": 1.0,
-      "transmittance": [0.5, 1.0, 0.5],
       "external_medium": "ior1",
-      "ior": 1.2
+      "ior": 1.3
     },
     "ior3": {
       "transparency": 1.0,
-      "transmittance": [1.0, 0.5, 0.5],
       "external_medium": "ior2",
-      "ior": 1.1
+      "ior": 1.2
     },
     "ior4": {
       "transparency": 1.0,
       "external_medium": "ior3",
-      "ior": 1.3
+      "ior": 1.1
     },
     "light": {
       "emittance": 10000

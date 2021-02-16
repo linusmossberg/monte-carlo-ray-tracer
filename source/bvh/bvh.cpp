@@ -82,7 +82,8 @@ Intersection BVH::intersect(const Ray& ray)
     double t;
     if (linear_tree[0].BB.intersect(ray, t))
     {
-        std::priority_queue<LinearNode::NodeIntersection> to_visit;
+        auto to_visit = reservedPriorityQueue<LinearNode::NodeIntersection>(64);
+
         uint32_t node_idx = 0;
 
         while (true)
@@ -315,11 +316,8 @@ void BVH::recursiveBuildQuaternarySAH(std::shared_ptr<BuildNode> bvh_node)
     
     if (extent_dims[axes.x] < C::EPSILON || extent_dims[axes.y] < C::EPSILON)
     {
-        if (S.size() > max_leaf_surfaces)
-        {
-            arbitrarySplit(bvh_node, 4);
-            for (const auto& child : bvh_node->children) recursiveBuildQuaternarySAH(child);
-        }
+        df_idx--;
+        recursiveBuildBinarySAH(bvh_node);
         return;
     }
 

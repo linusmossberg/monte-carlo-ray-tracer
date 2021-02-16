@@ -11,9 +11,8 @@ public:
     // This destroys the input octree for memory reasons.
     LinearOctree(Octree<Data> &octree_root);
 
-    std::vector<SearchResult<Data>> knnSearch(const glm::dvec3& p, size_t k, double max_distance) const;
+    std::vector<SearchResult<Data>> knnSearch(const glm::dvec3& p, size_t k, double radius_est) const;
     std::vector<SearchResult<Data>> radiusSearch(const glm::dvec3& p, double radius) const;
-    bool radiusEmpty(const glm::dvec3& p, double radius) const;
 
     struct alignas(64) LinearOctant
     {
@@ -31,7 +30,6 @@ private:
     void compact(Octree<Data> *node, uint32_t &df_idx, uint64_t &data_idx, bool last = false);
 
     void recursiveRadiusSearch(const uint32_t current, const glm::dvec3& p, double radius2, std::vector<SearchResult<Data>>& result) const;
-    void recursiveRadiusEmpty(const uint32_t current, const glm::dvec3& p, double radius2, bool &empty) const;
 
     void octreeSize(const Octree<Data> &octree_root, size_t &size, size_t &data_size) const;
 

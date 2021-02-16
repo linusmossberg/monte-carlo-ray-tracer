@@ -15,6 +15,7 @@ struct BoundingBox
     glm::dvec3 centroid() const;
     double area() const;
     double distance2(const glm::dvec3 &p) const;
+    double max_distance2(const glm::dvec3& p) const;
     void merge(const BoundingBox &BB);
     void merge(const glm::dvec3 &p);
     bool valid() const;

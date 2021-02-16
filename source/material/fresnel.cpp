@@ -15,8 +15,6 @@
 // https://seblagarde.wordpress.com/2013/04/29/memo-on-fresnel-equations/
 double Fresnel::dielectric(double n1, double n2, double cos_theta)
 {
-    if (n2 < 1.0) return 0.0;
-
     double g2 = pow2(n2 / n1) + pow2(cos_theta) - 1.0;
 
     if (g2 < 0.0) return 1.0;

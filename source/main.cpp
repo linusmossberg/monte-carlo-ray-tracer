@@ -57,6 +57,6 @@ int main(int argc, char* argv[])
     }
 
     camera->capture();
-    
+
     return 0;
 }

@@ -1,32 +1,38 @@
 #pragma once
 
-#include "../../octree/octree.hpp"
+#include <glm/glm.hpp>
 
-struct Photon : public OctreeData
+struct alignas(32) Photon
 {
-public:
     Photon(const glm::dvec3& flux, const glm::dvec3& position, const glm::dvec3& direction)
-        : flux(flux), position(position), direction(direction) { }
-
-    virtual const glm::dvec3& pos() const
+        : flux_(flux), position_(position)
     {
-        return position;
+        theta = (float)std::atan2(glm::length(glm::dvec2(direction)), direction.z);
+        phi = (float)std::atan2(direction.y, direction.x);
     }
 
-    glm::dvec3 flux, position, direction;
-};
-
-// Separate shadow photon type to reduce memory usage
-struct ShadowPhoton : public OctreeData
-{
-public:
-    ShadowPhoton(const glm::dvec3& position)
-        : position(position) { }
-
-    virtual const glm::dvec3& pos() const
+    glm::dvec3 pos() const
     {
-        return position;
+        return position_;
     }
 
-    glm::dvec3 position;
+    glm::dvec3 dir() const
+    {
+        double sin_theta = std::sin(theta);
+        return glm::dvec3(
+            sin_theta * std::cos(phi),
+            sin_theta * std::sin(phi),
+            std::cos(theta)
+        );
+    }
+
+    glm::dvec3 flux() const
+    {
+        return flux_;
+    }
+
+private:
+    // Single-precision and polar angles to reduce size to 32 bytes.
+    glm::vec3 flux_, position_;
+    float phi, theta;
 };

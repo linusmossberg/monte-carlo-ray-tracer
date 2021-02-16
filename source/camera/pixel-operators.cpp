@@ -44,8 +44,8 @@ glm::dvec3 linear(const glm::dvec3 &in)
     return in;
 }
 
-std::vector<uint8_t> truncate(const glm::dvec3 &in)
+std::vector<char> truncate(const glm::dvec3 &in)
 {
     glm::dvec3 c = glm::clamp(in, glm::dvec3(0.0), glm::dvec3(1.0)) * std::nextafter(256.0, 0.0);
-    return { (uint8_t)c.b, (uint8_t)c.g, (uint8_t)c.r };
+    return { (char)c.b, (char)c.g, (char)c.r };
 }

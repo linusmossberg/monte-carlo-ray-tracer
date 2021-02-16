@@ -17,8 +17,8 @@
   ],
 
   "bvh": {
-    "type": "octree",
-    "bins_per_axis": 32
+    "type": "quaternary_sah",
+    "bins_per_axis": 8
   },
 
   "vertices": {
@@ -89,8 +89,6 @@
       "ior": 1.33 
     },
     "dragon": {
-      "transmittances": "#ff9d47",
-      "transmittancebluegreen": "#59b39c",
       "transmittance": "#ff9d47",
       "transparency": 1.0,
       "specular_reflectance": 1.0,

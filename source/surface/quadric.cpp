@@ -85,45 +85,18 @@ bool Surface::Quadric::intersect(const Ray& ray, Intersection& intersection) con
     double b = glm::dot(d, Qo) * 2.0;
     double c = glm::dot(o, Qo);
 
-    double t;
-    if (std::abs(a) < C::EPSILON)
+    double t_min, t_max;
+    if (solveQuadratic(a, b, c, t_min, t_max) && t_max >= 0.0)
     {
-        t = -c / b;
-    }
-    else
-    {
-        double discriminant = pow2(b) - 4.0 * a*c;
-
-        // Complex solutions, no intersection
-        if (discriminant < 0.0)
+        double t = t_bb + (t_min < 0.0 ? t_max : t_min);
+        if (!BB_.contains(ray(t)))
         {
             return false;
         }
-
-        double v = std::sqrt(discriminant);
-
-        double t0 = (-b - v) / a;
-        double t1 = (-b + v) / a;
-
-        if (t0 > t1) std::swap(t0, t1);
-
-        t = t0 < 0.0 ? t1 : t0;
-
-        t /= 2.0;
+        intersection = Intersection(t);
+        return true;
     }
-
-    if (t < 0.0) return false;
-
-    t += t_bb;
-
-    if (!BB_.contains(ray(t)))
-    {
-        return false;
-    }
-
-    intersection = Intersection(t);
-    
-    return true;
+    return false;
 }
 
 void Surface::Quadric::transform(const Transform &T)

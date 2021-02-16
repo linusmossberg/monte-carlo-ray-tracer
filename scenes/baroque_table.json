@@ -10,7 +10,7 @@
       "look_at": [ 0.02125, -0.605, 0.85 ],
       "focus_distance": 1.15,
       "image":  { "width": 1280, "height": 720, "exposure_compensation": -3.0, "gain_compensation": 0.0, "tonemapper": "ACES" },
-      "sqrtspp": 8,
+      "sqrtspp": 4,
       "savename": "baroque_table"
     }
   ],

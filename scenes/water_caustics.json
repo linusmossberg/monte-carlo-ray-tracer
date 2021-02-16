@@ -8,7 +8,7 @@
       "sensor_width": 35,
       "eye": [ 0, 1, -6.83879 ],
       "look_at": [ 0, 1, 0 ],
-      "image":  { "width": 1000, "height": 1000, "exposure_compensation": -1.0, "gain_compensation": -0.55, "tonemapper": "Hable" },
+      "image":  { "width": 1000, "height": 1000, "exposure_compensation": -1.0, "gain_compensation": -0.5, "tonemapper": "Hable" },
       "sqrtspp": 4,
       "savename": "water_caustics"
     }
@@ -18,10 +18,7 @@
     "emissions": 1e6,
     "caustic_factor": 10.0,
     "k_nearest_photons": 50,
-    "max_radius": 0.025,
-    "max_caustic_radius": 0.02,
     "max_photons_per_octree_leaf": 200,
-    "use_shadow_photons": true,
     "direct_visualization": false
   },
 

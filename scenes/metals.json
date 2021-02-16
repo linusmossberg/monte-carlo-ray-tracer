@@ -1,6 +1,5 @@
 {
   "num_render_threads": -1,
-  "naive": false,
   "ior": 1.0,
 
   "cameras": [
@@ -10,7 +9,7 @@
       "eye": [ 0, 75, 255 ],
       "look_at": [ 0, 1, 0 ],
       "image": { "width": 1280, "height": 240, "tonemapper": "ACES" },
-      "sqrtspp": 4,
+      "sqrtspp": 32,
       "savename": "metals"
     }
   ],

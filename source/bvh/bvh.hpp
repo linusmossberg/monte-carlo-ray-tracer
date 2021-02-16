@@ -9,11 +9,11 @@ namespace Surface { class Base; }
 
 class BVH
 {
-    struct SurfaceCentroid : public OctreeData
+    struct SurfaceCentroid
     {
         SurfaceCentroid(std::shared_ptr<Surface::Base> surface);
 
-        virtual const glm::dvec3& pos() const
+        glm::dvec3 pos() const
         {
             return centroid;
         }
@@ -73,7 +73,7 @@ class BVH
         uint32_t next_sibling; // 0 if there is none
 
         // Used for priority queue
-        struct NodeIntersection
+        struct alignas(16) NodeIntersection
         {
             NodeIntersection(uint32_t node, double t) : t(t), node(node) { }
             bool operator< (const NodeIntersection& i) const { return i.t < t; };

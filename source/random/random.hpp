@@ -23,7 +23,7 @@ namespace Random
     // These may be possible to non-type template in C++20
     double unit(), angle();
 
-    size_t weightedUIntSample(const std::vector<double>& weights);
+    size_t weightedIdxSample(const std::vector<double>& cumulative_weights);
 
     bool trial(double probability);
 

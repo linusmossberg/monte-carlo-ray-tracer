@@ -1,16 +1,12 @@
 {
   "num_render_threads": -1,
-  "naive": false,
   "ior": 1.75,
 
   "photon_map": {
-    "emissions": 2e6,
-    "caustic_factor": 50.0,
+    "emissions": 1e6,
+    "caustic_factor": 10.0,
     "k_nearest_photons": 50,
-    "max_radius": 0.1,
-    "max_caustic_radius": 0.05,
     "max_photons_per_octree_leaf": 200,
-    "use_shadow_photons": false,
     "direct_visualization": false
   },
 
@@ -56,7 +52,7 @@
     },
     "crystal": {
       "ior": 3.5,
-      "transparency":  1.0,
+      "transparency":  1,
       "specular_reflectance": 1,
       "transmittance": [ 0.5, 1.0, 0.9 ]
     },
@@ -66,7 +62,7 @@
       "ior": 2.4
     },
     "transparent-1.17": {
-      "transparency": 1.0,
+      "transparency": 1,
       "specular_reflectance": [ 1, 1, 1 ],
       "ior": 1.17
     },
@@ -75,12 +71,10 @@
       "specular_reflectance": [ 1, 1, 1 ]
     },
     "rough-blue": {
-      "reflectance": [ 0.66, 0.929, 1.0 ],
-      "roughness": 10.0
+      "reflectance": [ 0.66, 0.929, 1.0 ]
     },
     "rough-red": {
-      "reflectance": [ 1.0, 0.66, 0.66 ],
-      "roughness": 10.0
+      "reflectance": [ 1.0, 0.66, 0.66 ]
     },
     "light": {
       "reflectance": [ 0.9, 0.9, 0.9 ],

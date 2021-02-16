@@ -2,18 +2,18 @@
 
 This is a physically based renderer with Path Tracing and Photon Mapping.
 
-![Path traced render of baroque table, 3.8 million triangles. Original scene by 1DInc.](https://user-images.githubusercontent.com/15798094/104470709-4c75d200-55ba-11eb-9f37-a3651a64cd1a.jpg "Path traced render of baroque table, 3.8 million triangles. Original scene by 1DInc.")
-![Path traced render of lego bulldozer, 2 million triangles. Original scene by Heinzelnisse.](https://user-images.githubusercontent.com/15798094/104470739-55ff3a00-55ba-11eb-8213-3171b954c3ed.jpg "Path traced render of lego bulldozer, 2 million triangles. Original scene by Heinzelnisse.")
-![Photon mapped render of caustics, 6.9 million triangles and 171 million photon particles. Original scene by Benedikt Bitterli.](https://user-images.githubusercontent.com/15798094/104966091-5fd0d500-59e0-11eb-9160-6d42dbc17050.jpg "Photon mapped render of caustics, 6.9 million triangles and 171 million photon particles. Original scene by Benedikt Bitterli.")
+![Path traced render of shells, 7 million triangles.](https://imgur.com/9Im3WBW.jpg "Path traced render of shells, 7 million triangles.")
+![Path traced render of lego bulldozer, 2 million triangles. Original scene by Heinzelnisse.](https://imgur.com/zmBM0gP.jpg "Path traced render of lego bulldozer, 2 million triangles. Original scene by Heinzelnisse.")
+![Photon mapped render of caustics, 6.9 million triangles and 347 million photon particles. Original scene by Benedikt Bitterli.](https://i.imgur.com/BsagYAi.jpg "Photon mapped render of caustics, 6.9 million triangles and 347 million photon particles. Original scene by Benedikt Bitterli.")
 
-This renderer was originally developed for the course [Advanced Global Illumination and Rendering](https://liu.se/studieinfo/en/kurs/tncg15) (TNCG15) at Linköpings Universitet, but I've continued to add features and improvements since then.
+This renderer was originally developed for the course [Advanced Global Illumination and Rendering](https://liu.se/studieinfo/en/kurs/tncg15) (TNCG15) at Linköpings universitet, but I've continued to add features and improvements since then.
 
 The program is written in C++ and requires a compiler with C++17 support. The only dependencies are the header-only libraries [GLM](https://glm.g-truc.net/) and [nlohmann::json](https://github.com/nlohmann/json), which are included in the repository.
 
 ## Building
 
-Install [git](https://git-scm.com/), [CMake](https://cmake.org/download/) and a modern compiler/IDE for your platform and run the following commands:
-```
+Install [git](https://git-scm.com/), [CMake](https://cmake.org/download/) and a modern compiler for your platform and run the following commands:
+```sh
 git clone https://github.com/linusmossberg/monte-carlo-ray-tracer
 cd monte-carlo-ray-tracer
 cmake .
@@ -60,10 +60,7 @@ Example:
   "emissions": 1e6,
   "caustic_factor": 100.0,
   "k_nearest_photons": 50,
-  "max_radius": 0.01,
-  "max_caustic_radius": 0.005,
   "max_photons_per_octree_leaf": 200,
-  "use_shadow_photons": false,
   "direct_visualization": false
 }
 ```
@@ -72,13 +69,11 @@ The `emissions` field determines the base number of rays that should be emitted 
 
 The `caustic_factor` determines how many times more caustic photons should be generated relative to other photon types. 1 is the "natural" factor, but this results in blurry caustics since the caustic photon map is visualized directly.
 
-The `k_nearest_photons` field specifies the number of nearest photons to search for and use in the radiance estimate each time a photon map is evaluated at a point. Larger values create better but less localized (blurrier) estimates since the search sphere is expanded to cover the target number of photons. The maximum radius of this search sphere is controlled with the `max_radius` field. This is useful to discard large parts of the search space and thereby increase performance. The global radiance evaluation is however delayed if the target number of photons doesn't fit in the search sphere to prevent bad estimates, so this should be set to a reasonable value. `max_caustic_radius` is the same but is used exclusively for caustic photons.
+The `k_nearest_photons` field specifies the number of nearest photons to search for and use in the radiance estimate each time a photon map is evaluated at a point. Larger values create better but less localized (blurrier) estimates since the search sphere is expanded to cover the target number of photons.
 
 The `max_photons_per_octree_leaf` field affects both the octree search performance and memory usage of the application. This value can probably be left at ~200 in most cases.
 
-The `use_shadow_photons` field specifies whether to use shadow photons. Shadow photons are used to determine if it's necessary to cast shadow rays or delay the global radiance evaluation in certain situations. This can improve performance and reduce artifacts in some scenes and do the opposite in other.
-
-The `direct_visualization` field can be used to visualize the photon maps directly. Setting this to true will make the program evaluate the global radiance from all photon maps at the first diffuse reflection.
+The `direct_visualization` field can be used to visualize the photon maps directly. Setting this to true will make the program evaluate the global radiance at the first diffuse reflection.
 </details>
 
 ___
@@ -157,7 +152,7 @@ The `eye` field defines the position of the camera, and the `up` and `forward` f
 
 The `f_stop` and `focus_distance` fields defines the depth of field properties of the camera and are optional. The distance from the camera to the `look_at` coordinate is used as focus distance if this coordinate is specified and if no valid focus distance is specified.
 
-The `sqrtspp` (Square-Rooted Samples Per Pixel) property defines the square-rooted number of ray paths that should be sampled from each pixel in the camera.
+The `sqrtspp` field defines the square-rooted number of ray paths that should be sampled from each pixel in the camera.
 
 The `savename` property defines the name of the resulting saved image file. Images are saved in TGA format.
 
@@ -197,13 +192,8 @@ Example:
       "imaginary": [4.52084303, 3.61703254, 2.59526494]
     }
   },
-  "water": {
-    "ior": 1.333,
-    "transparency": 1.0
-  },
   "crystal": {
     "ior": 2.0,
-    "external_medium": "water",
     "transparency":  1.0,
     "transmittance": [ 0.5, 1.0, 0.9 ],
     "specular_roughness": 0.1
@@ -240,7 +230,6 @@ The material fields are:
 | `specular_roughness`   | scalar      | 0       | [0, 1]      |
 | `transparency`         | scalar      | 0       | [0, 1]      |
 | `perfect_mirror`       | bool        | false   | {f, t}      |
-| `external_medium`      | string      | "scene" | keys        |
 | `ior`                  | [IOR](#ior) | 0       | [IOR](#ior) |
 
 These fields are all optional and any combination of fields can be used. A material can for example be a combination of diffusely reflecting, specularly reflecting, emissive, transmissive (specularly refracting) and rough. If set to true, the `perfect_mirror` field overrides most other fields to simulate a perfect mirror with infinite IOR.
@@ -248,8 +237,6 @@ These fields are all optional and any combination of fields can be used. A mater
 The `reflectance`, `specular_reflectance` and `transmittance` fields specifies the amount of radiance that should be diffusely reflected and specularly reflected/transmitted for each RGB channel. This is a simplification since these are spectral properties that varies with wavelength and not by the resulting tristimulus values of the virtual camera, but this is computationally cheaper and simpler. These properties now take gamma-corrected values and linearizes them internally to make it easier to pick colors via color pickers.
 
 The `emittance` field defines the radiant flux of each RGB channel in watts. This means that surfaces with different surface areas will emit the same amount of radiant energy if they are assigned the same emissive material. It's also possible to set the emittance by specifying an object with either an `illuminant` or a `temperature` field, along with a `scale` field. The `illuminant` field is used to specify a [CIE standard illuminant](https://en.wikipedia.org/wiki/Standard_illuminant), while the `temperature` field is used to specify a blackbody radiator in kelvin.
-
-The `external_medium` field can be used to specify the key string of the material that the material is enclosed in. This is required to correctly render scenes with layered transmissive objects (eg. ice cubes with air bubbles in a glass of water). This field is only needed when a ray exits a transmissive object that is enclosed in another transmissive object, and is therefore not required for opaque materials or transmissive materials that only has the scene as external medium.
 
 #### IOR
 
@@ -259,7 +246,7 @@ The `real` part is often called *n* and it represents the usual index of refract
 
 The `imaginary` part is often called *k* and it represents the absorption coefficient. The imaginary part is non-zero for conductives and zero for dielectrics, which means that conductives rapidly absorbs the transmitted radiance while dielectrics let it pass through.
 
-Spectral distributions of these values are available at [refractiveindex.info](https://refractiveindex.info/). These spectral distributions can be reduced to linear RGB by integrating the product of the spectral distributions and each of the CIE color matching functions over the visible spectrum, and then converting the resulting XYZ tristimulus values to linear RGB. The program does this automatically if a path to a downloaded CSV file with spectral data is provided for the `ior` field, but I also wrote the following MATLAB script to get the RGB values directly:
+Spectral distributions of these values are available at [refractiveindex.info](https://refractiveindex.info/). These spectral distributions can be reduced to linear sRGB by integrating the product of the spectral distributions and each of the CIE color matching functions over the visible spectrum, and then converting the resulting XYZ tristimulus values to linear sRGB. The program does this automatically if a path to a downloaded CSV file with spectral data is provided for the `ior` field, but I also wrote the following MATLAB script to get the values directly:
 
 ```matlab
 % Read CIE cmfs, http://cvrl.ioo.ucl.ac.uk/cmfs.htm
@@ -431,6 +418,8 @@ The `bound_dimensions` field specifies the dimensions of the axis-aligned boundi
 
 Quadric surfaces currently do not support emissive materials (the emissive part is simply ignored).
 
+![Path traced render of a scene containing only quadric surfaces.](https://user-images.githubusercontent.com/15798094/104470916-847d1500-55ba-11eb-99df-e600d248f495.jpg "Path traced render of a scene containing only quadric surfaces.")
+
 ___
 <sup>1</sup> The usual quadric equation looks slightly different when it's derived from the quadric matrix representation *p<sup>T</sup>Qp* since this results in some constants being doubled. The program uses this representation internally, but I've eliminated this in the scene format since it's easier to not have to think about whether or not some constants will be doubled when creating a surface.
 </details>
@@ -439,18 +428,18 @@ ___
 
 ## Renders
 
-![Path traced render of coffee maker, 235 049 triangles. Original scene by cekuhnen.](https://user-images.githubusercontent.com/15798094/104470841-716a4500-55ba-11eb-814e-a00b0b604714.jpg "Path traced render of coffee maker, 235 049 triangles. Original scene by cekuhnen.")
-![Path traced render of a scene containing only quadric surfaces.](https://user-images.githubusercontent.com/15798094/104470916-847d1500-55ba-11eb-99df-e600d248f495.jpg "Path traced render of a scene containing only quadric surfaces.")
-![Path traced render of the Stanford bunny with different rough metal materials, 864 348 triangles.](https://user-images.githubusercontent.com/15798094/104470964-919a0400-55ba-11eb-8462-9525c668177f.jpg "Path traced render of the Stanford bunny with different rough metal materials, 864 348 triangles.")
-![Path traced render of the Stanford dragon with a rough transmissive material, 871 414 triangles.](https://user-images.githubusercontent.com/15798094/104471005-9e1e5c80-55ba-11eb-98c7-11923b130b2e.jpg "Path traced render of the Stanford dragon with a rough transmissive material, 871 414 triangles.")
-![Path traced render of piping, 2.4 million triangles. Original scene by seeker47.](https://user-images.githubusercontent.com/15798094/104949124-b9280c80-59be-11eb-925c-eb6da552c849.jpg "Path traced render of piping, 2.4 million triangles. Original scene by seeker47.")
+![Path traced render of baroque table, 3.8 million triangles. Original scene by 1DInc.](https://imgur.com/N3cM7Hl.jpg "Path traced render of baroque table, 3.8 million triangles. Original scene by 1DInc.")
+![Path traced render of spaceship, 457 200 triangles. Original scene by thecali.](https://i.imgur.com/rSVyvl0.jpg "Path traced render of spaceship, 457 200 triangles. Original scene by thecali.")
+![Path traced render of coffee maker, 235 049 triangles. Original scene by cekuhnen.](https://imgur.com/38jhuBX.jpg "Path traced render of coffee maker, 235 049 triangles. Original scene by cekuhnen.")
+![Path traced render of Veach MIS scene. Original scene by Benedikt Bitterli.](https://imgur.com/oNbmpir.jpg "Path traced render of Veach MIS scene. Original scene by Benedikt Bitterli.")
+![Path traced render of piping, 2.4 million triangles. Original scene by seeker47.](https://imgur.com/AGnRbfX.jpg "Path traced render of piping, 2.4 million triangles. Original scene by seeker47.")
 
 ## Resources
 
 The following resources have been useful for the project:
 * [Physically Based Rendering](http://www.pbr-book.org/) - Matt Pharr, Wenzel Jakob and Greg Humphreys
 * [Global Illumination using Photon Maps](http://graphics.stanford.edu/~henrik/papers/ewr7/ewr7.html) - Henrik Wann Jensen
-* [A Simpler and Exact Sampling Routine for the GGX Distribution of Visible Normals](https://hal.archives-ouvertes.fr/hal-01509746/document) - Eric Heitz
+* [Sampling the GGX Distribution of Visible Normals](http://jcgt.org/published/0007/04/01/) - Eric Heitz
 * [Importance Sampling techniques for GGX with Smith Masking-Shadowing](https://schuttejoe.github.io/post/ggximportancesamplingpart2/) - Joe Schutte
 * [PBR Diffuse Lighting for GGX+Smith Microsurfaces](https://twvideo01.ubm-us.net/o1/vault/gdc2017/Presentations/Hammon_Earl_PBR_Diffuse_Lighting.pdf) - Earl Hammon
 * [Memo on Fresnel Equations](https://seblagarde.wordpress.com/2013/04/29/memo-on-fresnel-equations/) - Sébastien Lagarde

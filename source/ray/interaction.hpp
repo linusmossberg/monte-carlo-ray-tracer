@@ -8,10 +8,11 @@
 #include "intersection.hpp"
 
 class Material;
+namespace Surface { class Base; };
 
 struct Interaction
 {
-    Interaction(const Intersection &intersection, const Ray &ray);
+    Interaction(const Intersection &intersection, const Ray &ray, double external_ior);
 
     enum Type
     {
@@ -22,15 +23,19 @@ struct Interaction
 
     Type type;
 
-    glm::dvec3 BRDF(const glm::dvec3 &in) const;
+    bool sampleBSDF(glm::dvec3& bsdf_absIdotN, double& pdf, Ray& new_ray, bool flux = false) const;
+    bool BSDF(glm::dvec3& bsdf_absIdotN, const glm::dvec3& world_wi, double& pdf) const;
     
-    double t, n1, n2;
+    // n1 and n2 are correctly ordered.
+    double t, n1, n2, T, R;
     std::shared_ptr<Material> material;
-    glm::dvec3 position, normal, out;
-    CoordinateSystem cs;
-    bool inside;
+    std::shared_ptr<Surface::Base> surface;
+    glm::dvec3 position, normal, out, specular_normal;
+    CoordinateSystem shading_cs;
+    bool inside, dirac_delta;
     Ray ray;
 
 private:
-    void selectType(const glm::dvec3 &specular_normal);
+    glm::dvec3 BSDF(const glm::dvec3& wo, const glm::dvec3& wi, double& pdf, bool flux, bool wi_dirac_delta) const;
+    void selectType();
 };

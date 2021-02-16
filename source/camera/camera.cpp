@@ -14,6 +14,7 @@
 #include "../common/util.hpp"
 #include "../common/constexpr-math.hpp"
 #include "../common/format.hpp"
+#include "../common/constants.hpp"
 
 Camera::Camera(const nlohmann::json &j, const Option &option)
 {
@@ -149,7 +150,8 @@ void Camera::sampleImageThread(WorkQueue<Bucket>& buckets)
 void Camera::lookAt(const glm::dvec3& p)
 {
     forward = glm::normalize(p - eye);
-    left = glm::normalize(glm::cross(glm::dvec3(0.0, 1.0, 0.0), forward));
+    left = glm::cross({0.0, 1.0, 0.0}, forward);
+    left = glm::length(left) < C::EPSILON ? glm::dvec3(-1.0, 0.0, 0.0) : glm::normalize(left);
     up = glm::normalize(glm::cross(forward, left));
 }
 

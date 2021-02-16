@@ -8,12 +8,6 @@
 
 #include "../common/bounding-box.hpp"
 
-struct OctreeData
-{
-    virtual const glm::dvec3& pos() const = 0;
-    virtual ~OctreeData() { }
-};
-
 template <class Data>
 struct SearchResult
 {
@@ -25,8 +19,10 @@ struct SearchResult
 template <class Data>
 class Octree
 {
-static_assert(std::is_base_of<OctreeData, Data>::value, "Octree Data type must derive from OctreeData.");
-
+static_assert(
+    std::is_member_function_pointer<decltype(&Data::pos)>::value, 
+    "Octree Data must implement a 'glm::dvec3 pos()' member."
+);
 public:
     Octree(const glm::dvec3& origin, const glm::dvec3& half_size, size_t max_node_data);
     Octree(const BoundingBox& bb, size_t max_node_data);
@@ -40,7 +36,7 @@ public:
     }
 
     std::vector<SearchResult<Data>> radiusSearch(const glm::dvec3& point, double radius) const;
-    std::vector<SearchResult<Data>> knnSearch(const glm::dvec3& p, size_t k, double max_distance);
+    std::vector<SearchResult<Data>> knnSearch(const glm::dvec3& p, size_t k, double radius_est);
 
     std::vector<Data> data_vec;
     BoundingBox BB;

@@ -46,7 +46,21 @@ The following sections lists the free resources used for some of the scenes in t
 **URL**: https://blendswap.com/blend/13489<br>
 **License**: [CC-0](https://creativecommons.org/publicdomain/mark/1.0/)<br>
 **Scene file**: [spaceship.json](spaceship.json)<br>
-**Notes**: Scene conversion is work in process.
+**Notes**: The scene is based on the conversion by [Benedikt Bitterli](https://benedikt-bitterli.me/resources/).
+
+## Veach MIS Scene
+
+**Original creator**: [Benedikt Bitterli](https://benedikt-bitterli.me/)<br>
+**URL**: https://benedikt-bitterli.me/resources/<br>
+**License**: [CC-0](https://creativecommons.org/publicdomain/mark/1.0/)<br>
+**Scene file**: [veach_mis.json](veach_mis.json)
+
+## Shell Model
+
+**Original creator**: [Three D Scans](http://threedscans.com/)<br>
+**URL**: http://threedscans.com/shell/ramose-murex/<br>
+**License**: [CC-0](https://creativecommons.org/publicdomain/mark/1.0/)<br>
+**Notes**: This model is not included in the repository since it exceeds 100 MB. It must be downloaded, converted to OBJ (using e.g. Blender) and added to the data/shell directory before rendering scenes that uses this model.
 
 ## Refractive Index Spectral Distributions
 

@@ -9,6 +9,7 @@
 #include "../material/material.hpp"
 #include "../surface/surface.hpp"
 #include "../bvh/bvh.hpp"
+#include "../random/random.hpp"
 
 #include <fstream>
 #include <sstream>
@@ -19,12 +20,6 @@ Scene::Scene(const nlohmann::json& j)
     std::unordered_map<std::string, std::shared_ptr<Material>> materials = j.at("materials");
     auto vertices = getOptional(j, "vertices", std::unordered_map<std::string, std::vector<glm::dvec3>>());
     ior = getOptional(j, "ior", 1.0);
-
-    for (const auto& m : j.at("materials").items())
-    {
-        std::string external_medium = getOptional<std::string>(m.value(), "external_medium", "scene");
-        materials.at(m.key())->external_ior = external_medium == "scene" ? ior : materials.at(external_medium)->ior;
-    }
 
     for (const auto& s : j.at("surfaces"))
     {
@@ -137,7 +132,7 @@ Scene::Scene(const nlohmann::json& j)
                 }
                 surfaces.push_back(std::make_shared<Surface::Quadric>(s, mat));
             }
-            if (transform) surfaces.back()->transform(*transform);
+            if (transform && !surfaces.empty()) surfaces.back()->transform(*transform);
         }
     }
 
@@ -182,23 +177,34 @@ Intersection Scene::intersect(const Ray& ray) const
 
 void Scene::generateEmissives()
 {
-    double total_max_flux = 0.0;
     for (const auto& surface : surfaces)
     {
-        if (glm::length(surface->material->emittance) >= C::EPSILON)
+        if (surface->material->emissive)
         {
-            double max_flux = glm::compMax(surface->material->emittance);
-            total_max_flux += max_flux;
-            surface->material->emittance /= surface->area(); // flux to radiosity
             emissives.push_back(surface);
-            emissives_importance.push_back(max_flux);
         }
     }
 
-    // Normalize emissive importance
-    for (auto& ei : emissives_importance)
+    // Sort emissives based on importance (flux) to reduce the 
+    // number of iterations needed to select a random emissive.
+    std::sort(emissives.begin(), emissives.end(),
+        [](const auto& a, const auto& b)
+        {
+            return glm::compMax(a->material->emittance) > glm::compMax(b->material->emittance);
+        }
+    );
+    
+    double cumulative_max_flux = 0.0;
+    for (const auto& emissive : emissives)
     {
-        ei /= total_max_flux;
+        cumulative_max_flux += glm::compMax(emissive->material->emittance);
+        cumulative_emissives_importance.push_back(cumulative_max_flux);
+        emissive->material->emittance /= emissive->area(); // flux to radiosity
+    }
+
+    for (auto& ei : cumulative_emissives_importance)
+    {
+        ei /= cumulative_max_flux;
     }
 }
 
@@ -214,6 +220,19 @@ glm::dvec3 Scene::skyColor(const Ray& ray) const
 {
     double fy = (1.0 + std::asin(glm::dot(glm::dvec3(0.0, 1.0, 0.0), ray.direction)) / C::PI) / 2.0;
     return glm::mix(glm::dvec3(1.0, 0.5, 0.0), glm::dvec3(0.0, 0.5, 1.0), fy);
+}
+
+std::shared_ptr<Surface::Base> Scene::selectLight(double& select_probability) const
+{
+    size_t emissive_idx = Random::weightedIdxSample(cumulative_emissives_importance);
+
+    select_probability = cumulative_emissives_importance[emissive_idx];
+    if (emissive_idx > 0)
+    {
+        select_probability -= cumulative_emissives_importance[emissive_idx - 1];
+    }
+
+    return emissives[emissive_idx];
 }
 
 void Scene::parseOBJ(const std::filesystem::path &path,

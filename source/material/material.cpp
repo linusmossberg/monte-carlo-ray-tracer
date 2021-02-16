@@ -13,129 +13,102 @@
 #include "../color/illuminant.hpp"
 #include "../color/srgb.hpp"
 #include "fresnel.hpp"
+#include "ggx.hpp"
 
-glm::dvec3 Material::DiffuseBRDF(const glm::dvec3 &i, const glm::dvec3 &o)
+glm::dvec3 Material::diffuseReflection(const glm::dvec3& wi, const glm::dvec3& wo, double& PDF) const
 {
-    return rough ? OrenNayarBRDF(i, o) : LambertianBRDF();
+    if (wi.z < 0.0)
+    {
+        PDF = 0.0;
+        return glm::dvec3(0.0);
+    }
+
+    PDF = wi.z * C::INV_PI;
+    return rough ? OrenNayar(wi, wo) : lambertian();
 }
 
-glm::dvec3 Material::SpecularBRDF(const glm::dvec3 &i, const glm::dvec3 &o, bool inside)
+glm::dvec3 Material::specularReflection(const glm::dvec3& wi, const glm::dvec3& wo, double& PDF) const
 {
-    if (i.z < 0.0) // Transmission
+    if (wi.z < 0.0)
     {
-        double factor = rough_specular ? GGXFactor(-i.z, o.z) : 1.0;
-        return inside ? glm::dvec3(factor) : factor * transmittance;
+        PDF = 0.0;
+        return glm::dvec3(0.0);
+    }
+    if (rough_specular)
+    {
+        return specular_reflectance * GGX::reflection(wi, wo, a, PDF);
     }
     else
     {
-        return rough_specular ? GGXFactor(i.z, o.z) * specular_reflectance : specular_reflectance;
-    }
+        PDF = 1.0;
+        return specular_reflectance / std::abs(wi.z);
+    }        
 }
 
-glm::dvec3 Material::LambertianBRDF()
+glm::dvec3 Material::specularTransmission(const glm::dvec3& wi, const glm::dvec3& wo, double n1, 
+                                          double n2, double& PDF, bool inside, bool flux) const
 {
-    return reflectance / C::PI;
+    if (wi.z > 0.0)
+    {
+        PDF = 0.0;
+        return glm::dvec3(0.0);
+    }
+
+    glm::dvec3 btdf = !inside ? transmittance : glm::dvec3(1.0);
+    if (rough_specular)
+    {
+        btdf *= GGX::transmission(wi, wo, n1, n2, a, PDF);
+        if (flux) btdf *= pow2(n2 / n1);
+    }
+    else
+    {
+        PDF = 1.0;
+        btdf *= transmittance / std::abs(wi.z);
+        if (!flux) btdf *= pow2(n1 / n2);
+    }
+    return btdf;
+}
+
+glm::dvec3 Material::visibleMicrofacet(const glm::dvec3& wo) const
+{
+    return GGX::visibleMicrofacet(wo, a);
+}
+
+glm::dvec3 Material::lambertian() const
+{
+    return reflectance * C::INV_PI;
 }
 
 // Avoids trigonometric functions for increased performance.
-glm::dvec3 Material::OrenNayarBRDF(const glm::dvec3 &i, const glm::dvec3 &o)
+glm::dvec3 Material::OrenNayar(const glm::dvec3& wi, const glm::dvec3& wo) const
 {
     // equivalent to dot(normalize(i.x, i.y, 0), normalize(o.x, o.y, 0)).
     // i.e. remove z-component (normal) and get the cos angle between vectors with dot
-    double cos_delta_phi = glm::clamp((i.x*o.x + i.y*o.y) / std::sqrt((pow2(i.x) + pow2(i.y)) * (pow2(o.x) + pow2(o.y))), 0.0, 1.0);
+    double cos_delta_phi = glm::clamp((wi.x*wo.x + wi.y*wo.y) / 
+                           std::sqrt((pow2(wi.x) + pow2(wi.y)) * 
+                           (pow2(wo.x) + pow2(wo.y))), 0.0, 1.0);
 
     // D = sin(alpha) * tan(beta), i.z = dot(i, (0,0,1))
-    double D = std::sqrt((1.0 - pow2(i.z)) * (1.0 - pow2(o.z))) / std::max(i.z, o.z);
+    double D = std::sqrt((1.0 - pow2(wi.z)) * (1.0 - pow2(wo.z))) / std::max(wi.z, wo.z);
 
     // A and B are pre-computed in constructor.
-    return (reflectance * C::INV_PI) * (A + B * cos_delta_phi * D);
-}
-
-
-double Material::GGXFactor(double cos_i, double cos_o)
-{
-    double a2 = pow2(specular_roughness);
-    
-    // Slide 80:
-    // https://twvideo01.ubm-us.net/o1/vault/gdc2017/Presentations/Hammon_Earl_PBR_Diffuse_Lighting.pdf
-    double denom_i = std::sqrt(a2 + (1.0 - a2) * pow2(cos_i));
-    double denom_o = std::sqrt(a2 + (1.0 - a2) * pow2(cos_o));
-
-    // G1 = 2.0 * cos_o / (denom_o + cos_o);
-    // G2 = 2.0 * cos_i * cos_o / (cos_o * denom_i + cos_i * denom_o);
-    return (cos_i * (denom_o + cos_o)) / (cos_o * denom_i + cos_i * denom_o); // G2 / G1
-}
-
-// Samples a visible microfacet normal from the GGX distribution
-// https://schuttejoe.github.io/post/ggximportancesamplingpart2/
-// https://hal.archives-ouvertes.fr/hal-01509746/document
-glm::dvec3 Material::specularMicrofacetNormal(const glm::dvec3 &out) const
-{
-    glm::dmat3 T;
-
-    // Stretch the out-vector so we are sampling as if roughness is 1
-    T[2] = glm::normalize(glm::dvec3(out.x * specular_roughness, out.y * specular_roughness, out.z));
-    double out_z = T[2].z;
-
-    // Choose a point on a disk with each half of the disk weighted
-    // proportionally to its projection onto stretched out-direction
-    double a = 1.0 / (1.0 + out_z);
-    double r = std::sqrt(Random::unit());
-    double u = Random::unit();
-    double azimuth = ((u < a) ? (u / a) : 1.0 + (u - a) / (1.0 - a)) * C::PI;
-
-    glm::dvec3 p;
-    p.x = r * std::cos(azimuth);
-    p.y = r * std::sin(azimuth) * ((u < a) ? 1.0 : out_z);
-    p.z = std::sqrt(std::max(0.0, 1.0 - pow2(p.x) - pow2(p.y)));
-
-    // Build orthonormal basis
-    T[0] = (out_z < 1.0 - C::EPSILON) ? glm::normalize(glm::cross(T[2], glm::dvec3(0.0, 0.0, 1.0))) : glm::dvec3(1.0, 0.0, 0.0);
-    T[1] = glm::cross(T[0], T[2]);
-
-    // Calculate the normal in this stretched tangent space
-    glm::dvec3 n = T * p;
-
-    // Unstretch and normalize the normal
-    return glm::normalize(glm::dvec3(specular_roughness * n.x, specular_roughness * n.y, std::max(0.0, n.z)));
+    return lambertian() * (A + B * cos_delta_phi * D);
 }
 
 void Material::computeProperties()
 {
-    can_diffusely_reflect = !complex_ior && !perfect_mirror && std::abs(transparency - 1.0) > C::EPSILON;
-
     rough = roughness > C::EPSILON;
     rough_specular = specular_roughness > C::EPSILON;
-    opaque = transparency < C::EPSILON;
+    opaque = transparency < C::EPSILON || complex_ior || perfect_mirror;
+    emissive = glm::compMax(emittance) > C::EPSILON;
+
+    dirac_delta = (complex_ior || perfect_mirror || (std::abs(transparency - 1.0) < C::EPSILON)) && !rough_specular;
 
     double variance = pow2(roughness);
     A = 1.0 - 0.5 * (variance / (variance + 0.33));
     B = 0.45 * (variance / (variance + 0.09));
 
-    if (glm::compMax(emittance) > C::EPSILON)
-    {
-        reflect_probability = 0.8;
-        return;
-    }
-
-    // Using fresnel at 45 degree incidence and n1 in vacuum to determine Russian roulette reflect probability
-    double cos_45 = std::cos(C::PI / 4.0);
-    if (complex_ior)
-    {
-        reflect_probability = glm::compMax(specular_reflectance * Fresnel::conductor(1.0, complex_ior.get(), cos_45));
-    }
-    else
-    {
-        double R = Fresnel::dielectric(1.0, ior, cos_45);
-        double T = transparency;
-
-        double R_prob = glm::compMax((1.0 - T) * R * specular_reflectance);
-        double T_prob = glm::compMax((1.0 - R) * T * transmittance);
-        double D_prob = glm::compMax((1.0 - R) * (1.0 - T) * reflectance);
-
-        reflect_probability = glm::max(R_prob, glm::max(T_prob, D_prob));
-    }
-    reflect_probability = std::min(reflect_probability, 0.8);
+    a = glm::dvec2(specular_roughness);
 }
 
 void from_json(const nlohmann::json &j, Material &m)

@@ -5,6 +5,7 @@
 #include "pixel-operators.hpp"
 #include "../common/util.hpp"
 #include "../color/srgb.hpp"
+#include "../common/histogram.hpp"
 
 Image::Image(const nlohmann::json &j)
 {
@@ -43,8 +44,8 @@ void Image::save(const std::string& filename) const
     out_tonemapped.write(reinterpret_cast<char*>(&header), sizeof(header));
     for (const auto& p : blob)
     {
-        std::vector<uint8_t> fp = truncate(sRGB::gammaCompress(tonemap(p * exposure_factor) * gain_factor));
-        out_tonemapped.write(reinterpret_cast<char*>(fp.data()), fp.size() * sizeof(uint8_t));
+        std::vector<char> fp = truncate(sRGB::gammaCompress(tonemap(p * exposure_factor) * gain_factor));
+        out_tonemapped.write(fp.data(), fp.size() * sizeof(uint8_t));
     }
     out_tonemapped.close();
 }
@@ -61,86 +62,27 @@ The returned exposure factor is then 0.5/L, which if multiplied by each pixel in
 ********************************************************************************************/
 double Image::getExposure() const
 {
-    auto get_t = [&](const glm::dvec3 &p)
+    std::vector<double> brightness(blob.size());
+    for (size_t i = 0; i < blob.size(); i++)
     {
-        return glm::compAdd(p) / 3.0;
-    };
-
-    double max = 0.0;
-    for (const auto& p : blob)
-    {
-        double t = get_t(p);
-        if (max < t) max = t;
+        brightness[i] = glm::compAdd(blob[i]) / 3.0;
     }
-
-    if (max <= 0) return 1.0;
-
-    std::vector<size_t> histogram(65536, 0);
-    double bin_size = max / histogram.size();
-
-    for (const auto& p : blob)
-    {
-        double t = get_t(p);
-        if (t < 0) return 1.0;
-        histogram[std::min((size_t)(t / bin_size), histogram.size() - 1)]++;
-    }
-
-    size_t half_of_pixels = static_cast<size_t>(blob.size() * 0.5);
-    size_t count = 0;
-    double L = 0.5;
-    for (size_t i = 0; i < histogram.size(); i++)
-    {
-        count += histogram[i];
-        if (count >= half_of_pixels)
-        {
-            L = (i + 1) * bin_size;
-            break;
-        }
-    }
-    return 0.5 / L;
+    Histogram histogram(brightness, 65536);
+    double L = histogram.level(0.5);
+    return L > 0.0 ? 0.5 / L : 1.0;
 }
 
-/*************************************************************
-Histogram method to find the gain that positions the histogram 
-to the right such that 0.5% of image pixels are clipped
-**************************************************************/
+/**************************************************************************
+Histogram method to find the gain that positions the histogram to the right
+***************************************************************************/
 double Image::getGain(double exposure_factor) const
 {
-    auto get_t = [&](const glm::dvec3 &p)
+    std::vector<double> brightness(blob.size());
+    for (size_t i = 0; i < blob.size(); i++)
     {
-        return glm::compAdd(tonemap(p * exposure_factor)) / 3.0;
-    };
-
-    double max = 0.0;
-    for (const auto& p : blob)
-    {
-        double t = get_t(p);
-        if (max < t) max = t;
+        brightness[i] = glm::compAdd(tonemap(blob[i] * exposure_factor)) / 3.0;
     }
-
-    if (max <= 0) return 1.0;
-
-    std::vector<size_t> histogram(65536, 0);
-    double bin_size = max / histogram.size();
-
-    for (const auto& p : blob)
-    {
-        double t = get_t(p);
-        if (t < 0) return 1.0;
-        histogram[std::min((size_t)(t / bin_size), histogram.size() - 1)]++;
-    }
-
-    size_t num_clipped_pixels = static_cast<size_t>(blob.size() * 0.01);
-    size_t count = 0;
-    double L = 0.99;
-    for (size_t i = histogram.size() - 1; i >= 0; i--)
-    {
-        count += histogram[i];
-        if (count >= num_clipped_pixels)
-        {
-            L = (i + 1) * bin_size;
-            break;
-        }
-    }
-    return 0.99 / L;
+    Histogram histogram(brightness, 65536);
+    double L = histogram.level(0.99);
+    return L > 0.0 ? 0.99 / L : 1.0;
 }

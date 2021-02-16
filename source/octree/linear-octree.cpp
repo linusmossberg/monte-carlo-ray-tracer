@@ -18,21 +18,21 @@ LinearOctree<Data>::LinearOctree(Octree<Data> &octree_root)
 }
 
 template <class Data>
-std::vector<SearchResult<Data>> LinearOctree<Data>::knnSearch(const glm::dvec3& p, size_t k, double max_distance) const
+std::vector<SearchResult<Data>> LinearOctree<Data>::knnSearch(const glm::dvec3& p, size_t k, double radius_est) const
 {
     std::vector<SearchResult<Data>> result;
 
     if (linear_tree.empty()) return result;
+    
+    if (k > ordered_data.size()) k = ordered_data.size();
 
-    double max_distance2 = pow2(max_distance);
+    result.reserve(k);
+
+    double min_distance2 = -1.0;
+    double max_distance2 = pow2(radius_est);
     double distance2 = linear_tree[root_idx].BB.distance2(p);
 
-    if (distance2 > max_distance2)
-    {
-        return result;
-    }
-
-    std::priority_queue<KNNode> to_visit;
+    auto to_visit = reservedPriorityQueue<KNNode>(64);
 
     KNNode current(root_idx, distance2);
 
@@ -46,7 +46,7 @@ std::vector<SearchResult<Data>> LinearOctree<Data>::knnSearch(const glm::dvec3& 
                 for (uint64_t i = linear_tree[current.octant].start_data; i < end_idx; i++)
                 {
                     double distance2 = glm::distance2(ordered_data[i].pos(), p);
-                    if (distance2 <= max_distance2)
+                    if (distance2 <= max_distance2 && distance2 > min_distance2)
                     {
                         to_visit.emplace(distance2, i);
                     }
@@ -57,12 +57,14 @@ std::vector<SearchResult<Data>> LinearOctree<Data>::knnSearch(const glm::dvec3& 
                 uint32_t child_octant = current.octant + 1;
                 while (child_octant != null_idx)
                 {
-                    double distance2 = linear_tree[child_octant].BB.distance2(p);
-                    if (distance2 <= max_distance2)
+                    const auto& node = linear_tree[child_octant];
+
+                    distance2 = node.BB.distance2(p);
+                    if (distance2 <= max_distance2 && node.BB.max_distance2(p) > min_distance2)
                     {
                         to_visit.emplace(child_octant, distance2);
                     }
-                    child_octant = linear_tree[child_octant].next_sibling;
+                    child_octant = node.next_sibling;
                 }
             }
         }
@@ -72,10 +74,19 @@ std::vector<SearchResult<Data>> LinearOctree<Data>::knnSearch(const glm::dvec3& 
             if (result.size() == k) return result;
         }
 
-        if (to_visit.empty()) return result;
-
-        current = to_visit.top();
-        to_visit.pop();
+        if (to_visit.empty())
+        {
+            // Maximum search sphere doesn't contain k points. Increase radius and
+            // traverse octree again, ignoring the already found closest points.
+            max_distance2 *= 2.0;
+            if (!result.empty()) min_distance2 = result.back().distance2;
+            current = KNNode(root_idx, linear_tree[root_idx].BB.distance2(p));
+        }
+        else
+        {
+            current = to_visit.top();
+            to_visit.pop();
+        }
     }
 }
 
@@ -86,15 +97,6 @@ std::vector<SearchResult<Data>> LinearOctree<Data>::radiusSearch(const glm::dvec
     if (linear_tree.empty()) return result;
     recursiveRadiusSearch(root_idx, p, pow2(radius), result);
     return result;
-}
-
-template <class Data>
-bool LinearOctree<Data>::radiusEmpty(const glm::dvec3& p, double radius) const
-{
-    bool empty = true;
-    if (linear_tree.empty()) return empty;
-    recursiveRadiusEmpty(root_idx, p, pow2(radius), empty);
-    return empty;
 }
 
 template <class Data>
@@ -120,38 +122,6 @@ void LinearOctree<Data>::recursiveRadiusSearch(const uint32_t current, const glm
             if (linear_tree[child_octant].BB.distance2(p) <= radius2)
             {
                 recursiveRadiusSearch(child_octant, p, radius2, result);
-            }
-            child_octant = linear_tree[child_octant].next_sibling;
-        }
-    }
-}
-
-template <class Data>
-void LinearOctree<Data>::recursiveRadiusEmpty(const uint32_t current, const glm::dvec3& p, double radius2, bool &empty) const
-{
-    if (!empty) return;  
-
-    if (linear_tree[current].leaf)
-    {
-        uint64_t end_idx = linear_tree[current].start_data + linear_tree[current].num_data;
-        for (uint64_t i = linear_tree[current].start_data; i < end_idx; i++)
-        {
-            if (glm::distance2(ordered_data[i].pos(), p) <= radius2)
-            {
-                empty = false;
-                return;
-            }
-        }
-    }
-    else
-    {
-        uint32_t child_octant = current + 1;
-        while (child_octant != null_idx)
-        {
-            // Keep searching in octants that intersects or is contained in the search sphere
-            if (linear_tree[child_octant].BB.distance2(p) <= radius2)
-            {
-                recursiveRadiusEmpty(child_octant, p, radius2, empty);
             }
             child_octant = linear_tree[child_octant].next_sibling;
         }
@@ -189,6 +159,7 @@ void LinearOctree<Data>::compact(Octree<Data> *node, uint32_t &df_idx, uint64_t 
     ordered_data.insert(ordered_data.end(), node->data_vec.begin(), node->data_vec.end());
     data_idx += node->data_vec.size();
     node->data_vec.clear();
+    node->data_vec.shrink_to_fit();
 
     if (!node->leaf())
     {
@@ -206,5 +177,6 @@ void LinearOctree<Data>::compact(Octree<Data> *node, uint32_t &df_idx, uint64_t 
         }
     }
     node->octants.clear();
+    node->octants.shrink_to_fit();
     linear_tree[idx].next_sibling = last ? null_idx : df_idx;
 }

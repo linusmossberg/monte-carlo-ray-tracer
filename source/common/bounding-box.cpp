@@ -23,6 +23,7 @@ bool BoundingBox::intersect(const Ray &ray, double &t) const
         }
 
         if (t0 > t) t = t0;
+
         if (t1 < t_max) t_max = t1;
 
         if (t_max < t)
@@ -61,6 +62,13 @@ double BoundingBox::area() const
 double BoundingBox::distance2(const glm::dvec3 &p) const
 {
     glm::dvec3 d = glm::max(glm::max(min - p, p - max), glm::dvec3(0.0));
+    return glm::dot(d, d);
+}
+
+// Largest possible squared distance to a point in the bounding box
+double BoundingBox::max_distance2(const glm::dvec3& p) const
+{
+    glm::dvec3 d = glm::max(glm::max(p - min, max - p), glm::dvec3(0.0));
     return glm::dot(d, d);
 }
 

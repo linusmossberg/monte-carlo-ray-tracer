@@ -12,76 +12,115 @@
 #include "../material/material.hpp"
 #include "../surface/surface.hpp"
 #include "../ray/interaction.hpp"
+#include "../material/fresnel.hpp"
 
 Integrator::Integrator(const nlohmann::json &j) : scene(j)
 {
     int threads = getOptional(j, "num_render_threads", -1);
-    naive = getOptional(j, "naive", false);
 
     size_t max_threads = std::thread::hardware_concurrency();
     num_threads = (threads < 1 || threads > max_threads) ? max_threads : threads;
     std::cout << "\nThreads used for rendering: " << num_threads << std::endl;
 }
 
-/*****************************************************************************
-Only applies cos(theta) from the rendering equation to the diffuse point that 
-samples this direct contribution. It must be attenuated by the BRDF later.
-******************************************************************************/
-glm::dvec3 Integrator::sampleDirect(const Interaction& interaction) const
+/**************************************************************************
+Samples a light source using MIS. The BSDF is sampled using MIS later 
+in the next interaction in sampleEmissive, if the ray hits the same light.
+**************************************************************************/
+glm::dvec3 Integrator::sampleDirect(const Interaction& interaction, LightSample& ls) const
 {
-    // Pick one light source and divide with probability of picking light source
-    if (!scene.emissives.empty())
+    if (scene.emissives.empty() || interaction.material->dirac_delta)
     {
-        size_t emissive_idx = Random::weightedUIntSample(scene.emissives_importance);
-        double light_probability = scene.emissives_importance[emissive_idx];
+        ls.light = nullptr;
+        return glm::dvec3(0.0);
+    }
 
-        const auto& light = scene.emissives[emissive_idx];
+    // Pick one light source and divide with probability of selecting light source
+    ls.light = scene.selectLight(ls.select_probability);
 
-        glm::dvec3 light_pos = light->operator()(Random::unit(), Random::unit());
-        Ray shadow_ray(interaction.position + interaction.normal * C::EPSILON, light_pos);
+    glm::dvec3 light_pos = ls.light->operator()(Random::unit(), Random::unit());
+    Ray shadow_ray(interaction.position + interaction.normal * C::EPSILON, light_pos);
 
-        double cos_light_theta = glm::dot(-shadow_ray.direction, light->normal(light_pos));
+    double cos_light_theta = glm::dot(-shadow_ray.direction, ls.light->normal(light_pos));
 
-        if (cos_light_theta <= 0.0)
+    if (cos_light_theta <= 0.0)
+    {
+        return glm::dvec3(0.0);
+    }
+
+    double cos_theta = glm::dot(shadow_ray.direction, interaction.normal);
+    if (cos_theta <= 0.0)
+    {
+        if (interaction.material->opaque || cos_theta == 0.0)
         {
             return glm::dvec3(0.0);
         }
-
-        double cos_theta = glm::dot(shadow_ray.direction, interaction.cs.normal);
-
-        if (cos_theta <= 0)
+        else
         {
-            return glm::dvec3(0.0);
+            // Try transmission
+            shadow_ray = Ray(interaction.position - interaction.normal * C::EPSILON, light_pos);
         }
+    }
 
-        Intersection shadow_intersection = scene.intersect(shadow_ray);
+    Intersection shadow_intersection = scene.intersect(shadow_ray);
 
-        if (shadow_intersection)
+    if (!shadow_intersection || shadow_intersection.surface != ls.light)
+    {
+        return glm::dvec3(0.0);
+    }    
+
+    double light_pdf = pow2(shadow_intersection.t) / (ls.light->area() * cos_light_theta);
+
+    double bsdf_pdf;
+    glm::dvec3 bsdf_absIdotN;
+    if (!interaction.BSDF(bsdf_absIdotN, shadow_ray.direction, bsdf_pdf))
+    {
+        return glm::dvec3(0.0);
+    }
+
+    double mis_weight = powerHeuristic(light_pdf, bsdf_pdf);
+
+    return mis_weight * bsdf_absIdotN * ls.light->material->emittance / (light_pdf * ls.select_probability);
+}
+
+/********************************************************************
+Adds emittance from interaction surface if applicable, or samples 
+the emissive using the BSDF from the previous interaction using MIS.
+********************************************************************/
+glm::dvec3 Integrator::sampleEmissive(const Interaction& interaction, const LightSample &ls) const
+{
+    if (interaction.material->emissive && !interaction.inside)
+    {
+        if (interaction.ray.depth == 0 || interaction.ray.dirac_delta)
         {
-            glm::dvec3 position = shadow_ray(shadow_intersection.t);
-
-            if (glm::distance2(position, light_pos) > pow2(C::EPSILON))
-            {
-                return glm::dvec3(0.0);
-            }
-
-            // Factor to transform the PDF of sampling the point on the light (1/area) to 
-            // the solid angle PDF at the diffuse point that samples this direct contribution.
-            double t = light->area() * cos_light_theta / pow2(shadow_intersection.t);
-
-            return light->material->emittance * t * cos_theta / light_probability;
+            return interaction.material->emittance;
+        }
+        if(ls.light == interaction.surface)
+        {
+            double cos_light_theta = glm::dot(interaction.out, interaction.normal);
+            double light_pdf = pow2(interaction.t) / (interaction.surface->area() * cos_light_theta);
+            double mis_weight = powerHeuristic(ls.bsdf_pdf, light_pdf);
+            return mis_weight * interaction.material->emittance / ls.select_probability;
         }
     }
     return glm::dvec3(0.0);
 }
 
-bool Integrator::absorb(const Ray &ray, const Intersection &isect, double &survive) const
+bool Integrator::absorb(const Ray &ray, glm::dvec3 &throughput) const
 {
-    if (ray.diffuse_depth <= min_ray_depth && ray.depth <= min_priority_ray_depth)
+    double survive = glm::compMax(throughput) * ray.refraction_scale;
+
+    if (survive == 0.0) return true;
+
+    if (ray.diffuse_depth > min_ray_depth || ray.depth > min_priority_ray_depth)
     {
-        survive = 1.0;
-        return false;
+        survive = std::min(0.95, survive);
+
+        if (!Random::trial(survive))
+        {
+            return true;
+        }
+        throughput /= survive;
     }
-    survive = isect.surface->material->reflect_probability;
-    return Random::trial(1.0 - survive);
+    return false;
 }
