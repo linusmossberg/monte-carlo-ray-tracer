@@ -1,5 +1,7 @@
 #include "random.hpp"
 
+#include <algorithm>
+
 #include "../common/constants.hpp"
 
 double Random::unit()

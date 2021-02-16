@@ -1,6 +1,7 @@
 #include "histogram.hpp"
 
 #include <vector>
+#include <limits>
 
 Histogram::Histogram(const std::vector<double>& data, size_t num_bins) 
     : bin_size(1.0), data_size(data.size())

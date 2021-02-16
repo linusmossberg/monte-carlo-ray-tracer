@@ -3,6 +3,7 @@
 #include <glm/gtx/norm.hpp>
 
 #include "../common/constexpr-math.hpp"
+#include "../common/util.hpp"
 
 template <class Data>
 LinearOctree<Data>::LinearOctree(Octree<Data> &octree_root)

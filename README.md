@@ -418,8 +418,6 @@ The `bound_dimensions` field specifies the dimensions of the axis-aligned boundi
 
 Quadric surfaces currently do not support emissive materials (the emissive part is simply ignored).
 
-![Path traced render of a scene containing only quadric surfaces.](https://user-images.githubusercontent.com/15798094/104470916-847d1500-55ba-11eb-99df-e600d248f495.jpg "Path traced render of a scene containing only quadric surfaces.")
-
 ___
 <sup>1</sup> The usual quadric equation looks slightly different when it's derived from the quadric matrix representation *p<sup>T</sup>Qp* since this results in some constants being doubled. The program uses this representation internally, but I've eliminated this in the scene format since it's easier to not have to think about whether or not some constants will be doubled when creating a surface.
 </details>
@@ -428,9 +426,10 @@ ___
 
 ## Renders
 
-![Path traced render of baroque table, 3.8 million triangles. Original scene by 1DInc.](https://imgur.com/N3cM7Hl.jpg "Path traced render of baroque table, 3.8 million triangles. Original scene by 1DInc.")
 ![Path traced render of spaceship, 457 200 triangles. Original scene by thecali.](https://i.imgur.com/rSVyvl0.jpg "Path traced render of spaceship, 457 200 triangles. Original scene by thecali.")
 ![Path traced render of coffee maker, 235 049 triangles. Original scene by cekuhnen.](https://imgur.com/38jhuBX.jpg "Path traced render of coffee maker, 235 049 triangles. Original scene by cekuhnen.")
+![Path traced render of baroque table, 3.8 million triangles. Original scene by 1DInc.](https://imgur.com/N3cM7Hl.jpg "Path traced render of baroque table, 3.8 million triangles. Original scene by 1DInc.")
+![Path traced render of a scene containing only quadric surfaces.](https://user-images.githubusercontent.com/15798094/104470916-847d1500-55ba-11eb-99df-e600d248f495.jpg "Path traced render of a scene containing only quadric surfaces.")
 ![Path traced render of Veach MIS scene. Original scene by Benedikt Bitterli.](https://imgur.com/oNbmpir.jpg "Path traced render of Veach MIS scene. Original scene by Benedikt Bitterli.")
 ![Path traced render of piping, 2.4 million triangles. Original scene by seeker47.](https://imgur.com/AGnRbfX.jpg "Path traced render of piping, 2.4 million triangles. Original scene by seeker47.")
 

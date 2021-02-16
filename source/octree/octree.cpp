@@ -5,6 +5,7 @@
 
 #include "../common/constexpr-math.hpp"
 #include "../common/constants.hpp"
+#include "../common/util.hpp"
 
 /**************
 Octant:  x y z
