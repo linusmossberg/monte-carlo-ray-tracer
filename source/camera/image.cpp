@@ -44,8 +44,8 @@ void Image::save(const std::string& filename) const
     out_tonemapped.write(reinterpret_cast<char*>(&header), sizeof(header));
     for (const auto& p : blob)
     {
-        std::vector<char> fp = truncate(sRGB::gammaCompress(tonemap(p * exposure_factor) * gain_factor));
-        out_tonemapped.write(fp.data(), fp.size() * sizeof(uint8_t));
+        auto fp = truncate(sRGB::gammaCompress(tonemap(p * exposure_factor) * gain_factor));
+        out_tonemapped.write(reinterpret_cast<char*>(fp.data()), fp.size() * sizeof(uint8_t));
     }
     out_tonemapped.close();
 }

@@ -10,4 +10,4 @@ glm::dvec3 filmicACES(const glm::dvec3 &in);
 
 glm::dvec3 linear(const glm::dvec3 &in);
 
-std::vector<char> truncate(const glm::dvec3 &in);
+std::vector<uint8_t> truncate(const glm::dvec3 &in);

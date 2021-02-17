@@ -2,7 +2,7 @@
 
 This is a physically based renderer with Path Tracing and Photon Mapping.
 
-![Path traced render of shells, 7 million triangles.](https://imgur.com/9Im3WBW.jpg "Path traced render of shells, 7 million triangles.")
+![Path traced render of spaceship, 457 200 triangles. Original scene by thecali.](https://i.imgur.com/rSVyvl0.jpg "Path traced render of spaceship, 457 200 triangles. Original scene by thecali.")
 ![Path traced render of lego bulldozer, 2 million triangles. Original scene by Heinzelnisse.](https://imgur.com/zmBM0gP.jpg "Path traced render of lego bulldozer, 2 million triangles. Original scene by Heinzelnisse.")
 ![Photon mapped render of caustics, 6.9 million triangles and 347 million photon particles. Original scene by Benedikt Bitterli.](https://i.imgur.com/BsagYAi.jpg "Photon mapped render of caustics, 6.9 million triangles and 347 million photon particles. Original scene by Benedikt Bitterli.")
 
@@ -426,7 +426,7 @@ ___
 
 ## Renders
 
-![Path traced render of spaceship, 457 200 triangles. Original scene by thecali.](https://i.imgur.com/rSVyvl0.jpg "Path traced render of spaceship, 457 200 triangles. Original scene by thecali.")
+![Path traced render of shells, 7 million triangles.](https://imgur.com/9Im3WBW.jpg "Path traced render of shells, 7 million triangles.")
 ![Path traced render of coffee maker, 235 049 triangles. Original scene by cekuhnen.](https://imgur.com/38jhuBX.jpg "Path traced render of coffee maker, 235 049 triangles. Original scene by cekuhnen.")
 ![Path traced render of baroque table, 3.8 million triangles. Original scene by 1DInc.](https://imgur.com/N3cM7Hl.jpg "Path traced render of baroque table, 3.8 million triangles. Original scene by 1DInc.")
 ![Path traced render of a scene containing only quadric surfaces.](https://user-images.githubusercontent.com/15798094/104470916-847d1500-55ba-11eb-99df-e600d248f495.jpg "Path traced render of a scene containing only quadric surfaces.")
