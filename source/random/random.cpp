@@ -19,7 +19,19 @@ double Random::angle()
 size_t Random::weightedIdxSample(const std::vector<double>& w)
 {
     double p = unit();
-    return std::find_if(w.begin(), w.end() - 1, [p](const auto &v) { return v > p; }) - w.begin();
+
+    // Binary search
+    size_t left = 0;
+    size_t right = w.size() - 1;
+    while (left < right)
+    {
+        size_t middle = (left + right) / 2;
+        if (w[middle] < p)
+            left = middle + 1;
+        else
+            right = middle;
+    }
+    return left;
 }
 
 bool Random::trial(double probability)
