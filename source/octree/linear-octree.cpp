@@ -147,16 +147,17 @@ void LinearOctree<Data>::octreeSize(const Octree<Data> &octree_root, size_t &siz
 }
 
 template <class Data>
-void LinearOctree<Data>::compact(Octree<Data> *node, uint32_t &df_idx, uint64_t &data_idx, bool last)
+BoundingBox LinearOctree<Data>::compact(Octree<Data> *node, uint32_t &df_idx, uint64_t &data_idx, bool last)
 {
     uint32_t idx = df_idx++;
 
     linear_tree.emplace_back();
-    linear_tree[idx].BB = node->BB;
     linear_tree[idx].leaf = (uint8_t)node->leaf();
     linear_tree[idx].start_data = data_idx;
     linear_tree[idx].num_data = (uint16_t)node->data_vec.size();
 
+    BoundingBox BB;
+    for (auto&& data : node->data_vec) BB.merge(data.pos());
     ordered_data.insert(ordered_data.end(), node->data_vec.begin(), node->data_vec.end());
     data_idx += node->data_vec.size();
     node->data_vec.clear();
@@ -174,10 +175,12 @@ void LinearOctree<Data>::compact(Octree<Data> *node, uint32_t &df_idx, uint64_t 
         }
         for (const auto &i : use)
         {
-            compact(node->octants[i].get(), df_idx, data_idx, i == use.back());
+            BB.merge(compact(node->octants[i].get(), df_idx, data_idx, i == use.back()));
         }
     }
     node->octants.clear();
     node->octants.shrink_to_fit();
     linear_tree[idx].next_sibling = last ? null_idx : df_idx;
+    linear_tree[idx].BB = BB;
+    return BB;
 }

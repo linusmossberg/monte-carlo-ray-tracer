@@ -27,7 +27,7 @@ public:
     std::vector<Data> ordered_data;
 
 private:
-    void compact(Octree<Data> *node, uint32_t &df_idx, uint64_t &data_idx, bool last = false);
+    BoundingBox compact(Octree<Data> *node, uint32_t &df_idx, uint64_t &data_idx, bool last = false);
 
     void recursiveRadiusSearch(const uint32_t current, const glm::dvec3& p, double radius2, std::vector<SearchResult<Data>>& result) const;
 

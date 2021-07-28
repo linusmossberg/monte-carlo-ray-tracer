@@ -1,6 +1,6 @@
 # Scenes and Assets
 
-The following sections lists the free resources used for some of the scenes in this directory. All of these have been modified to some extent and converted to my scene format.
+The following sections lists the free resources used for some of the scenes in this directory. All of these have been modified to some extent and converted to my scene format. The scenes generally uses low render settings by default to generate fast previews, so consider bumping up the image resolution, `sqrtspp`, `emissions` and `caustic_factor` to get equivalent renders to those in the main readme.
 
 ## Baroque Table Scene
 
