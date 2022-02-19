@@ -6,7 +6,8 @@
 
 #include <glm/gtx/component_wise.hpp>
 
-#include "../../random/random.hpp"
+#include "../../sampling/sampling.hpp"
+#include "../../sampling/sampler.hpp"
 #include "../../common/util.hpp"
 #include "../../common/work-queue.hpp"
 #include "../../common/constants.hpp"
@@ -45,19 +46,21 @@ PhotonMapper::PhotonMapper(const nlohmann::json& j) : Integrator(j)
 
     struct EmissionWork
     {
-        EmissionWork() : light(), num_emissions(0), photon_flux(0.0) { }
-        EmissionWork(std::shared_ptr<Surface::Base> light, size_t num_emissions, const glm::dvec3& photon_flux)
-            : light(light), num_emissions(num_emissions), photon_flux(photon_flux) { }
+        EmissionWork() : light_index(0), emissions_offset(0), num_emissions(0), photon_flux(0.0) { }
+        EmissionWork(size_t light_index, size_t emissions_offset, size_t num_emissions, const glm::dvec3& photon_flux)
+            : light_index(light_index), emissions_offset(emissions_offset), num_emissions(num_emissions), photon_flux(photon_flux) { }
 
-        std::shared_ptr<Surface::Base> light;
+        size_t light_index;
+        size_t emissions_offset;
         size_t num_emissions;
         glm::dvec3 photon_flux;
     };
 
     std::vector<EmissionWork> work_vec;
 
-    for (const auto& light : scene.emissives)
+    for(size_t i = 0; i < scene.emissives.size(); i++)
     {
+        auto light = scene.emissives[i];
         glm::dvec3 light_flux = light->material->emittance * light->area();
         double photon_emissions_share = glm::compAdd(light_flux) / total_add_flux;
         size_t num_light_emissions = static_cast<size_t>(photon_emissions * photon_emissions_share);
@@ -67,7 +70,7 @@ PhotonMapper::PhotonMapper(const nlohmann::json& j) : Integrator(j)
         while (count != num_light_emissions)
         {
             size_t emissions = count + EPW > num_light_emissions ? num_light_emissions - count : EPW;
-            work_vec.emplace_back(light, emissions, photon_flux);
+            work_vec.emplace_back(i, count, emissions, photon_flux);
             count += emissions;
         }
     }
@@ -89,11 +92,16 @@ PhotonMapper::PhotonMapper(const nlohmann::json& j) : Integrator(j)
                 EmissionWork work;
                 while (work_queue.getWork(work))
                 {
+                    auto light = scene.emissives[work.light_index];
+                    Sampler::initiate(static_cast<uint32_t>(work.light_index));
                     for (size_t i = 0; i < work.num_emissions; i++)
                     {
-                        glm::dvec3 pos = (*work.light)(Random::unit(), Random::unit());
-                        glm::dvec3 normal = work.light->normal(pos);
-                        glm::dvec3 dir = CoordinateSystem::from(Random::cosWeightedHemiSample(), normal);
+                        Sampler::setIndex(work.emissions_offset + i);
+
+                        auto u = Sampler::get<Dim::PM_LIGHT, 4>();
+                        glm::dvec3 pos = (*light)(u[0], u[1]);
+                        glm::dvec3 normal = light->normal(pos);
+                        glm::dvec3 dir = CoordinateSystem::from(Sampling::cosWeightedHemi(u[2], u[3]), normal);
 
                         pos += normal * C::EPSILON;
 
@@ -220,6 +228,8 @@ void PhotonMapper::emitPhoton(Ray ray, glm::dvec3 flux, size_t thread)
 
     while (true)
     {
+        Sampler::nextSequence();
+
         Intersection intersection = scene.intersect(ray);
 
         if (!intersection)
@@ -236,7 +246,7 @@ void PhotonMapper::emitPhoton(Ray ray, glm::dvec3 flux, size_t thread)
             {
                 caustic_vecs[thread].emplace_back(flux, interaction.position, -ray.direction);
             }
-            else if(Random::trial(non_caustic_reject))
+            else if(non_caustic_reject > Sampler::get<Dim::PM_REJECT, 1>()[0])
             {
                 global_vecs[thread].emplace_back(flux / non_caustic_reject, interaction.position, -ray.direction);
             }
@@ -253,7 +263,7 @@ void PhotonMapper::emitPhoton(Ray ray, glm::dvec3 flux, size_t thread)
         // https://cgg.mff.cuni.cz/~jaroslav/teaching/2015-npgr010/slides/11%20-%20npgr010-2015%20-%20PM.pdf
         // I.e. reduce survival probability rather than flux to keep flux of spawned photons roughly constant.
         double survive = std::min(glm::compMax(bsdf_absIdotN), 0.95);
-        if (survive == 0.0 || !Random::trial(survive))
+        if (survive == 0.0 || survive <= Sampler::get<Dim::ABSORB, 1>()[0])
         {
             return;
         }
@@ -273,6 +283,8 @@ glm::dvec3 PhotonMapper::sampleRay(Ray ray)
 
     while (true)
     {
+        Sampler::nextSequence();
+
         Intersection intersection = scene.intersect(ray);
 
         if (!intersection)

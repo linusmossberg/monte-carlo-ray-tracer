@@ -9,7 +9,7 @@
 #include "../material/material.hpp"
 #include "../surface/surface.hpp"
 #include "../bvh/bvh.hpp"
-#include "../random/random.hpp"
+#include "../sampling/sampling.hpp"
 
 #include <fstream>
 #include <sstream>
@@ -222,9 +222,9 @@ glm::dvec3 Scene::skyColor(const Ray& ray) const
     return glm::mix(glm::dvec3(1.0, 0.5, 0.0), glm::dvec3(0.0, 0.5, 1.0), fy);
 }
 
-std::shared_ptr<Surface::Base> Scene::selectLight(double& select_probability) const
+std::shared_ptr<Surface::Base> Scene::selectLight(double u, double& select_probability) const
 {
-    size_t emissive_idx = Random::weightedIdxSample(cumulative_emissives_importance);
+    size_t emissive_idx = Sampling::weightedIdx(u, cumulative_emissives_importance);
 
     select_probability = cumulative_emissives_importance[emissive_idx];
     if (emissive_idx > 0)

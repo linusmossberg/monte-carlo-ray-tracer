@@ -5,7 +5,6 @@
 #include "camera/camera.hpp"
 
 #include "common/option.hpp"
-#include "random/random.hpp"
 #include "common/util.hpp"
 
 int main(int argc, char* argv[])

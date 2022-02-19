@@ -8,7 +8,8 @@
 #include "../common/util.hpp"
 #include "../common/constexpr-math.hpp"
 #include "../common/constants.hpp"
-#include "../random/random.hpp"
+#include "../sampling/sampling.hpp"
+#include "../sampling/sampler.hpp"
 #include "../material/material.hpp"
 #include "../surface/surface.hpp"
 #include "../ray/interaction.hpp"
@@ -35,10 +36,12 @@ glm::dvec3 Integrator::sampleDirect(const Interaction& interaction, LightSample&
         return glm::dvec3(0.0);
     }
 
-    // Pick one light source and divide with probability of selecting light source
-    ls.light = scene.selectLight(ls.select_probability);
+    auto u = Sampler::get<Dim::LIGHT, 3>();
 
-    glm::dvec3 light_pos = ls.light->operator()(Random::unit(), Random::unit());
+    // Pick one light source and divide with probability of selecting light source
+    ls.light = scene.selectLight(u[2], ls.select_probability);
+
+    glm::dvec3 light_pos = ls.light->operator()(u[0], u[1]);
     Ray shadow_ray(interaction.position + interaction.normal * C::EPSILON, light_pos);
 
     double cos_light_theta = glm::dot(-shadow_ray.direction, ls.light->normal(light_pos));
@@ -116,7 +119,7 @@ bool Integrator::absorb(const Ray &ray, glm::dvec3 &throughput) const
     {
         survive = std::min(0.95, survive);
 
-        if (!Random::trial(survive))
+        if(survive <= Sampler::get<Dim::ABSORB, 1>()[0])
         {
             return true;
         }

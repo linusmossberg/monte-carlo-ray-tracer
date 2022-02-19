@@ -3,7 +3,7 @@
 #include <glm/gtx/component_wise.hpp>
 
 #include "../../common/util.hpp"
-#include "../../random/random.hpp"
+#include "../../sampling/sampler.hpp"
 #include "../../common/constants.hpp"
 #include "../../material/material.hpp"
 #include "../../surface/surface.hpp"
@@ -20,6 +20,8 @@ glm::dvec3 PathTracer::sampleRay(Ray ray)
 
     while (true)
     {
+        Sampler::nextSequence();
+
         Intersection intersection = scene.intersect(ray);
 
         if (!intersection)

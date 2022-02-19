@@ -28,7 +28,7 @@ public:
     std::vector<std::shared_ptr<Surface::Base>> emissives; // subset of surfaces
     std::vector<double> cumulative_emissives_importance;
 
-    std::shared_ptr<Surface::Base> selectLight(double& select_probability) const;
+    std::shared_ptr<Surface::Base> selectLight(double u, double& select_probability) const;
 
     BoundingBox BB() const
     {

@@ -1,7 +1,8 @@
 #include "ray.hpp"
 
 #include "../common/constexpr-math.hpp"
-#include "../random/random.hpp"
+#include "../sampling/sampling.hpp"
+#include "../sampling/sampler.hpp"
 #include "../common/constants.hpp"
 #include "../material/material.hpp"
 #include "interaction.hpp"
@@ -18,20 +19,22 @@ Ray::Ray(const Interaction &ia) :
     {
         case Interaction::REFLECT:
         {
-            direction = glm::reflect(ia.ray.direction, ia.specular_normal);
+            glm::dvec3 specular_normal = ia.specularNormal();
+            direction = glm::reflect(ia.ray.direction, specular_normal);
             medium_ior = ia.n1;
             start += ia.normal * C::EPSILON;
             break;
         }
         case Interaction::REFRACT:
         {
+            glm::dvec3 specular_normal = ia.specularNormal();
             double inv_eta = ia.n1 / ia.n2;
-            double cos_theta = glm::dot(ia.specular_normal, ia.ray.direction);
+            double cos_theta = glm::dot(specular_normal, ia.ray.direction);
             double k = 1.0 - pow2(inv_eta) * (1.0 - pow2(cos_theta)); // 1 - (n1/n2 * sin(theta))^2
             if (k >= 0.0)
             {
                 /* SPECULAR REFRACTION */
-                direction = inv_eta * ia.ray.direction - (inv_eta * cos_theta + std::sqrt(k)) * ia.specular_normal;
+                direction = inv_eta * ia.ray.direction - (inv_eta * cos_theta + std::sqrt(k)) * specular_normal;
                 medium_ior = ia.n2;
                 start -= ia.normal * C::EPSILON;
                 ia.inside ? refraction_level-- : refraction_level++;
@@ -41,7 +44,7 @@ Ray::Ray(const Interaction &ia) :
             else
             {
                 /* CRITICAL ANGLE, SPECULAR REFLECTION */
-                direction = ia.ray.direction - ia.specular_normal * cos_theta * 2.0;
+                direction = ia.ray.direction - specular_normal * cos_theta * 2.0;
                 medium_ior = ia.n1;
                 start += ia.normal * C::EPSILON;
             }
@@ -50,7 +53,8 @@ Ray::Ray(const Interaction &ia) :
         case Interaction::DIFFUSE:
         {
             diffuse_depth++;
-            direction = ia.shading_cs.from(Random::cosWeightedHemiSample());
+            auto u = Sampler::get<Dim::BSDF, 2>();
+            direction = ia.shading_cs.from(Sampling::cosWeightedHemi(u[0], u[1]));
             medium_ior = ia.n1;
             start += ia.normal * C::EPSILON;
             break;

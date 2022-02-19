@@ -11,5 +11,5 @@ namespace GGX
     double SmithG2(const glm::dvec3& wi, const glm::dvec3& wo, const glm::dvec2& a);
     double reflection(const glm::dvec3& wi, const glm::dvec3& wo, const glm::dvec2& a, double& PDF);
     double transmission(const glm::dvec3& wi, const glm::dvec3& wo, double n1, double n2, const glm::dvec2& a, double& PDF);
-    glm::dvec3 visibleMicrofacet(const glm::dvec3& wo, const glm::dvec2& a);
+    glm::dvec3 visibleMicrofacet(double u, double v, const glm::dvec3& wo, const glm::dvec2& a);
 }

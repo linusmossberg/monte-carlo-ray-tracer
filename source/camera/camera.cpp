@@ -10,7 +10,8 @@
 #include "../ray/ray.hpp"
 #include "../integrator/path-tracer/path-tracer.hpp"
 #include "../integrator/photon-mapper/photon-mapper.hpp"
-#include "../random/random.hpp"
+#include "../sampling/sampling.hpp"
+#include "../sampling/sampler.hpp"
 #include "../common/util.hpp"
 #include "../common/constexpr-math.hpp"
 #include "../common/format.hpp"
@@ -66,29 +67,32 @@ void Camera::samplePixel(size_t x, size_t y)
 
     glm::dvec2 half_dim = glm::dvec2(image.width, image.height) * 0.5;
 
-    for (int s_x = 0; s_x < sqrtspp; s_x++)
-    {
-        for (int s_y = 0; s_y < sqrtspp; s_y++)
+    Sampler::initiate(y * image.width + x);
+
+    for(int i = 0; i < pow2(sqrtspp); i++)
+    { 
+        Sampler::setIndex(i);
+
+        auto u = Sampler::get<Dim::PIXEL, 2>();
+        glm::dvec2 pixel_space_pos(x + u[0], y + u[1]);
+        glm::dvec2 center_offset = pixel_size * (half_dim - pixel_space_pos);
+
+        glm::dvec3 sensor_pos = eye + forward * focal_length + left * center_offset.x + up * center_offset.y;
+
+        // Pinhole camera ray
+        Ray ray(eye, sensor_pos, integrator->scene.ior);
+
+        if (thin_lens)
         {
-            glm::dvec2 pixel_space_pos(x + s_x * sub_step + Random::get(0.0, sub_step), y + s_y * sub_step + Random::get(0.0, sub_step));
-            glm::dvec2 center_offset = pixel_size * (half_dim - pixel_space_pos);
-
-            glm::dvec3 sensor_pos = eye + forward * focal_length + left * center_offset.x + up * center_offset.y;
-
-            // Pinhole camera ray
-            Ray ray(eye, sensor_pos, integrator->scene.ior);
-
-            if (thin_lens)
-            {
-                // Thin lens camera ray for depth of field
-                glm::dvec3 focus_point = ray(focus_distance / glm::dot(ray.direction, forward));
-                glm::dvec2 aperture_sample = Random::uniformDiskSample() * aperture_radius;
-                ray.start += left * aperture_sample.x + up * aperture_sample.y;
-                ray.direction = glm::normalize(focus_point - ray.start);
-            }
-
-            pixel += integrator->sampleRay(ray);
+            // Thin lens camera ray for depth of field
+            auto u = Sampler::get<Dim::LENS, 2>();
+            glm::dvec3 focus_point = ray(focus_distance / glm::dot(ray.direction, forward));
+            glm::dvec2 aperture_sample = Sampling::uniformDisk(u[0], u[1]) * aperture_radius;
+            ray.start += left * aperture_sample.x + up * aperture_sample.y;
+            ray.direction = glm::normalize(focus_point - ray.start);
         }
+
+        pixel += integrator->sampleRay(ray);
     }
     pixel /= pow2(sqrtspp);
     num_sampled_pixels++;

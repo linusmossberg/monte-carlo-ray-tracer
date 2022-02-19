@@ -30,7 +30,7 @@ public:
     glm::dvec3 specularTransmission(const glm::dvec3& wi, const glm::dvec3& wo, double n1, 
                                     double n2, double& PDF, bool inside, bool flux) const;
 
-    glm::dvec3 visibleMicrofacet(const glm::dvec3& o) const;
+    glm::dvec3 visibleMicrofacet(double u, double v, const glm::dvec3& o) const;
 
     void computeProperties();
 

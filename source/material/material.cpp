@@ -8,7 +8,6 @@
 #include "../common/util.hpp"
 #include "../common/constexpr-math.hpp"
 #include "../common/constants.hpp"
-#include "../random/random.hpp"
 #include "../common/coordinate-system.hpp"
 #include "../color/illuminant.hpp"
 #include "../color/srgb.hpp"
@@ -69,9 +68,9 @@ glm::dvec3 Material::specularTransmission(const glm::dvec3& wi, const glm::dvec3
     return btdf;
 }
 
-glm::dvec3 Material::visibleMicrofacet(const glm::dvec3& wo) const
+glm::dvec3 Material::visibleMicrofacet(double u, double v, const glm::dvec3& wo) const
 {
-    return GGX::visibleMicrofacet(wo, a);
+    return GGX::visibleMicrofacet(u, v, wo, a);
 }
 
 glm::dvec3 Material::lambertian() const

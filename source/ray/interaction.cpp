@@ -2,7 +2,8 @@
 
 #include "../material/fresnel.hpp"
 #include "../material/material.hpp"
-#include "../random/random.hpp"
+#include "../sampling/sampling.hpp"
+#include "../sampling/sampler.hpp"
 #include "../common/constants.hpp"
 #include "../common/coordinate-system.hpp"
 #include "../surface/surface.hpp"
@@ -36,19 +37,12 @@ Interaction::Interaction(const Intersection &isect, const Ray &ray, double exter
 
     shading_cs = CoordinateSystem(shading_normal);
 
-    if (material->rough_specular)
-        specular_normal = shading_cs.from(material->visibleMicrofacet(shading_cs.to(out)));
-    else
-        specular_normal = shading_normal;
-
     // Specular reflect probability
-    R = Fresnel::dielectric(n1, n2, glm::dot(specular_normal, out));
+    R = Fresnel::dielectric(n1, n2, glm::dot(shading_normal, out));
 
     // Transmission probability once ray has passed through specular layer
     T = material->transparency;
 
-    // Ensure that both reflection and transmission has a chance to contribute for arbitrary wi, 
-    // even if importance sampled ray spawned by interaction is e.g. total internal reflection.
     if (material->rough_specular)
     {
         R = glm::clamp(R, 0.1, 0.9);
@@ -171,7 +165,7 @@ void Interaction::selectType()
     }
     else
     {
-        double p = Random::unit();
+        double p = Sampler::get<Dim::INTERACTION, 1>()[0];
 
         if (R > p)
         {
@@ -186,4 +180,14 @@ void Interaction::selectType()
             type = DIFFUSE;
         }
     }
+}
+
+glm::dvec3 Interaction::specularNormal() const
+{
+    if (material->rough_specular)
+    {
+        auto u = Sampler::get<Dim::BSDF, 2>();
+        return shading_cs.from(material->visibleMicrofacet(u[0], u[1], shading_cs.to(out)));
+    }
+    return shading_cs.normal;
 }

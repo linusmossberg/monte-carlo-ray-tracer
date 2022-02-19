@@ -25,12 +25,14 @@ struct Interaction
 
     bool sampleBSDF(glm::dvec3& bsdf_absIdotN, double& pdf, Ray& new_ray, bool flux = false) const;
     bool BSDF(glm::dvec3& bsdf_absIdotN, const glm::dvec3& world_wi, double& pdf) const;
+
+    glm::dvec3 specularNormal() const;
     
     // n1 and n2 are correctly ordered.
     double t, n1, n2, T, R;
     std::shared_ptr<Material> material;
     std::shared_ptr<Surface::Base> surface;
-    glm::dvec3 position, normal, out, specular_normal;
+    glm::dvec3 position, normal, out;
     CoordinateSystem shading_cs;
     bool inside, dirac_delta;
     Ray ray;

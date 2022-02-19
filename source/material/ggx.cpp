@@ -1,8 +1,9 @@
 #include "ggx.hpp"
 
+#include <algorithm>
+
 #include "../common/constexpr-math.hpp"
 #include "../common/constants.hpp"
-#include "../random/random.hpp"
 
 /*
 
@@ -63,7 +64,7 @@ double GGX::transmission(const glm::dvec3& wi, const glm::dvec3& wo, double n1, 
     return std::abs(SmithG2(wi, wo, a) * D(m, a) * glm::dot(wo, m) * dm_dwi / (wo.z * wi.z));
 }
 
-glm::dvec3 GGX::visibleMicrofacet(const glm::dvec3& wo, const glm::dvec2& a)
+glm::dvec3 GGX::visibleMicrofacet(double u, double v, const glm::dvec3& wo, const glm::dvec2& a)
 {
     glm::dvec3 Vh = glm::normalize(glm::dvec3(a.x * wo.x, a.y * wo.y, wo.z));
 
@@ -73,8 +74,8 @@ glm::dvec3 GGX::visibleMicrofacet(const glm::dvec3& wo, const glm::dvec2& a)
     glm::dvec3 T2 = glm::cross(Vh, T1);
 
     // Section 4.2: parameterization of the projected area
-    double r = std::sqrt(Random::unit());
-    double phi = Random::angle();
+    double r = std::sqrt(u);
+    double phi = v * C::TWO_PI;
     double t1 = r * std::cos(phi);
     double t2 = r * std::sin(phi);
     double s = 0.5 * (1.0 + Vh.z);
