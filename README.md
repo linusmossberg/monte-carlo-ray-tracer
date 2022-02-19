@@ -3,7 +3,6 @@
 This is a physically based renderer with Path Tracing and Photon Mapping.
 
 ![Path traced render of spaceship, 457 200 triangles. Original scene by thecali.](https://i.imgur.com/rSVyvl0.jpg "Path traced render of spaceship, 457 200 triangles. Original scene by thecali.")
-![Path traced render of lego bulldozer, 2 million triangles. Original scene by Heinzelnisse.](https://imgur.com/zmBM0gP.jpg "Path traced render of lego bulldozer, 2 million triangles. Original scene by Heinzelnisse.")
 ![Photon mapped render of caustics, 6.9 million triangles and 347 million photon particles. Original scene by Benedikt Bitterli.](https://i.imgur.com/BsagYAi.jpg "Photon mapped render of caustics, 6.9 million triangles and 347 million photon particles. Original scene by Benedikt Bitterli.")
 
 This renderer was originally developed for the course [Advanced Global Illumination and Rendering](https://liu.se/studieinfo/en/kurs/tncg15) (TNCG15) at Linköpings universitet, but I've continued to add features and improvements since then.
@@ -427,6 +426,7 @@ ___
 ## Renders
 
 ![Path traced render of shells, 7 million triangles.](https://imgur.com/9Im3WBW.jpg "Path traced render of shells, 7 million triangles.")
+![Path traced render of lego bulldozer, 2 million triangles. Original scene by Heinzelnisse.](https://imgur.com/zmBM0gP.jpg "Path traced render of lego bulldozer, 2 million triangles. Original scene by Heinzelnisse.")
 ![Path traced render of coffee maker, 235 049 triangles. Original scene by cekuhnen.](https://imgur.com/38jhuBX.jpg "Path traced render of coffee maker, 235 049 triangles. Original scene by cekuhnen.")
 ![Path traced render of baroque table, 3.8 million triangles. Original scene by 1DInc.](https://imgur.com/N3cM7Hl.jpg "Path traced render of baroque table, 3.8 million triangles. Original scene by 1DInc.")
 ![Path traced render of a scene containing only quadric surfaces.](https://user-images.githubusercontent.com/15798094/104470916-847d1500-55ba-11eb-99df-e600d248f495.jpg "Path traced render of a scene containing only quadric surfaces.")
@@ -438,6 +438,8 @@ ___
 The following resources have been useful for the project:
 * [Physically Based Rendering](http://www.pbr-book.org/) - Matt Pharr, Wenzel Jakob and Greg Humphreys
 * [Global Illumination using Photon Maps](http://graphics.stanford.edu/~henrik/papers/ewr7/ewr7.html) - Henrik Wann Jensen
+* [Practical Hash-based Owen Scrambling](https://jcgt.org/published/0009/04/01/) - Brent Burley
+* [Sobol sequence generator](https://web.maths.unsw.edu.au/~fkuo/sobol/) - S. Joe and F. Y. Kuo
 * [Sampling the GGX Distribution of Visible Normals](http://jcgt.org/published/0007/04/01/) - Eric Heitz
 * [Importance Sampling techniques for GGX with Smith Masking-Shadowing](https://schuttejoe.github.io/post/ggximportancesamplingpart2/) - Joe Schutte
 * [PBR Diffuse Lighting for GGX+Smith Microsurfaces](https://twvideo01.ubm-us.net/o1/vault/gdc2017/Presentations/Hammon_Earl_PBR_Diffuse_Lighting.pdf) - Earl Hammon

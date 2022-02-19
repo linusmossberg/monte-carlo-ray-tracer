@@ -11,7 +11,8 @@ class Ray
 {
 public:
     Ray(const Interaction& ia);
-    Ray(const glm::dvec3& start, const glm::dvec3& end, double medium_ior = 1.0);
+    Ray(const glm::dvec3& start, const glm::dvec3& end);
+    Ray(const glm::dvec3& start, const glm::dvec3& direction, double medium_ior);
 
     glm::dvec3 operator()(double t) const;
 

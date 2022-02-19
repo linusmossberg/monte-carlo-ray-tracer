@@ -7,8 +7,11 @@
 #include "../material/material.hpp"
 #include "interaction.hpp"
 
-Ray::Ray(const glm::dvec3& start, const glm::dvec3& end, double medium_ior)
-    : start(start), direction(glm::normalize(end - start)), medium_ior(medium_ior) { }
+Ray::Ray(const glm::dvec3& start, const glm::dvec3& end)
+    : start(start), direction(glm::normalize(end - start)), medium_ior(1.0) { }
+
+Ray::Ray(const glm::dvec3& start, const glm::dvec3& direction, double medium_ior)
+    : start(start), direction(direction), medium_ior(medium_ior) { }
 
 Ray::Ray(const Interaction &ia) : 
     depth(ia.ray.depth + 1), diffuse_depth(ia.ray.diffuse_depth),

@@ -165,7 +165,7 @@ void Interaction::selectType()
     }
     else
     {
-        double p = Sampler::get<Dim::INTERACTION, 1>()[0];
+        double p = Sampler::get<Dim::INTERACTION>()[0];
 
         if (R > p)
         {

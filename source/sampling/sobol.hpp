@@ -35,7 +35,7 @@ namespace Sobol
         {
             for (uint32_t bit = 0; bit < s[dim]; bit++)
             {
-                V[dim][bit] = m[dim][bit] << (32 - (bit + 1));
+                V[dim][bit] = m[dim][bit] << (31 - bit);
             }
             for (uint32_t bit = s[dim]; bit < 32; bit++)
             {

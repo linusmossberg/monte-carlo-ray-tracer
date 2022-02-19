@@ -1,12 +1,10 @@
 #pragma once
 
 #include <array>
-#include <random> // Only used for non-determenistic global seed
+#include <random> // Only used for non-deterministic global seed
 
 #include "sobol.hpp"
 #include "../common/unrolled-loop.hpp"
-
-#include "sampling.hpp"
 
 // Hash-based Owen-scrambled Sobol sequence generator based on:
 // Practical Hash-based Owen Scrambling - Brent Burley
@@ -18,7 +16,7 @@ struct Sampler
 
     // Non-type template dimension-range and loop-unrolling is about 4% faster 
     // for my use, but probably doesn't work well for more Sobol dimensions.
-    template<int START_DIM, int NUM_DIMS>
+    template<int START_DIM, int NUM_DIMS = 1>
     static auto get()
     {
         std::array<double, NUM_DIMS> res;

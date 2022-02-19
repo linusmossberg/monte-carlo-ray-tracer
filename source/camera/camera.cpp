@@ -63,24 +63,23 @@ void Camera::samplePixel(size_t x, size_t y)
     auto& pixel = image(x, y);
 
     double pixel_size = sensor_width / image.width;
-    double sub_step = 1.0 / sqrtspp;
+    int spp = pow2(sqrtspp);
 
     glm::dvec2 half_dim = glm::dvec2(image.width, image.height) * 0.5;
 
     Sampler::initiate(y * image.width + x);
 
-    for(int i = 0; i < pow2(sqrtspp); i++)
+    glm::dvec3 value(0.0);
+    for(int i = 0; i < spp; i++)
     { 
         Sampler::setIndex(i);
 
         auto u = Sampler::get<Dim::PIXEL, 2>();
-        glm::dvec2 pixel_space_pos(x + u[0], y + u[1]);
-        glm::dvec2 center_offset = pixel_size * (half_dim - pixel_space_pos);
-
-        glm::dvec3 sensor_pos = eye + forward * focal_length + left * center_offset.x + up * center_offset.y;
+        glm::dvec2 local = pixel_size * (half_dim - glm::dvec2(x + u[0], y + u[1]));
+        glm::dvec3 direction = glm::normalize(forward * focal_length + left * local.x + up * local.y);
 
         // Pinhole camera ray
-        Ray ray(eye, sensor_pos, integrator->scene.ior);
+        Ray ray(eye, direction, integrator->scene.ior);
 
         if (thin_lens)
         {
@@ -92,9 +91,9 @@ void Camera::samplePixel(size_t x, size_t y)
             ray.direction = glm::normalize(focus_point - ray.start);
         }
 
-        pixel += integrator->sampleRay(ray);
+        value += integrator->sampleRay(ray);
     }
-    pixel /= pow2(sqrtspp);
+    image(x, y) = value / static_cast<double>(spp);
     num_sampled_pixels++;
 }
 

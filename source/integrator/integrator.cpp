@@ -119,7 +119,7 @@ bool Integrator::absorb(const Ray &ray, glm::dvec3 &throughput) const
     {
         survive = std::min(0.95, survive);
 
-        if(survive <= Sampler::get<Dim::ABSORB, 1>()[0])
+        if(survive <= Sampler::get<Dim::ABSORB>()[0])
         {
             return true;
         }

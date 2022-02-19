@@ -105,7 +105,7 @@ PhotonMapper::PhotonMapper(const nlohmann::json& j) : Integrator(j)
 
                         pos += normal * C::EPSILON;
 
-                        emitPhoton(Ray(pos, pos + dir, scene.ior), work.photon_flux, thread);
+                        emitPhoton(Ray(pos, dir, scene.ior), work.photon_flux, thread);
                     }
                 }
             }
@@ -246,7 +246,7 @@ void PhotonMapper::emitPhoton(Ray ray, glm::dvec3 flux, size_t thread)
             {
                 caustic_vecs[thread].emplace_back(flux, interaction.position, -ray.direction);
             }
-            else if(non_caustic_reject > Sampler::get<Dim::PM_REJECT, 1>()[0])
+            else if(non_caustic_reject > Sampler::get<Dim::PM_REJECT>()[0])
             {
                 global_vecs[thread].emplace_back(flux / non_caustic_reject, interaction.position, -ray.direction);
             }
@@ -263,7 +263,7 @@ void PhotonMapper::emitPhoton(Ray ray, glm::dvec3 flux, size_t thread)
         // https://cgg.mff.cuni.cz/~jaroslav/teaching/2015-npgr010/slides/11%20-%20npgr010-2015%20-%20PM.pdf
         // I.e. reduce survival probability rather than flux to keep flux of spawned photons roughly constant.
         double survive = std::min(glm::compMax(bsdf_absIdotN), 0.95);
-        if (survive == 0.0 || survive <= Sampler::get<Dim::ABSORB, 1>()[0])
+        if (survive == 0.0 || survive <= Sampler::get<Dim::ABSORB>()[0])
         {
             return;
         }
