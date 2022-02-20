@@ -6,11 +6,11 @@ namespace Sobol
 {
     constexpr uint32_t reverseBits(uint32_t x)
     {
-        x = (((x & 0xaaaaaaaau) >> 1) | ((x & 0x55555555u) << 1));
-        x = (((x & 0xccccccccu) >> 2) | ((x & 0x33333333u) << 2));
-        x = (((x & 0xf0f0f0f0u) >> 4) | ((x & 0x0f0f0f0fu) << 4));
-        x = (((x & 0xff00ff00u) >> 8) | ((x & 0x00ff00ffu) << 8));
-        return ((x >> 16) | (x << 16));
+        x = ((x & 0xaaaaaaaau) >> 1) | ((x & 0x55555555u) << 1);
+        x = ((x & 0xccccccccu) >> 2) | ((x & 0x33333333u) << 2);
+        x = ((x & 0xf0f0f0f0u) >> 4) | ((x & 0x0f0f0f0fu) << 4);
+        x = ((x & 0xff00ff00u) >> 8) | ((x & 0x00ff00ffu) << 8);
+        return (x >> 16) | (x << 16);
     }
 
     // Based on code and data from: https://web.maths.unsw.edu.au/~fkuo/sobol/

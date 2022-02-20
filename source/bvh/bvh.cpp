@@ -8,6 +8,7 @@
 #include "../common/format.hpp"
 #include "../surface/surface.hpp"
 #include "../common/util.hpp"
+#include "../common/constant-priority-queue.hpp"
 
 BVH::BVH(const BoundingBox &BB, 
          const std::vector<std::shared_ptr<Surface::Base>> &surfaces, 
@@ -76,20 +77,17 @@ BVH::BVH(const BoundingBox &BB,
               << ". Branching factor of tree: " << (num_nodes - 1) / num_branchings << std::endl;
 }
 
-Intersection BVH::intersect(const Ray& ray)
+Intersection BVH::intersect(const Ray& ray) const
 {
     Intersection intersect;
     double t;
     if (linear_tree[0].BB.intersect(ray, t))
     {
-        auto to_visit = reservedPriorityQueue<LinearNode::NodeIntersection>(64);
-
+        ConstantPriorityQueue<LinearNode::NodeIntersection, 64> to_visit;
         uint32_t node_idx = 0;
-
         while (true)
         {
             const auto &node = linear_tree[node_idx];
-
             if (node.num_surfaces)
             {
                 uint32_t end_idx = node.start_surface + node.num_surfaces;
@@ -113,17 +111,15 @@ Intersection BVH::intersect(const Ray& ray)
                 {
                     if (linear_tree[child_idx].BB.intersect(ray, t) && t < intersect.t)
                     {
-                        to_visit.emplace(child_idx, t);
+                        to_visit.insert({ t, child_idx });
                     }
                     child_idx = linear_tree[child_idx].next_sibling;
                 }
             }
-
             if (to_visit.empty() || to_visit.top().t >= intersect.t)
             {
                 break;
             }
-
             node_idx = to_visit.top().node; 
             to_visit.pop();
         }

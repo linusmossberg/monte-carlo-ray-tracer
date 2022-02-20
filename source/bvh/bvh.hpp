@@ -75,7 +75,6 @@ class BVH
         // Used for priority queue
         struct alignas(16) NodeIntersection
         {
-            NodeIntersection(uint32_t node, double t) : t(t), node(node) { }
             bool operator< (const NodeIntersection& i) const { return i.t < t; };
             double t;
             uint32_t node;
@@ -87,7 +86,7 @@ public:
         const std::vector<std::shared_ptr<Surface::Base>> &surfaces, 
         const nlohmann::json &j);
 
-    Intersection intersect(const Ray& ray);
+    Intersection intersect(const Ray& ray) const;
 
     const size_t leaf_surfaces = 8;
     const size_t max_leaf_surfaces = 0xFF;
