@@ -1,7 +1,6 @@
 #pragma once
 
 #include <vector>
-#include <atomic>
 
 #include <glm/vec3.hpp>
 #include <nlohmann/json.hpp>
@@ -37,29 +36,4 @@ private:
 
     uint16_t max_node_data;
     size_t k_nearest_photons;
-
-    // Accumulates average radii. Used as search space guess to accelerate KNN-search.
-    struct RadiusEstimate
-    {
-        RadiusEstimate() : count(0), tot(0.0), est(0.1) { }
-
-        void update(double radius)
-        {
-            count++;
-            tot = tot + radius;
-            est = tot / count;
-        }
-
-        double get()
-        {
-            return est;
-        }
-
-    private:
-        std::atomic_size_t count;
-        std::atomic<double> tot, est;
-    };
-
-    RadiusEstimate global_radius_est;
-    RadiusEstimate caustic_radius_est;
 };

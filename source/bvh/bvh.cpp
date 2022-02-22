@@ -8,7 +8,6 @@
 #include "../common/format.hpp"
 #include "../surface/surface.hpp"
 #include "../common/util.hpp"
-#include "../common/constant-priority-queue.hpp"
 
 BVH::BVH(const BoundingBox &BB, 
          const std::vector<std::shared_ptr<Surface::Base>> &surfaces, 
@@ -79,11 +78,12 @@ BVH::BVH(const BoundingBox &BB,
 
 Intersection BVH::intersect(const Ray& ray) const
 {
+    thread_local AccessiblePQ<LinearNode::NodeIntersection> to_visit; to_visit.clear();
+
     Intersection intersect;
     double t;
     if (linear_tree[0].BB.intersect(ray, t))
     {
-        ConstantPriorityQueue<LinearNode::NodeIntersection, 64> to_visit;
         uint32_t node_idx = 0;
         while (true)
         {
@@ -111,7 +111,7 @@ Intersection BVH::intersect(const Ray& ray) const
                 {
                     if (linear_tree[child_idx].BB.intersect(ray, t) && t < intersect.t)
                     {
-                        to_visit.insert({ t, child_idx });
+                        to_visit.push({ t, child_idx });
                     }
                     child_idx = linear_tree[child_idx].next_sibling;
                 }

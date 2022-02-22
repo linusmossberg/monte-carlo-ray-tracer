@@ -96,7 +96,7 @@ PhotonMapper::PhotonMapper(const nlohmann::json& j) : Integrator(j)
                     Sampler::initiate(static_cast<uint32_t>(work.light_index));
                     for (size_t i = 0; i < work.num_emissions; i++)
                     {
-                        Sampler::setIndex(work.emissions_offset + i);
+                        Sampler::setIndex(static_cast<uint32_t>(work.emissions_offset + i));
 
                         auto u = Sampler::get<Dim::PM_LIGHT, 4>();
                         glm::dvec3 pos = (*light)(u[0], u[1]);
@@ -340,25 +340,24 @@ glm::dvec3 PhotonMapper::sampleRay(Ray ray)
 
 glm::dvec3 PhotonMapper::estimateGlobalRadiance(const Interaction& interaction)
 {
-    auto photons = global_map.knnSearch(interaction.position, k_nearest_photons, global_radius_est.get());
+    thread_local AccessiblePQ<SearchResult<Photon>> photons;
+    global_map.knnSearch(interaction.position, k_nearest_photons, photons);
     if (photons.empty())
     {
         return glm::dvec3(0.0);
     }
-
-    global_radius_est.update(std::sqrt(photons.back().distance2));
     
     double bsdf_pdf;
     glm::dvec3 bsdf_absIdotN;
     glm::dvec3 radiance(0.0);
-    for (const auto& p : photons)
+    for (const auto& p : photons.container())
     {
         if (interaction.BSDF(bsdf_absIdotN, p.data.dir(), bsdf_pdf))
         {
             radiance += p.data.flux() * bsdf_absIdotN / bsdf_pdf;
         }
     }
-    return radiance / (photons.back().distance2 * C::PI);
+    return radiance / (photons.top().distance2 * C::PI);
 }
 
 /********************************************************************
@@ -366,19 +365,19 @@ Cone filtering method used for sharper caustics. Simplified for k = 1
 *********************************************************************/
 glm::dvec3 PhotonMapper::estimateCausticRadiance(const Interaction& interaction)
 {
-    auto photons = caustic_map.knnSearch(interaction.position, k_nearest_photons, caustic_radius_est.get());
+    thread_local AccessiblePQ<SearchResult<Photon>> photons;
+    caustic_map.knnSearch(interaction.position, k_nearest_photons, photons);
     if (photons.empty())
     {
         return glm::dvec3(0.0);
     }
 
-    caustic_radius_est.update(std::sqrt(photons.back().distance2));
-    double inv_max_squared_radius = 1.0 / photons.back().distance2;
+    double inv_max_squared_radius = 1.0 / photons.top().distance2;
 
     double bsdf_pdf;
     glm::dvec3 bsdf_absIdotN;
     glm::dvec3 radiance(0.0);
-    for (const auto& p : photons)
+    for(const auto& p : photons.container())
     {
         if (interaction.BSDF(bsdf_absIdotN, p.data.dir(), bsdf_pdf))
         {

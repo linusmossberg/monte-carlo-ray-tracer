@@ -69,14 +69,6 @@ void Octree<Data>::insert(const Data& data)
 }
 
 template <class Data>
-std::vector<SearchResult<Data>> Octree<Data>::radiusSearch(const glm::dvec3& point, double radius) const
-{
-    std::vector<SearchResult<Data>> result;
-    recursiveRadiusSearch(point, pow2(radius), result);
-    return result;
-}
-
-template <class Data>
 void Octree<Data>::insertInOctant(const Data& data)
 {
     glm::dvec3 origin = BB.centroid();
@@ -86,103 +78,4 @@ void Octree<Data>::insertInOctant(const Data& data)
         if (data.pos()[c] >= origin[c]) octant |= (0b100 >> c);
     }
     octants[octant]->insert(data);
-}
-
-// Squared distances/radius to avoid sqrt
-template <class Data>
-void Octree<Data>::recursiveRadiusSearch(const glm::dvec3& p, double radius2, std::vector<SearchResult<Data>>& result) const
-{
-    if (leaf())
-    {
-        for (const auto& data : data_vec)
-        {
-            double distance2 = glm::distance2(data.pos(), p);
-            if (distance2 <= radius2)
-            {
-                result.emplace_back(data, distance2);
-            }
-        }
-    }
-    else
-    {
-        for (const auto& octant : octants)
-        {
-            // Keep searching in octants that intersects or is contained in the search sphere
-            if (octant->BB.distance2(p) <= radius2)
-            {
-                octant->recursiveRadiusSearch(p, radius2, result);
-            }
-        }
-    }
-}
-
-template <class Data>
-std::vector<SearchResult<Data>> Octree<Data>::knnSearch(const glm::dvec3& p, size_t k, double radius_est)
-{
-    std::vector<SearchResult<Data>> result;
-    result.reserve(k);
-
-    double min_distance2 = -1.0;
-    double max_distance2 = pow2(radius_est);
-    double distance2 = BB.distance2(p);
-
-    auto to_visit = reservedPriorityQueue<KNNode>(64);
-
-    KNNode current(this, distance2);
-
-    while (true)
-    {
-        if (current.octant)
-        {
-            if (current.octant->leaf())
-            {
-                for (const auto &data : current.octant->data_vec)
-                {
-                    double distance2 = glm::distance2(data.pos(), p);
-                    if (distance2 <= max_distance2 && distance2 > min_distance2)
-                    {
-                        to_visit.emplace(std::make_shared<Data>(data), distance2);
-                    }
-                }
-            }
-            else
-            {
-                for (const auto &octant : current.octant->octants)
-                {
-                    double distance2 = octant->BB.distance2(p);
-                    if (distance2 <= max_distance2 && octant->BB.max_distance2(p) > min_distance2)
-                    {
-                        to_visit.emplace(octant.get(), distance2);
-                    }
-                }
-            }
-        }
-        else
-        {
-            result.emplace_back(*current.data, distance2);
-            if (result.size() == k) return result;
-        }
-
-        if (to_visit.empty())
-        {
-            // Octree evidently contains less than k elements
-            if (max_distance2 > BB.max_distance2(p)) return result;
-
-            // Maximum search sphere doesn't contain k points. Increase radius and
-            // traverse octree again, ignoring the already found closest points.
-            max_distance2 *= 2.0;
-            if (!result.empty()) min_distance2 = result.back().distance2;
-            current = KNNode(this, BB.distance2(p));
-        }
-        else
-        {
-            current = to_visit.top();
-            to_visit.pop();
-        }
-
-        if (to_visit.empty()) return result;
-
-        current = to_visit.top();
-        to_visit.pop();
-    }
 }

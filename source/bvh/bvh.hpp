@@ -88,8 +88,8 @@ public:
 
     Intersection intersect(const Ray& ray) const;
 
-    const size_t leaf_surfaces = 8;
-    const size_t max_leaf_surfaces = 0xFF;
+    static constexpr size_t leaf_surfaces = 8;
+    static constexpr size_t max_leaf_surfaces = 0xFF;
     std::map<size_t, size_t> branching;
 
     int bins_per_axis = 16;

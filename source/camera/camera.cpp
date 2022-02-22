@@ -63,11 +63,11 @@ void Camera::samplePixel(size_t x, size_t y)
     auto& pixel = image(x, y);
 
     double pixel_size = sensor_width / image.width;
-    int spp = pow2(sqrtspp);
+    size_t spp = pow2(sqrtspp);
 
     glm::dvec2 half_dim = glm::dvec2(image.width, image.height) * 0.5;
 
-    Sampler::initiate(y * image.width + x);
+    Sampler::initiate(static_cast<uint32_t>(y * image.width + x));
 
     glm::dvec3 value(0.0);
     for(int i = 0; i < spp; i++)

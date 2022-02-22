@@ -12,6 +12,7 @@ template <class Data>
 struct SearchResult
 {
     SearchResult(const Data& data, double distance2) : data(data), distance2(distance2) { }
+    bool operator< (const SearchResult& rhs) const { return distance2 < rhs.distance2; };
     Data data;
     double distance2;
 };
@@ -35,29 +36,12 @@ public:
         return octants.empty();
     }
 
-    std::vector<SearchResult<Data>> radiusSearch(const glm::dvec3& point, double radius) const;
-    std::vector<SearchResult<Data>> knnSearch(const glm::dvec3& p, size_t k, double radius_est);
-
     std::vector<Data> data_vec;
     BoundingBox BB;
     std::vector<std::unique_ptr<Octree>> octants;
 
 private:
     void insertInOctant(const Data& data);
-
-    void recursiveRadiusSearch(const glm::dvec3& p, double radius2, std::vector<SearchResult<Data>>& result) const;
-
-    struct KNNode
-    {
-        KNNode(Octree* octant, double distance2) : octant(octant), distance2(distance2) { }
-        KNNode(std::shared_ptr<Data> data, double distance2) : octant(nullptr), data(data), distance2(distance2)  { }
-
-        bool operator< (const KNNode& e) const { return e.distance2 < distance2; };
-
-        Octree* octant;
-        std::shared_ptr<Data> data;
-        double distance2;
-    };
 
     size_t max_node_data;
 };

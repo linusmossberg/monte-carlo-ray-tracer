@@ -68,7 +68,7 @@ double BoundingBox::distance2(const glm::dvec3 &p) const
 // Largest possible squared distance to a point in the bounding box
 double BoundingBox::max_distance2(const glm::dvec3& p) const
 {
-    glm::dvec3 d = glm::max(glm::max(p - min, max - p), glm::dvec3(0.0));
+    glm::dvec3 d = glm::max(max - p, p - min);
     return glm::dot(d, d);
 }
 
