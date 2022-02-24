@@ -41,7 +41,7 @@ struct Sampler
         shuffled_index = index;
     }
 
-    static void nextSequence()
+    static void shuffle()
     {
         seed = hashCombine(base_seed, hash(++sequence));
         shuffled_index = scramble(bit_reversed_index, seed);

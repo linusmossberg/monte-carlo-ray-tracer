@@ -94,10 +94,3 @@ inline std::priority_queue<T> reservedPriorityQueue(size_t size)
     std::vector<T> container; container.reserve(size);
     return std::priority_queue<T, std::vector<T>, std::less<T>>(std::less<T>(), std::move(container));
 }
-
-template<class T>
-struct AccessiblePQ : public std::priority_queue<T, std::vector<T>, std::less<T>>
-{
-    void clear() { this->c.clear(); }
-    const std::vector<T>& container() const { return this->c; }
-};

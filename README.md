@@ -70,7 +70,7 @@ The `caustic_factor` determines how many times more caustic photons should be ge
 
 The `k_nearest_photons` field specifies the number of nearest photons to search for and use in the radiance estimate each time a photon map is evaluated at a point. Larger values create better but less localized (blurrier) estimates since the search sphere is expanded to cover the target number of photons.
 
-The `max_photons_per_octree_leaf` field affects both the octree search performance and memory usage of the application. This value can probably be left at ~200 in most cases.
+The `max_photons_per_octree_leaf` field affects both the octree search performance and memory usage of the application. Best performance is usually achieved with `max_photons_per_octree_leaf` = `k_nearest_photons`, but larger values reduces memory usage.
 
 The `direct_visualization` field can be used to visualize the photon maps directly. Setting this to true will make the program evaluate the global radiance at the first diffuse reflection.
 </details>

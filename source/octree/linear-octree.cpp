@@ -21,9 +21,8 @@ LinearOctree<Data>::LinearOctree(Octree<Data> &octree_root)
     compact(&octree_root, df_idx, data_idx, contained_data, true);
 }
 
-#include <iostream>
 template <class Data>
-void LinearOctree<Data>::knnSearch(const glm::dvec3& p, size_t k, AccessiblePQ<SearchResult<Data>>& result) const
+void LinearOctree<Data>::knnSearch(const glm::dvec3& p, size_t k, PriorityQueue<SearchResult<Data>>& result) const
 {
     result.clear();
 
@@ -40,14 +39,14 @@ void LinearOctree<Data>::knnSearch(const glm::dvec3& p, size_t k, AccessiblePQ<S
         uint32_t octant;
     };
 
-    thread_local AccessiblePQ<DNode> to_visit; to_visit.clear();
+    thread_local PriorityQueue<DNode> to_visit; to_visit.clear();
 
     DNode current{ linear_tree[ROOT_IDX].BB.distance2(p), ROOT_IDX };
 
     while (true)
     {
         const auto& node = linear_tree[current.octant];
-        if (node.leaf)
+        if (node.leaf || node.contained_data <= k)
         {
             uint64_t end_idx = node.start_data + node.contained_data;
             for (uint64_t i = node.start_data; i < end_idx; i++)
@@ -57,14 +56,15 @@ void LinearOctree<Data>::knnSearch(const glm::dvec3& p, size_t k, AccessiblePQ<S
                 if (distance2 <= max_distance2)
                 {
                     // Remove the farthest of the k elements
-                    if (result.size() == k) result.pop();
-
-                    result.emplace(data, distance2);
+                    if (result.size() == k)
+                        result.pop_push({ data, distance2 });
+                    else
+                        result.push({ data, distance2 });
 
                     // Reduce search space
                     if (result.size() == k)
                     {
-                        // No element can be farther than the farthest of the currently closest k elements 
+                        // No element can be farther than the farthest of the currently closest k elements.
                         max_distance2 = std::min(max_distance2, result.top().distance2);
                     }
                 }
@@ -199,11 +199,14 @@ BoundingBox LinearOctree<Data>::compact(Octree<Data>* node, uint32_t& df_idx, ui
     linear_tree[idx].contained_data = node->data_vec.size();
 
     BoundingBox BB;
-    for (auto&& data : node->data_vec) BB.merge(data.pos());
-    ordered_data.insert(ordered_data.end(), node->data_vec.begin(), node->data_vec.end());
-    data_idx += node->data_vec.size();
-    node->data_vec.clear();
-    node->data_vec.shrink_to_fit();
+    if (!node->data_vec.empty())
+    {
+        for (auto&& data : node->data_vec) BB.merge(data.pos());
+        ordered_data.insert(ordered_data.end(), node->data_vec.begin(), node->data_vec.end());
+        data_idx += node->data_vec.size();
+        node->data_vec.clear();
+        node->data_vec.shrink_to_fit();
+    }
 
     if (!node->leaf())
     {
@@ -220,7 +223,6 @@ BoundingBox LinearOctree<Data>::compact(Octree<Data>* node, uint32_t& df_idx, ui
             uint64_t child_data;
             BB.merge(compact(node->octants[i].get(), df_idx, data_idx, child_data, i == use.back()));
             linear_tree[idx].contained_data += child_data;
-
         }
     }
     node->octants.clear();

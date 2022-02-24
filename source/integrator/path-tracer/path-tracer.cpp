@@ -20,7 +20,7 @@ glm::dvec3 PathTracer::sampleRay(Ray ray)
 
     while (true)
     {
-        Sampler::nextSequence();
+        Sampler::shuffle();
 
         Intersection intersection = scene.intersect(ray);
 

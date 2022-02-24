@@ -2,7 +2,7 @@
 
 #include "octree.hpp"
 
-#include "../common/util.hpp"
+#include "../common/priority-queue.hpp"
 
 template <class Data>
 class LinearOctree
@@ -13,7 +13,7 @@ public:
     // This destroys the input octree for memory reasons.
     LinearOctree(Octree<Data> &octree_root);
 
-    void knnSearch(const glm::dvec3& p, size_t k, AccessiblePQ<SearchResult<Data>>& result) const;
+    void knnSearch(const glm::dvec3& p, size_t k, PriorityQueue<SearchResult<Data>>& result) const;
     std::vector<SearchResult<Data>> radiusSearch(const glm::dvec3& p, double radius) const;
 
     struct alignas(128) LinearOctant

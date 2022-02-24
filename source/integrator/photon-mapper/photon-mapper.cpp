@@ -11,6 +11,7 @@
 #include "../../sampling/sampler.hpp"
 #include "../../common/util.hpp"
 #include "../../common/work-queue.hpp"
+#include "../../common/priority-queue.hpp"
 #include "../../common/constants.hpp"
 #include "../../common/format.hpp"
 #include "../../material/material.hpp"
@@ -171,7 +172,7 @@ PhotonMapper::PhotonMapper(const nlohmann::json& j) : Integrator(j)
         auto i = pvec.end();
         while (i > pvec.begin())
         {
-            if (removed_bytes > size_t(1e7))
+            if (removed_bytes > (1 << 24))
             {
                 pvec.shrink_to_fit();
                 i = pvec.end();
@@ -229,7 +230,7 @@ void PhotonMapper::emitPhoton(Ray ray, glm::dvec3 flux, size_t thread)
 
     while (true)
     {
-        Sampler::nextSequence();
+        Sampler::shuffle();
 
         Intersection intersection = scene.intersect(ray);
 
@@ -284,7 +285,7 @@ glm::dvec3 PhotonMapper::sampleRay(Ray ray)
 
     while (true)
     {
-        Sampler::nextSequence();
+        Sampler::shuffle();
 
         Intersection intersection = scene.intersect(ray);
 
@@ -341,7 +342,7 @@ glm::dvec3 PhotonMapper::sampleRay(Ray ray)
 
 glm::dvec3 PhotonMapper::estimateGlobalRadiance(const Interaction& interaction)
 {
-    thread_local AccessiblePQ<SearchResult<Photon>> photons;
+    thread_local PriorityQueue<SearchResult<Photon>> photons;
     global_map.knnSearch(interaction.position, k_nearest_photons, photons);
     if (photons.empty())
     {
@@ -366,7 +367,7 @@ Cone filtering method used for sharper caustics. Simplified for k = 1
 *********************************************************************/
 glm::dvec3 PhotonMapper::estimateCausticRadiance(const Interaction& interaction)
 {
-    thread_local AccessiblePQ<SearchResult<Photon>> photons;
+    thread_local PriorityQueue<SearchResult<Photon>> photons;
     caustic_map.knnSearch(interaction.position, k_nearest_photons, photons);
     if (photons.empty())
     {
