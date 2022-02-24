@@ -7,7 +7,7 @@ This is a physically based renderer with Path Tracing and Photon Mapping.
 
 This renderer was originally developed for the course [Advanced Global Illumination and Rendering](https://liu.se/studieinfo/en/kurs/tncg15) (TNCG15) at Linköpings universitet, but I've continued to add features and improvements since then.
 
-The program is written in C++ and requires a compiler with C++17 support. The only dependencies are the header-only libraries [GLM](https://glm.g-truc.net/) and [nlohmann::json](https://github.com/nlohmann/json), which are included in the repository.
+The program is written in C++ and requires a compiler with C++20 support. The only dependencies are the header-only libraries [GLM](https://glm.g-truc.net/) and [nlohmann::json](https://github.com/nlohmann/json), which are included in the repository.
 
 ## Building
 
