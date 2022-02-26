@@ -32,6 +32,8 @@ void LinearOctree<Data>::knnSearch(const glm::dvec3& p, size_t k, PriorityQueue<
 
     double max_distance2 = std::numeric_limits<double>::max();
 
+    auto updateMaxDistance = [&](double d2) { if (d2 < max_distance2) max_distance2 = d2; };
+
     struct alignas(16) DNode
     {
         bool operator< (const DNode& rhs) const { return rhs.distance2 < distance2; };
@@ -55,17 +57,26 @@ void LinearOctree<Data>::knnSearch(const glm::dvec3& p, size_t k, PriorityQueue<
                 double distance2 = glm::distance2(data.pos(), p);
                 if (distance2 <= max_distance2)
                 {
-                    // Remove the farthest of the k elements
-                    if (result.size() == k)
-                        result.pop_push({ data, distance2 });
-                    else
-                        result.push({ data, distance2 });
-
-                    // Reduce search space
-                    if (result.size() == k)
+                    if (result.size() < k - 1)
                     {
-                        // No element can be farther than the farthest of the currently closest k elements.
-                        max_distance2 = std::min(max_distance2, result.top().distance2);
+                        // Insert the first k elements without maintaining the heap-property.
+                        result.push_unordered({ data, distance2 });
+                    }
+                    else
+                    {
+                        if (result.size() != k)
+                        {
+                            result.push_unordered({ data, distance2 });
+                            // Create valid heap now that k elements have been found.
+                            result.make_heap();
+                        }
+                        else
+                        {
+                            // Pop the farthest of the k elements and push the closer new element.
+                            result.pop_push({ data, distance2 });
+                        }
+                        // No k-NN element can be farther than the farthest element in the current set of k elements.
+                        updateMaxDistance(result.top().distance2);
                     }
                 }
             }
@@ -82,11 +93,10 @@ void LinearOctree<Data>::knnSearch(const glm::dvec3& p, size_t k, PriorityQueue<
                 {
                     to_visit.push({ distance2, child_octant });
 
-                    // Reduce search space
                     if (child_node.contained_data >= k)
                     {
-                        // No element can be farther than the farthest possible point in a node that contains k elements.
-                        max_distance2 = std::min(max_distance2, child_node.BB.max_distance2(p));
+                        // No k-NN element can be farther than the farthest corner in a node that contains k elements.
+                        updateMaxDistance(child_node.BB.max_distance2(p));
                     }
                 }
                 child_octant = child_node.next_sibling;

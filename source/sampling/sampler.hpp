@@ -28,11 +28,13 @@ struct Sampler
         return res;
     }
 
+    // Called with e.g. linear pixel index before sampling pixel
     static void initiate(uint32_t start_seed)
     {
         base_seed = hashCombine(global_seed, hash(start_seed));
     }
 
+    // Called with e.q. ray path index before sampling path
     static void setIndex(uint32_t index)
     {
         sequence = 0u;
@@ -41,6 +43,8 @@ struct Sampler
         shuffled_index = index;
     }
 
+    // Called at the beginning of e.g. each ray bounce/scatter to effectively 
+    // decorrelate the previously sampled dimensions from the next ("padding").
     static void shuffle()
     {
         seed = hashCombine(base_seed, hash(++sequence));
