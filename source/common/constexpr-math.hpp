@@ -1,11 +1,19 @@
 #pragma once
 
 #include <glm/matrix.hpp>
+#include <bit>
 
 template <class T>
 constexpr T pow2(T x)
 {
     return x * x;
+}
+
+template <class T>
+constexpr size_t nextPowerOfTwo(T i)
+{
+    // Equivalent to 2^ceil(log2(i))
+    return i == 0 ? 0 : 1ull << (sizeof(T) * 8 - std::countl_zero(i - 1));
 }
 
 constexpr double determinant(const glm::dmat3 &M)

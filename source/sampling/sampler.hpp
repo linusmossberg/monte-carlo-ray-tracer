@@ -34,7 +34,7 @@ struct Sampler
         base_seed = hashCombine(global_seed, hash(start_seed));
     }
 
-    // Called with e.q. ray path index before sampling path
+    // Called with e.g. ray path index before each pixel sample
     static void setIndex(uint32_t index)
     {
         sequence = 0u;

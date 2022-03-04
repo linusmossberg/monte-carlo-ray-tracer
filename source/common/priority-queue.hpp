@@ -37,6 +37,7 @@ public:
             T value = H.back();
             H.pop_back();
             shiftDown(value, 0);
+
         }
         else
         {
@@ -83,11 +84,13 @@ public:
         do { shiftDown(T(H[index]), index); } while (index--);
     }
 
+    std::vector<T>::const_iterator const begin() { return H.begin(); }
+    std::vector<T>::const_iterator const end() { return H.end(); }
+
     const T& top() const { return H.front(); }
     bool empty() const { return H.empty(); }
     uint_t size() const { return H.size(); }
     void clear() { H.clear(); }
-    const std::vector<T>& container() const { return H; }
 
 private:
     uint_t parentIndex(uint_t i) const { return (i - 1) / 2; }
@@ -152,11 +155,13 @@ public:
         H.pop_back();
     }
 
+    std::vector<T>::const_iterator const begin() { return H.begin(); }
+    std::vector<T>::const_iterator const end() { return H.end(); }
+
     const T& top() const { return H.front(); }
     bool empty() const { return H.empty(); }
     uint_t size() const { return H.size(); }
     void clear() { H.clear(); }
-    const std::vector<T>& container() const { return H; }
 
 private:
     std::vector<T> H;

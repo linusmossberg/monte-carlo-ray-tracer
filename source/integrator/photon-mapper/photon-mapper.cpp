@@ -352,7 +352,7 @@ glm::dvec3 PhotonMapper::estimateGlobalRadiance(const Interaction& interaction)
     double bsdf_pdf;
     glm::dvec3 bsdf_absIdotN;
     glm::dvec3 radiance(0.0);
-    for (const auto& p : photons.container())
+    for (const auto& p : photons)
     {
         if (interaction.BSDF(bsdf_absIdotN, p.data.dir(), bsdf_pdf))
         {
@@ -379,7 +379,7 @@ glm::dvec3 PhotonMapper::estimateCausticRadiance(const Interaction& interaction)
     double bsdf_pdf;
     glm::dvec3 bsdf_absIdotN;
     glm::dvec3 radiance(0.0);
-    for(const auto& p : photons.container())
+    for(const auto& p : photons)
     {
         if (interaction.BSDF(bsdf_absIdotN, p.data.dir(), bsdf_pdf))
         {

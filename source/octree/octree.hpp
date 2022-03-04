@@ -7,9 +7,10 @@
 #include <glm/vec3.hpp>
 
 #include "../common/bounding-box.hpp"
+#include "../common/constexpr-math.hpp"
 
 template <class Data>
-struct SearchResult
+struct alignas(nextPowerOfTwo(sizeof(Data) + sizeof(double))) SearchResult
 {
     SearchResult(const Data& data, double distance2) : data(data), distance2(distance2) { }
     bool operator< (const SearchResult& rhs) const { return distance2 < rhs.distance2; };
