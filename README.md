@@ -123,6 +123,10 @@ Example:
       "exposure_compensation": -1, 
       "gain_compensation": 0.5 
     },
+    "film": {
+      "filter": "Lanczos",
+      "radius": 2
+    },
     "sqrtspp": 4,
     "savename": "c1b"
   },
@@ -138,6 +142,10 @@ Example:
       "width": 960, 
       "height": 540,
       "tonemapper": "ACES"
+    },
+    "film": {
+      "filter": "Hermite",
+      "radius": 1
     },
     "sqrtspp": 1,
     "savename": "c2"
@@ -166,6 +174,14 @@ The program has histogram-based auto-exposure which centers the histogram around
 The program also has a histogram-based auto-gain method which is applied after auto-exposure and tone-mapping, which instead tries to position the histogram of the resulting image to the right. This can similarly be offset with the optional `gain_compensation` field, which is also specified in EV units.
 
 The reason for separating these steps is that the tone-mapping/camera response is non-linear, and as a result `exposure_compensation` mostly controls the camera response (contrast, dynamic range etc.) while `gain_compensation` controls the overall image intensity.
+
+#### Film
+
+The `film` object is optional and it specifies the image reconstruction method. The `filter` field specifies which filter to use and the `radius` field the radius/width of that filter. The `radius` field is optional and the program uses a reasonable value if this field is omitted. The available filters are shown in the figure below (with radius 2).
+
+![Filters](https://user-images.githubusercontent.com/15798094/156931794-8bf84035-0a83-4231-ba73-d7c1c23da231.svg "Filters")
+
+The filters with negative lobes makes the image sharper but these doesn't work well for images with sharp HDR transitions, since this causes severe ringing artifacts. A non-negative filter with a small radius is probably preferable in such cases. The program uses the box filter with radius 0.5 by default.
 </details>
 
 ___

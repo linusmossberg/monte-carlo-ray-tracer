@@ -10,6 +10,7 @@
 #include <nlohmann/json.hpp>
 
 #include "image.hpp"
+#include "film.hpp"
 
 #include "../scene/scene.hpp"
 #include "../common/work-queue.hpp"
@@ -44,6 +45,7 @@ public:
 
     double focal_length, sensor_width, aperture_radius, focus_distance;
     Image image;
+    Film film;
     bool thin_lens;
 
     std::string savename;

@@ -31,6 +31,11 @@ Camera::Camera(const nlohmann::json &j, const Option &option)
     const nlohmann::json &c = j.at("cameras").at(option.camera_idx);
 
     image = Image(c.at("image"));
+    if (c.find("film") != c.end())
+        film = Film(image.width, image.height, c.at("film"));
+    else
+        film = Film(image.width, image.height);
+
     eye = c.at("eye");
     focal_length = c.at("focal_length").get<double>() / 1000.0;
     sensor_width = c.at("sensor_width").get<double>() / 1000.0;
@@ -60,8 +65,6 @@ Camera::Camera(const nlohmann::json &j, const Option &option)
 
 void Camera::samplePixel(size_t x, size_t y)
 {
-    auto& pixel = image(x, y);
-
     double pixel_size = sensor_width / image.width;
     size_t spp = pow2(sqrtspp);
 
@@ -69,13 +72,13 @@ void Camera::samplePixel(size_t x, size_t y)
 
     Sampler::initiate(static_cast<uint32_t>(y * image.width + x));
 
-    glm::dvec3 value(0.0);
     for(int i = 0; i < spp; i++)
-    { 
+    {
         Sampler::setIndex(i);
 
         auto u = Sampler::get<Dim::PIXEL, 2>();
-        glm::dvec2 local = pixel_size * (half_dim - glm::dvec2(x + u[0], y + u[1]));
+        glm::dvec2 px(x + u[0], y + u[1]);
+        glm::dvec2 local = pixel_size * (half_dim - px);
         glm::dvec3 direction = glm::normalize(forward * focal_length + left * local.x + up * local.y);
 
         // Pinhole camera ray
@@ -90,10 +93,8 @@ void Camera::samplePixel(size_t x, size_t y)
             ray.start += left * aperture_sample.x + up * aperture_sample.y;
             ray.direction = glm::normalize(focus_point - ray.start);
         }
-
-        value += integrator->sampleRay(ray);
+        film.deposit(px, integrator->sampleRay(ray));
     }
-    image(x, y) = value / static_cast<double>(spp);
     num_sampled_pixels++;
 }
 
@@ -133,6 +134,14 @@ void Camera::sampleImage()
     {
         thread->join();
     }
+
+    for (int y = 0; y < image.height; y++)
+    {
+        for (int x = 0; x < image.width; x++)
+        {
+            image(x, y) = film.scan(x, y);
+        }
+    }
 }
 
 void Camera::sampleImageThread(WorkQueue<Bucket>& buckets)
@@ -140,9 +149,9 @@ void Camera::sampleImageThread(WorkQueue<Bucket>& buckets)
     Bucket bucket;
     while (buckets.getWork(bucket))
     {
-        for (size_t x = bucket.min.x; x < bucket.max.x; x++)
+        for (size_t y = bucket.min.y; y < bucket.max.y; y++)
         {
-            for (size_t y = bucket.min.y; y < bucket.max.y; y++)
+            for (size_t x = bucket.min.x; x < bucket.max.x; x++)
             {
                 samplePixel(x, y);
             }
