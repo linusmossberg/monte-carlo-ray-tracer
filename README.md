@@ -181,7 +181,7 @@ The `film` object is optional and it specifies the image reconstruction method. 
 
 ![Filters](https://user-images.githubusercontent.com/15798094/156931794-8bf84035-0a83-4231-ba73-d7c1c23da231.svg "Filters")
 
-The filters with negative lobes makes the image sharper but these doesn't work well for images with sharp HDR transitions, since this causes severe ringing artifacts. A non-negative filter with a small radius is probably preferable in such cases. The program uses the box filter with radius 0.5 by default.
+The filters with negative lobes improves sharpness, but they don't work well for images with sharp HDR transitions since this causes severe ringing artifacts. A non-negative filter with a small radius (e.g. Hermite with radius 1) is probably preferable in such cases. The program uses the box filter with radius 0.5 by default, which is equivalent to the naive method of simply averaging the samples for each pixel.
 </details>
 
 ___

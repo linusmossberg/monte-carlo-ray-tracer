@@ -22,25 +22,28 @@ Film::Film(size_t width, size_t height, const nlohmann::json& j)
     std::string filter_type = j.at("filter");
     std::transform(filter_type.begin(), filter_type.end(), filter_type.begin(), tolower);
 
-    radius = getOptional(j, "radius", 2.0);
+    auto set = [&](auto f, auto r)
+    {
+        filter_function = f;
+        radius = r;
+    };
 
     if (filter_type == "mitchell-netravali")
-        filter_function = Filter::MitchellNetravali<>;
+        set(Filter::MitchellNetravali<>, 2.0);
     else if (filter_type == "catmull-rom")
-        filter_function = Filter::CatmullRom;
+        set(Filter::CatmullRom, 2.0);
     else if (filter_type == "b-spline")
-        filter_function = Filter::BSpline;
+        set(Filter::BSpline, 1.39);
     else if (filter_type == "hermite")
-        filter_function = Filter::Hermite;
+        set(Filter::Hermite, 1.0);
     else if (filter_type == "gaussian")
-        filter_function = Filter::Gaussian;
+        set(Filter::Gaussian, 1.71);
     else if (filter_type == "lanczos")
-        filter_function = Filter::Lanczos;
+        set(Filter::Lanczos, 2.0);
     else
-    {
-        filter_function = Filter::box;
-        radius = getOptional(j, "radius", 0.5);
-    }
+        set(Filter::box, 0.5);
+
+    radius = getOptional(j, "radius", radius);
     two_inv_radius = 2.0 / radius;
 }
 
