@@ -15,6 +15,10 @@
     }
   ],
 
+  "bvh": {
+    "type": "octree"
+  },
+
   "materials": {
     "default": {
       "reflectance": 0.5

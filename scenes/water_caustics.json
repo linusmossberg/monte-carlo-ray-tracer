@@ -23,8 +23,7 @@
   },
 
   "bvh": {
-    "type": "octree",
-    "bins_per_axis": 16
+    "type": "octree"
   },
 
   "materials": {

@@ -10,13 +10,16 @@
       "image" : { 
         "width": 1280,
         "height": 720,
-        "exposure_compensation": 0.0,
         "tonemapper": "ACES"
       },
       "sqrtspp": 4,
       "savename": "veach-mis"
     }
   ],
+
+  "bvh": {
+    "type": "octree"
+  },
 
   "materials": {
     "superrough": {

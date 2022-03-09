@@ -8,12 +8,15 @@
       "sensor_width": 35,
       "eye": [ -80, 40, 80 ],
       "look_at": [ 0, 1, 0 ],
-      "f_stop": -0.1,
       "image": { "width": 1920, "height": 960 },
       "sqrtspp": 4,
       "savename": "oren_nayar_test_c1"
     }
   ],
+
+  "bvh": {
+    "type": "octree"
+  },
 
   "materials": {
     "default": {

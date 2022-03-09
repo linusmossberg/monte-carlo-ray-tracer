@@ -8,8 +8,6 @@
       "sensor_width": 35,
       "eye": [ 0, 0, -3.5 ],
       "look_at": 0,
-      "f_stops": 0.5,
-      "focus_distances": 3.5,
       "image" : { 
         "width": 512,
         "height": 512
@@ -31,23 +29,19 @@
     },
     "ior1": {
       "transparency": 1.0,
-      "external_medium": "scene",
       "ior": 1.4
     },
     "ior2": {
       "transparency": 1.0,
-      "external_medium": "ior1",
       "ior": 1.3
     },
     "ior3": {
       "transparency": 1.0,
-      "external_medium": "ior2",
       "ior": 1.2
     },
     "ior4": {
       "transparency": 1.0,
-      "external_medium": "ior3",
-      "ior": 1.1
+      "ior": 2.1
     },
     "light": {
       "emittance": 10000

@@ -15,8 +15,7 @@
   ],
 
   "bvh": {
-    "type": "octree",
-    "bins_per_axis": 8
+    "type": "octree"
   },
 
   "vertices": {
