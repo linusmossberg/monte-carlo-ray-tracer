@@ -13,7 +13,7 @@ Film::Film() { }
 Film::Film(size_t width, size_t height)
     : width(width), height(height), blob(width* height), 
       filter_function(Filter::box), radius(0.5), 
-      two_inv_radius(2.0 / radius) 
+      two_inv_radius(2.0 / radius), inv_dx(0.0)
 { }
 
 Film::Film(size_t width, size_t height, const nlohmann::json& j)
@@ -45,6 +45,17 @@ Film::Film(size_t width, size_t height, const nlohmann::json& j)
 
     radius = getOptional(j, "radius", radius);
     two_inv_radius = 2.0 / radius;
+
+    if (j.find("cache_size") != j.end())
+    {
+        size_t cache_size = j.at("cache_size");
+        filter_cache.resize(cache_size);
+        for (int i = 0; i < cache_size; i++)
+        {
+            filter_cache[i] = filter_function((2.0 * i) / (cache_size - 1));
+        }
+        inv_dx = (cache_size - 1) / radius;
+    }
 }
 
 void Film::deposit(const glm::dvec2& p, const glm::dvec3& v)
@@ -74,7 +85,15 @@ glm::dvec3 Film::scan(size_t col, size_t row) const
 
 double Film::filter(double x) const
 {
-    return filter_function(two_inv_radius * std::abs(x));
+    if (filter_cache.empty())
+    {
+        return filter_function(two_inv_radius * std::abs(x));
+    }
+    else
+    {
+        // index = round(inv_bin_size * abs(x)) = floor(inv_bin_size * abs(x) + 0.5)
+        return filter_cache[static_cast<size_t>(inv_dx * std::abs(x) + 0.5)];
+    }
 }
 
 void Film::Splat::update(const glm::dvec3& v, double weight)

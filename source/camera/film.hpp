@@ -39,8 +39,11 @@ private:
 
     std::vector<Splat> blob;
 
+    std::vector<double> filter_cache;
+
     double radius;
     double two_inv_radius;
+    double inv_dx;
 
     size_t width, height;
 

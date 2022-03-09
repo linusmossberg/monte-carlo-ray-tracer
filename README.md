@@ -125,7 +125,8 @@ Example:
     },
     "film": {
       "filter": "Lanczos",
-      "radius": 2
+      "radius": 2,
+      "cache_size": 32
     },
     "sqrtspp": 4,
     "savename": "c1b"
@@ -182,6 +183,8 @@ The `film` object is optional and it specifies the image reconstruction method. 
 ![Filters](https://user-images.githubusercontent.com/15798094/156931794-8bf84035-0a83-4231-ba73-d7c1c23da231.svg "Filters")
 
 The filters with negative lobes improves sharpness, but they don't work well for images with sharp HDR transitions since this causes severe ringing artifacts. A non-negative filter with a small radius (e.g. Hermite with radius 1) is probably preferable in such cases. The program uses the box filter with radius 0.5 by default, which is equivalent to the naive method of simply averaging the samples for each pixel.
+
+The `cache_size` field is optional and it can be used to specify that the filter function should be cached and approximated using the nearest cached filter value, rather than evaluating the filter function each time. This can improve performance for the more costly filters (i.e. Gaussian and Lanczos), and a cache size of 32 filter values is usually indistinguishable from evaluating the filter directly. Direct filter evaluation is used if this field is not provided.
 </details>
 
 ___
