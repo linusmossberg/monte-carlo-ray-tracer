@@ -5,34 +5,15 @@
 
 #include "../ray/ray.hpp"
 
+// Reduced version of https://tavianator.com/2011/ray_box.html
 bool BoundingBox::intersect(const Ray &ray, double &t) const
 {
-    t = 0.0;
-    double t_max = std::numeric_limits<double>::max();
+    glm::dvec3 t0{ (min - ray.start) * ray.inv_direction };
+    glm::dvec3 t1{ (max - ray.start) * ray.inv_direction };
 
-    for (int i = 0; i < 3; i++)
-    {
-        double inv_d = 1.0 / ray.direction[i];
+    t = std::max(glm::compMax(glm::min(t0, t1)), 0.0);
 
-        double t0 = (min[i] - ray.start[i]) * inv_d;
-        double t1 = (max[i] - ray.start[i]) * inv_d;
-
-        if (inv_d < 0.0)
-        {
-            std::swap(t0, t1);
-        }
-
-        if (t0 > t) t = t0;
-
-        if (t1 < t_max) t_max = t1;
-
-        if (t_max < t)
-        {
-            return false;
-        }
-    }
-
-    return true;
+    return glm::compMin(glm::max(t0, t1)) >= t;
 }
 
 bool BoundingBox::contains(const glm::dvec3 &p) const

@@ -88,10 +88,10 @@ void Camera::samplePixel(size_t x, size_t y)
         {
             // Thin lens camera ray for depth of field
             auto u = Sampler::get<Dim::LENS, 2>();
-            glm::dvec3 focus_point = ray(focus_distance / glm::dot(ray.direction, forward));
             glm::dvec2 aperture_sample = Sampling::uniformDisk(u[0], u[1]) * aperture_radius;
-            ray.start += left * aperture_sample.x + up * aperture_sample.y;
-            ray.direction = glm::normalize(focus_point - ray.start);
+            glm::dvec3 focus_point = ray(focus_distance / glm::dot(ray.direction, forward));
+            glm::dvec3 start = eye + left * aperture_sample.x + up * aperture_sample.y;
+            ray = Ray(start, glm::normalize(focus_point - start), integrator->scene.ior);
         }
         film.deposit(px, integrator->sampleRay(ray));
     }

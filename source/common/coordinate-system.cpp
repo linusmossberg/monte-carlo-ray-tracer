@@ -1,20 +1,23 @@
 #include "coordinate-system.hpp"
-#include "constexpr-math.hpp"
-#include "constants.hpp"
 
-glm::dvec3 orthogonalUnitVector(const glm::dvec3& v)
+#include <cmath>
+
+// Building an Orthonormal Basis, Revisited. - Duff et al.
+// https://graphics.pixar.com/library/OrthonormalB/paper.pdf
+glm::dmat3 orthonormalBasis(const glm::dvec3& N)
 {
-    if (std::abs(v.x) > std::abs(v.y))
-        return glm::dvec3(-v.z, 0, v.x) / std::sqrt(pow2(v.x) + pow2(v.z));
-    else
-        return glm::dvec3(0, v.z, -v.y) / std::sqrt(pow2(v.y) + pow2(v.z));
+    double sign = std::copysign(1.0, N.z);
+    double a = -1.0 / (sign + N.z);
+    double b = N.x * N.y * a;
+    return
+    {
+        { 1.0 + sign * N.x * N.x * a, sign * b, -sign * N.x },
+        { b, sign + N.y * N.y * a, -N.y },
+        N
+    };
 }
 
-CoordinateSystem::CoordinateSystem(const glm::dvec3& N) : normal(N)
-{
-    glm::dvec3 X = orthogonalUnitVector(N);
-    T = glm::dmat3(X, glm::cross(N, X), N);
-}
+CoordinateSystem::CoordinateSystem(const glm::dvec3& N) : T(orthonormalBasis(N)) { }
 
 glm::dvec3 CoordinateSystem::from(const glm::dvec3& v) const
 {
@@ -26,9 +29,12 @@ glm::dvec3 CoordinateSystem::to(const glm::dvec3& v) const
     return glm::transpose(T) * v;
 }
 
+const glm::dvec3& CoordinateSystem::normal() const
+{
+    return T[2];
+}
+
 glm::dvec3 CoordinateSystem::from(const glm::dvec3& v, const glm::dvec3& N)
 {
-    glm::dvec3 tX = orthogonalUnitVector(N);
-    glm::dvec3 tY = glm::cross(N, tX);
-    return tX * v.x + tY * v.y + N * v.z;
+    return orthonormalBasis(N) * v;
 }

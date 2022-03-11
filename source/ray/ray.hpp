@@ -16,7 +16,7 @@ public:
 
     glm::dvec3 operator()(double t) const;
 
-    glm::dvec3 start, direction;
+    glm::dvec3 start, direction, inv_direction;
     double medium_ior;
     double refraction_scale = 1.0;
     bool dirac_delta = false, refraction = false;

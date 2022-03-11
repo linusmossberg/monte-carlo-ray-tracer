@@ -91,7 +91,7 @@ double Film::filter(double x) const
     }
     else
     {
-        // index = round(inv_dx * |x|) = floor(inv_dx * |x| + 0.5)
+        // nearest neighbor index = round(inv_dx * |x|) = floor(inv_dx * |x| + 0.5)
         return filter_cache[static_cast<size_t>(inv_dx * std::abs(x) + 0.5)];
     }
 }

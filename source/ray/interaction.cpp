@@ -189,5 +189,5 @@ glm::dvec3 Interaction::specularNormal() const
         auto u = Sampler::get<Dim::BSDF, 2>();
         return shading_cs.from(material->visibleMicrofacet(u[0], u[1], shading_cs.to(out)));
     }
-    return shading_cs.normal;
+    return shading_cs.normal();
 }
